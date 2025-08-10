@@ -67,7 +67,6 @@ export function DashboardLayout() {
                     pl: 3,
                     pr: 3,
                     pt: 10, // chừa AppBar
-                    ml: `${contentPaddingLeft}px`, // chừa Drawer
                 }}
             >
                 <Outlet />
