@@ -8,9 +8,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import {
     Box,
     Button,
-    Checkbox,
     Container,
-    FormControlLabel,
     IconButton,
     InputAdornment,
     Paper,
@@ -84,7 +82,7 @@ export default function LoginPage() {
                                 Welcome back
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Sign in to your Vitre CMS
+                                Sign in to your Dashboard
                             </Typography>
                         </Stack>
 
@@ -143,13 +141,7 @@ export default function LoginPage() {
                                 })}
                             />
 
-                            <Stack direction="row" alignItems="center" justifyContent="space-between">
-                                <FormControlLabel
-                                    control={<Checkbox defaultChecked {...register("remember")} />}
-                                    label="Remember me"
-                                />
-                                <Button variant="text" size="small">Forgot password?</Button>
-                            </Stack>
+
 
                             <Button
                                 type="submit"
