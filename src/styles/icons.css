@@ -1,0 +1,28 @@
+/* Kích thước mặc định cho icon */
+.icon {
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+  color: inherit; /* Màu theo text cha */
+  stroke-width: 1.5;
+  vertical-align: middle;
+}
+
+/* Màu sắc tuỳ biến */
+.icon-yellow {
+  color: #facc15;
+}
+
+.icon-red {
+  color: #ef4444;
+}
+
+.icon-green {
+  color: #22c55e;
+}
+
+/* Hiệu ứng hover */
+.icon-hover:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}

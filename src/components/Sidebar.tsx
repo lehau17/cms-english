@@ -1,3 +1,4 @@
+import { Person } from "@mui/icons-material";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -20,6 +21,7 @@ type NavItem = { to: string; label: string; icon: React.ReactNode };
 const NAV: NavItem[] = [
     { to: "/dashboard", label: "Dashboard", icon: <HomeOutlinedIcon /> },
     { to: "/settings", label: "Settings", icon: <SettingsOutlinedIcon /> },
+    { to: "/students", label: "Student", icon: <Person /> },
 ];
 
 const DRAWER_WIDTH = 240;
