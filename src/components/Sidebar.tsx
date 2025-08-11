@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
     { to: "/dashboard", label: "Dashboard", icon: <HomeOutlinedIcon /> },
     { to: "/settings", label: "Settings", icon: <SettingsOutlinedIcon /> },
     { to: "/students", label: "Student", icon: <Person /> },
+    { to: "/teachers", label: "Teacher", icon: <Person /> },
 ];
 
 const DRAWER_WIDTH = 240;

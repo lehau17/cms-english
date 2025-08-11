@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import StudentPage from "./pages/StudentPage";
+import TeacherPage from "./pages/TeacherPage";
 
 const router = createBrowserRouter([
     { path: "/login", element: <LoginPage /> },
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
                     // ví dụ route thật trong dashboard
                     { path: "/dashboard", element: <DashboardPage /> },
                     { path: "/students", element: <StudentPage /> },
+                    { path: "/teachers", element: <TeacherPage /> },
                 ],
             },
         ],
