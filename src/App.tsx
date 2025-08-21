@@ -2,6 +2,7 @@
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import ClassroomPage from "./pages/ClassroomPage";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import StudentPage from "./pages/StudentPage";
@@ -15,10 +16,10 @@ const router = createBrowserRouter([
             {
                 element: <DashboardLayout />,
                 children: [
-                    // ví dụ route thật trong dashboard
                     { path: "/dashboard", element: <DashboardPage /> },
                     { path: "/students", element: <StudentPage /> },
                     { path: "/teachers", element: <TeacherPage /> },
+                    { path: "/classrooms", element: <ClassroomPage /> },
                 ],
             },
         ],

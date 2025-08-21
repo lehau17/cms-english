@@ -1,6 +1,32 @@
-import { Calendar, CheckCircle, ChevronLeft, ChevronRight, Clock, Edit, Eye, Filter, Mail, Phone, Search, Trash2, User, XCircle } from 'lucide-react';
+import {
+    Avatar,
+    Button,
+    Chip,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    FormControl,
+    FormControlLabel,
+    FormHelperText,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Select,
+    Slide,
+    Stack,
+    Switch,
+    TextField,
+    Tooltip,
+    Typography,
+} from '@mui/material';
+import Box from '@mui/material/Box';
+
+import Grid from '@mui/material/Grid';
+import { Calendar, CheckCircle, ChevronLeft, ChevronRight, Clock, Edit, Eye, Filter, Mail, Phone, Search, Trash2, Upload, User, X, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Modal, Box } from '@mui/material';
 
 // TypeScript interfaces
 interface Teacher {
@@ -53,6 +79,30 @@ interface URLParams {
     search: string;
     status: string;
 }
+
+
+import type { TransitionProps } from '@mui/material/transitions';
+
+// ==== (1) Transition cho Dialog ====
+const Transition = React.forwardRef(function Transition(
+    props: TransitionProps & { children: React.ReactElement<any, any> },
+    ref: React.Ref<unknown>,
+) {
+    return <Slide direction="up" ref={ref} {...props} />;
+});
+
+
+
+const statusColor = (s: 'active' | 'inactive') =>
+    s === 'active' ? { bg: '#E8F5E9', color: '#2E7D32', label: 'Active' } : { bg: '#FFEBEE', color: '#C62828', label: 'Inactive' };
+
+const providerColor = (p: 'local' | 'google' | 'facebook') => {
+    if (p === 'google') return { bg: '#FFEBEE', color: '#C62828' };
+    if (p === 'facebook') return { bg: '#E3F2FD', color: '#1565C0' };
+    return { bg: '#ECEFF1', color: '#37474F' };
+};
+
+
 
 const TeacherPage: React.FC = () => {
     // Mock data - tạo nhiều teachers để test phân trang
@@ -289,6 +339,62 @@ const TeacherPage: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // mở form edit
+    const handleEditTeacher = (teacherId: string): void => {
+        const t = teachers.find(te => te.id === teacherId) || null;
+        setEditTeacher(t);
+        setIsEditOpen(true);
+    };
+
+    const handleCloseEdit = () => {
+        if (isSaving) return;
+        setIsEditOpen(false);
+        setEditTeacher(null);
+        setErrors({});
+    };
+
+    const setField = <K extends keyof Teacher>(key: K, value: Teacher[K]) => {
+        setEditTeacher(prev => (prev ? { ...prev, [key]: value } as Teacher : prev));
+    };
+
+    const validateEdit = (t: Teacher) => {
+        const e: Record<string, string> = {};
+        if (!t.firstName?.trim()) e.firstName = 'First name is required';
+        if (!t.lastName?.trim()) e.lastName = 'Last name is required';
+        if (!t.email?.trim()) e.email = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email)) e.email = 'Invalid email';
+        if (t.phone && !/^\+?\d{6,15}$/.test(t.phone)) e.phone = 'Invalid phone';
+        return e;
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editTeacher) return;
+        const e = validateEdit(editTeacher);
+        setErrors(e);
+        if (Object.keys(e).length) return;
+
+        try {
+            setIsSaving(true);
+            // 🔧 mock API
+            await new Promise(r => setTimeout(r, 700));
+            setTeachers(prev => prev.map(t => (t.id === editTeacher.id ? editTeacher : t)));
+            setIsEditOpen(false);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const onPickAvatar = (file: File) => {
+        // demo: dùng objectURL; thực tế: upload -> lấy URL từ server
+        const url = URL.createObjectURL(file);
+        setField('avatarUrl', url);
+    };
+
 
     // Simulate API call với pagination - mô phỏng server-side pagination
     const fetchTeachers = async (
@@ -529,9 +635,8 @@ const TeacherPage: React.FC = () => {
         setSelectedTeacher(null);
     };
 
-    const handleEditTeacher = (teacherId: string): void => {
-        console.log('Edit teacher:', teacherId);
-    };
+
+
 
     const handleDeleteTeacher = (teacherId: string): void => {
         console.log('Delete teacher:', teacherId);
@@ -686,8 +791,8 @@ const TeacherPage: React.FC = () => {
                                                 <div className="space-y-2">
                                                     <span
                                                         className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${teacher.status === 'active'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : 'bg-red-100 text-red-800'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
                                                             }`}
                                                     >
                                                         {teacher.status}
@@ -702,10 +807,10 @@ const TeacherPage: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <span
                                                     className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${teacher.provider === 'google'
-                                                            ? 'bg-red-100 text-red-800'
-                                                            : teacher.provider === 'facebook'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : 'bg-gray-100 text-gray-800'
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : teacher.provider === 'facebook'
+                                                            ? 'bg-blue-100 text-blue-800'
+                                                            : 'bg-gray-100 text-gray-800'
                                                         }`}
                                                 >
                                                     {teacher.provider}
@@ -782,8 +887,8 @@ const TeacherPage: React.FC = () => {
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={!pagination.hasPrevPage}
                                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pagination.hasPrevPage
-                                        ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                                        : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                                    ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                                    : 'text-gray-400 bg-gray-50 cursor-not-allowed'
                                     }`}
                             >
                                 <ChevronLeft className="w-4 h-4 mr-1" />
@@ -799,8 +904,8 @@ const TeacherPage: React.FC = () => {
                                             key={pageNum}
                                             onClick={() => handlePageChange(pageNum)}
                                             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
                                                 }`}
                                         >
                                             {pageNum}
@@ -814,8 +919,8 @@ const TeacherPage: React.FC = () => {
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={!pagination.hasNextPage}
                                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pagination.hasNextPage
-                                        ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                                        : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                                    ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                                    : 'text-gray-400 bg-gray-50 cursor-not-allowed'
                                     }`}
                             >
                                 Next
@@ -872,52 +977,531 @@ const TeacherPage: React.FC = () => {
             </div>
 
             {/* Teacher Detail Modal */}
-            <Modal
+            <Dialog
                 open={isModalOpen}
                 onClose={handleCloseModal}
-                aria-labelledby="teacher-detail-modal-title"
-                aria-describedby="teacher-detail-modal-description"
+                TransitionComponent={Transition}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        overflow: 'hidden',
+                        boxShadow: '0px 24px 48px rgba(0,0,0,0.12)',
+                    },
+                }}
             >
-                <Box sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: 400,
-                    bgcolor: 'background.paper',
-                    border: '2px solid #000',
-                    boxShadow: 24,
-                    p: 4,
-                }}>
-                    {selectedTeacher && (
-                        <div>
-                            <h2 id="teacher-detail-modal-title">{selectedTeacher.firstName} {selectedTeacher.lastName}</h2>
-                            <img src={selectedTeacher.avatarUrl} alt={`${selectedTeacher.firstName} ${selectedTeacher.lastName}`} style={{ width: '100px', height: '100px', borderRadius: '50%' }} />
-                            <p id="teacher-detail-modal-description">
-                                Email: {selectedTeacher.email}
-                            </p>
-                            <p>
-                                Phone: {selectedTeacher.phone || 'N/A'}
-                            </p>
-                            <p>
-                                Username: {selectedTeacher.username}
-                            </p>
-                            <p>
-                                Status: {selectedTeacher.status}
-                            </p>
-                            <p>
-                                Gender: {selectedTeacher.gender}
-                            </p>
-                            <p>
-                                Date of Birth: {formatDate(selectedTeacher.dob)}
-                            </p>
-                            <p>
-                                Last Login: {formatDateTime(selectedTeacher.lastLoginAt)}
-                            </p>
-                        </div>
-                    )}
-                </Box>
-            </Modal>
+                {selectedTeacher && (
+                    <>
+                        <DialogTitle sx={{ p: 0 }}>
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    p: 3,
+                                    bgcolor: 'linear-gradient(135deg, #2563EB 0%, #9333EA 100%)',
+                                    backgroundImage: 'linear-gradient(135deg, #2563EB 0%, #9333EA 100%)',
+                                    color: 'white',
+                                }}
+                            >
+                                {/* Close */}
+                                <IconButton
+                                    aria-label="close"
+                                    onClick={handleCloseModal}
+                                    sx={{
+                                        position: 'absolute',
+                                        right: 10,
+                                        top: 10,
+                                        color: 'white',
+                                        bgcolor: 'rgba(255,255,255,0.12)',
+                                        '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                                    }}
+                                    size="small"
+                                >
+                                    <X className="w-4 h-4" />
+                                </IconButton>
+
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                    <Avatar
+                                        src={selectedTeacher.avatarUrl}
+                                        alt={`${selectedTeacher.firstName} ${selectedTeacher.lastName}`}
+                                        sx={{ width: 64, height: 64, border: '2px solid rgba(255,255,255,0.35)' }}
+                                    />
+                                    <Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
+                                            {selectedTeacher.firstName} {selectedTeacher.lastName}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                            @{selectedTeacher.username} • {selectedTeacher.bio}
+                                        </Typography>
+                                        <Stack direction="row" spacing={1} mt={1}>
+                                            {/* status */}
+                                            {(() => {
+                                                const s = statusColor(selectedTeacher.status);
+                                                return (
+                                                    <Chip
+                                                        label={s.label}
+                                                        size="small"
+                                                        sx={{ bgcolor: s.bg, color: s.color, fontWeight: 600 }}
+                                                    />
+                                                );
+                                            })()}
+                                            {/* provider */}
+                                            {(() => {
+                                                const p = providerColor(selectedTeacher.provider);
+                                                return (
+                                                    <Chip
+                                                        label={selectedTeacher.provider}
+                                                        size="small"
+                                                        sx={{ bgcolor: p.bg, color: p.color, fontWeight: 600, textTransform: 'capitalize' }}
+                                                    />
+                                                );
+                                            })()}
+                                            {/* verify */}
+                                            <Chip
+                                                icon={selectedTeacher.emailVerified ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                                                label={selectedTeacher.emailVerified ? 'Email verified' : 'Email unverified'}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: selectedTeacher.emailVerified ? '#E8F5E9' : '#FFF3E0',
+                                                    color: selectedTeacher.emailVerified ? '#2E7D32' : '#E65100',
+                                                    fontWeight: 600,
+                                                }}
+                                            />
+                                        </Stack>
+                                    </Box>
+                                </Stack>
+                            </Box>
+                        </DialogTitle>
+
+                        <DialogContent sx={{ p: 3 }}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="overline" color="text.secondary">Contact</Typography>
+                                    <Stack spacing={1.2} mt={0.5}>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Mail size={16} />
+                                            <Typography variant="body2">{selectedTeacher.email}</Typography>
+                                        </Stack>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Phone size={16} />
+                                            <Typography variant="body2">{selectedTeacher.phone || 'N/A'}</Typography>
+                                        </Stack>
+                                    </Stack>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="overline" color="text.secondary">Profile</Typography>
+                                    <Stack spacing={1.2} mt={0.5}>
+                                        <Typography variant="body2">Gender: <b style={{ textTransform: 'capitalize' }}>{selectedTeacher.gender}</b></Typography>
+                                        <Typography variant="body2">DOB: <b>{formatDate(selectedTeacher.dob)}</b></Typography>
+                                        <Typography variant="body2">Language: <b>{selectedTeacher.language.toUpperCase()}</b></Typography>
+                                        <Typography variant="body2">Timezone: <b>{selectedTeacher.timezone}</b></Typography>
+                                    </Stack>
+                                </Grid>
+
+                                <Grid item xs={12}>
+                                    <Divider sx={{ my: 1.5 }} />
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="overline" color="text.secondary">Activity</Typography>
+                                    <Stack spacing={1.2} mt={0.5}>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Clock size={16} />
+                                            <Typography variant="body2">Login: <b>{formatDateTime(selectedTeacher.lastLoginAt)}</b></Typography>
+                                        </Stack>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Clock size={16} />
+                                            <Typography variant="body2">Active: <b>{formatDateTime(selectedTeacher.lastActiveAt)}</b></Typography>
+                                        </Stack>
+                                    </Stack>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="overline" color="text.secondary">Meta</Typography>
+                                    <Stack spacing={1.2} mt={0.5}>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Calendar size={16} />
+                                            <Typography variant="body2">Created: <b>{formatDateTime(selectedTeacher.createdAt)}</b></Typography>
+                                        </Stack>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Calendar size={16} />
+                                            <Typography variant="body2">Updated: <b>{formatDateTime(selectedTeacher.updatedAt)}</b></Typography>
+                                        </Stack>
+                                    </Stack>
+                                </Grid>
+                            </Grid>
+                        </DialogContent>
+
+                        <DialogActions sx={{ px: 3, pb: 3, justifyContent: 'space-between' }}>
+                            <Stack direction="row" spacing={1}>
+                                <Tooltip title="Send email">
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<Mail size={16} />}
+                                        onClick={() => window.open(`mailto:${selectedTeacher.email}`, '_blank')}
+                                    >
+                                        Email
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Call phone">
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<Phone size={16} />}
+                                        disabled={!selectedTeacher.phone}
+                                        onClick={() => selectedTeacher.phone && (window.location.href = `tel:${selectedTeacher.phone}`)}
+                                    >
+                                        Call
+                                    </Button>
+                                </Tooltip>
+                            </Stack>
+
+                            <Stack direction="row" spacing={1.5}>
+                                <Button
+                                    variant="text"
+                                    onClick={() => handleEditTeacher(selectedTeacher.id)}
+                                    startIcon={<Edit size={16} />}
+                                >
+                                    Edit
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color={selectedTeacher.status === 'active' ? 'error' : 'success'}
+                                    onClick={() =>
+                                        alert(
+                                            `${selectedTeacher.status === 'active' ? 'Deactivate' : 'Activate'} ${selectedTeacher.firstName}?`,
+                                        )
+                                    }
+                                    startIcon={
+                                        selectedTeacher.status === 'active' ? <XCircle size={16} /> : <CheckCircle size={16} />
+                                    }
+                                >
+                                    {selectedTeacher.status === 'active' ? 'Deactivate' : 'Activate'}
+                                </Button>
+                            </Stack>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
+
+            <Dialog
+                open={isEditOpen}
+                onClose={handleCloseEdit}
+                TransitionComponent={Transition}
+                fullWidth
+                maxWidth="md"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        overflow: 'hidden',
+                        boxShadow: '0px 32px 64px rgba(0,0,0,0.15)',
+                    },
+                }}
+            >
+                {editTeacher && (
+                    <>
+                        <DialogTitle sx={{ p: 0 }}>
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    p: 4,
+                                    pb: 6,
+                                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                    color: 'white',
+                                }}
+                            >
+                                <IconButton
+                                    aria-label="close"
+                                    onClick={handleCloseEdit}
+                                    sx={{
+                                        position: 'absolute',
+                                        right: 12,
+                                        top: 12,
+                                        color: 'white',
+                                        bgcolor: 'rgba(255,255,255,0.15)',
+                                        '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
+                                        borderRadius: 2,
+                                    }}
+                                    size="small"
+                                    disabled={isSaving}
+                                >
+                                    <X size={18} />
+                                </IconButton>
+
+                                <Stack direction="row" spacing={3} alignItems="center">
+                                    <Box sx={{ position: 'relative' }}>
+                                        <Avatar
+                                            src={editTeacher.avatarUrl}
+                                            alt={`${editTeacher.firstName} ${editTeacher.lastName}`}
+                                            sx={{
+                                                width: 80,
+                                                height: 80,
+                                                border: '3px solid rgba(255,255,255,0.3)',
+                                                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                                            }}
+                                        />
+                                        <input
+                                            id="avatar-input"
+                                            type="file"
+                                            accept="image/*"
+                                            hidden
+                                            onChange={(e) => {
+                                                const f = e.target.files?.[0];
+                                                if (f) onPickAvatar(f);
+                                            }}
+                                        />
+                                        <IconButton
+                                            component="label"
+                                            htmlFor="avatar-input"
+                                            sx={{
+                                                position: 'absolute',
+                                                bottom: -4,
+                                                right: -4,
+                                                bgcolor: 'rgba(255,255,255,0.9)',
+                                                '&:hover': { bgcolor: 'white' },
+                                                width: 32,
+                                                height: 32,
+                                            }}
+                                            size="small"
+                                            disabled={isSaving}
+                                        >
+                                            <Upload size={14} />
+                                        </IconButton>
+                                    </Box>
+
+                                    <Box sx={{ flex: 1 }}>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                            Edit Teacher Profile
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                                            Update {editTeacher.firstName} {editTeacher.lastName}'s information
+                                        </Typography>
+                                        <Stack direction="row" spacing={1} mt={1}>
+                                            <Chip
+                                                label={editTeacher.status}
+                                                size="small"
+                                                sx={{
+                                                    textTransform: 'capitalize',
+                                                    bgcolor:
+                                                        editTeacher.status === 'active' ? 'rgba(46,125,50,0.15)' : 'rgba(198,40,40,0.12)',
+                                                    color: editTeacher.status === 'active' ? '#2E7D32' : '#C62828',
+                                                    fontWeight: 600,
+                                                }}
+                                            />
+                                            <Chip
+                                                label={editTeacher.provider}
+                                                size="small"
+                                                sx={{ textTransform: 'capitalize', bgcolor: 'rgba(255,255,255,0.25)' }}
+                                            />
+                                        </Stack>
+                                    </Box>
+
+                                    {isSaving && (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <CircularProgress size={22} color="inherit" />
+                                            <Typography>Saving…</Typography>
+                                        </Box>
+                                    )}
+                                </Stack>
+                            </Box>
+                        </DialogTitle>
+
+                        <DialogContent sx={{
+                            p: 4, mt: 4
+                        }}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="First name"
+                                        value={editTeacher.firstName}
+                                        onChange={(e) => setField('firstName', e.target.value)}
+                                        fullWidth
+                                        error={!!errors.firstName}
+                                        helperText={errors.firstName}
+                                        disabled={isSaving}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Last name"
+                                        value={editTeacher.lastName}
+                                        onChange={(e) => setField('lastName', e.target.value)}
+                                        fullWidth
+                                        error={!!errors.lastName}
+                                        helperText={errors.lastName}
+                                        disabled={isSaving}
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Email"
+                                        value={editTeacher.email}
+                                        onChange={(e) => setField('email', e.target.value)}
+                                        fullWidth
+                                        error={!!errors.email}
+                                        helperText={errors.email}
+                                        disabled={isSaving}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Phone"
+                                        value={editTeacher.phone ?? ''}
+                                        onChange={(e) => setField('phone', e.target.value)}
+                                        fullWidth
+                                        error={!!errors.phone}
+                                        helperText={errors.phone}
+                                        disabled={isSaving}
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12}>
+                                    <TextField
+                                        label="Bio"
+                                        value={editTeacher.bio}
+                                        onChange={(e) => setField('bio', e.target.value)}
+                                        fullWidth
+                                        multiline
+                                        minRows={2}
+                                        disabled={isSaving}
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <FormControl fullWidth disabled={isSaving}>
+                                        <InputLabel id="status-label">Status</InputLabel>
+                                        <Select
+                                            labelId="status-label"
+                                            label="Status"
+                                            value={editTeacher.status}
+                                            onChange={(e) => setField('status', e.target.value as 'active' | 'inactive')}
+                                        >
+                                            <MenuItem value="active">Active</MenuItem>
+                                            <MenuItem value="inactive">Inactive</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <FormControl fullWidth disabled={isSaving}>
+                                        <InputLabel id="provider-label">Provider</InputLabel>
+                                        <Select
+                                            labelId="provider-label"
+                                            label="Provider"
+                                            value={editTeacher.provider}
+                                            onChange={(e) =>
+                                                setField('provider', e.target.value as 'local' | 'google' | 'facebook')
+                                            }
+                                        >
+                                            <MenuItem value="local">Local</MenuItem>
+                                            <MenuItem value="google">Google</MenuItem>
+                                            <MenuItem value="facebook">Facebook</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <FormControl fullWidth disabled={isSaving}>
+                                        <InputLabel id="gender-label">Gender</InputLabel>
+                                        <Select
+                                            labelId="gender-label"
+                                            label="Gender"
+                                            value={editTeacher.gender}
+                                            onChange={(e) => setField('gender', e.target.value as 'male' | 'female')}
+                                        >
+                                            <MenuItem value="male">Male</MenuItem>
+                                            <MenuItem value="female">Female</MenuItem>
+                                        </Select>
+                                        <FormHelperText>Required</FormHelperText>
+                                    </FormControl>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Date of Birth"
+                                        type="date"
+                                        value={editTeacher.dob ?? ''}
+                                        onChange={(e) => setField('dob', e.target.value || null)}
+                                        fullWidth
+                                        disabled={isSaving}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <FormControl fullWidth disabled={isSaving}>
+                                        <InputLabel id="language-label">Language</InputLabel>
+                                        <Select
+                                            labelId="language-label"
+                                            label="Language"
+                                            value={editTeacher.language}
+                                            onChange={(e) => setField('language', e.target.value as 'en' | 'vi')}
+                                        >
+                                            <MenuItem value="en">English</MenuItem>
+                                            <MenuItem value="vi">Vietnamese</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Timezone"
+                                        value={editTeacher.timezone}
+                                        onChange={(e) => setField('timezone', e.target.value)}
+                                        fullWidth
+                                        disabled={isSaving}
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12}>
+                                    <Divider />
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={!!editTeacher.emailVerified}
+                                                onChange={(e) => setField('emailVerified', e.target.checked)}
+                                                disabled={isSaving}
+                                            />
+                                        }
+                                        label="Email verified"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={!!editTeacher.phoneVerified}
+                                                onChange={(e) => setField('phoneVerified', e.target.checked)}
+                                                disabled={isSaving}
+                                            />
+                                        }
+                                        label="Phone verified"
+                                    />
+                                </Grid>
+                            </Grid>
+                        </DialogContent>
+
+                        <DialogActions sx={{ px: 3, py: 2 }}>
+                            <Button onClick={handleCloseEdit} disabled={isSaving}>Cancel</Button>
+                            <Button
+                                variant="contained"
+                                onClick={handleSaveEdit}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? 'Saving…' : 'Save changes'}
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
+
+
+
+
         </div>
     );
 };
