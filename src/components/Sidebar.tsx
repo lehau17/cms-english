@@ -1,4 +1,4 @@
-import { Person } from "@mui/icons-material";
+import { Class, Person } from "@mui/icons-material";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
     { to: "/settings", label: "Settings", icon: <SettingsOutlinedIcon /> },
     { to: "/students", label: "Student", icon: <Person /> },
     { to: "/teachers", label: "Teacher", icon: <Person /> },
+    { to: "/classrooms", label: "Class", icon: <Class /> },
 ];
 
 const DRAWER_WIDTH = 240;
