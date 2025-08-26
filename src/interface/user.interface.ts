@@ -1,0 +1,34 @@
+export type UserResponse = {
+    id: string,
+    email: string;
+    phone: string;
+    passwordHash: string;
+    role: string;
+    status: string;
+    provider: string;
+    providerId: null;
+    firstName: string;
+    lastName: string;
+    displayName: null;
+    gender: null;
+    dob: null;
+    nationality: null;
+    nativeLanguage: null;
+    avatarUrl: null;
+    bio: null;
+    language: string;
+    timezone: string;
+    lastLoginAt: null;
+    lastActiveAt: null;
+    emailVerified: boolean;
+    phoneVerified: boolean;
+    twoFactorEnabled: boolean;
+    preferences: null;
+    privacySettings: null;
+    notificationSettings: null;
+    parentalConsent: null;
+    profileCompleteness: number;
+    isOnline: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
