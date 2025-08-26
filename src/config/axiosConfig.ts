@@ -6,51 +6,50 @@ const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 // Tạo instance axios
 const axiosInstance = axios.create({
-    baseURL,
-    headers: {
-        "Content-Type": "application/json",
-        Accept: "*/*",
-    },
-    timeout: 10000, // 10 giây
+  baseURL,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "*/*",
+  },
+  timeout: 10000, // 10 giây
 });
 
 // Interceptor cho request
 axiosInstance.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem("access-token");
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        // console.log("Request config:", config);
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    const raw = localStorage.getItem("cms_auth");
+    if (raw) {
+      const { token } = JSON.parse(raw);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Interceptor cho response
 axiosInstance.interceptors.response.use(
-    (response) => {
-        // console.log("Response data:", response);
-        return response; // Trả luôn response.data
-    },
-    (error) => {
-        if (error.response) {
-            // Server trả về lỗi
-            console.error("API Error:", error.response);
-            if (error.response.status === 401) {
-                // Ví dụ: token hết hạn → redirect login
-                console.warn("Unauthorized, redirecting to login...");
-                localStorage.removeItem("access-token");
-                window.location.href = "/login";
-            }
-        } else {
-            // Lỗi mạng hoặc timeout
-            console.error("Network Error:", error.message);
-        }
-        return Promise.reject(error);
+  (response) => {
+    return response; // Trả luôn response.data
+  },
+  (error) => {
+    if (error.response) {
+      console.error("API Error:", error.response);
+      if (error.response.status === 401) {
+        console.warn("Unauthorized, redirecting to login...");
+        localStorage.removeItem("access-token");
+        window.location.href = "/login";
+      }
+    } else {
+      // Lỗi mạng hoặc timeout
+      console.error("Network Error:", error.message);
     }
+    return Promise.reject(error);
+  }
 );
 
 export default axiosInstance;
