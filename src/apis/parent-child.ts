@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { ParentChild } from "../interface/parent-child.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getParentChildren = async (params: any): Promise<PageResponseDto<ParentChild>> => {
+export const getParentChildren = async (params: RequestPagingDto): Promise<PageResponseDto<ParentChild>> => {
   const response = await axiosInstance.get<PageResponseDto<ParentChild>>("/private/v1/parent-children", { params });
   return response.data;
 };

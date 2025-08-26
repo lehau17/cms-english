@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { Attempt } from "../interface/attempt.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getAttempts = async (params: any): Promise<PageResponseDto<Attempt>> => {
+export const getAttempts = async (params: RequestPagingDto): Promise<PageResponseDto<Attempt>> => {
   const response = await axiosInstance.get<PageResponseDto<Attempt>>("/private/v1/attempts", { params });
   return response.data;
 };

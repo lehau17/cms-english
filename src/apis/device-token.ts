@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { DeviceToken } from "../interface/device-token.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getDeviceTokens = async (params: any): Promise<PageResponseDto<DeviceToken>> => {
+export const getDeviceTokens = async (params: RequestPagingDto): Promise<PageResponseDto<DeviceToken>> => {
   const response = await axiosInstance.get<PageResponseDto<DeviceToken>>("/private/v1/device-tokens", { params });
   return response.data;
 };

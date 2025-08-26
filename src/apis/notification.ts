@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { Notification } from "../interface/notification.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getNotifications = async (params: any): Promise<PageResponseDto<Notification>> => {
+export const getNotifications = async (params: RequestPagingDto): Promise<PageResponseDto<Notification>> => {
   const response = await axiosInstance.get<PageResponseDto<Notification>>("/private/v1/notifications", { params });
   return response.data;
 };

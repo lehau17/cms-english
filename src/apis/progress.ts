@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { Progress } from "../interface/progress.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getProgresses = async (params: any): Promise<PageResponseDto<Progress>> => {
+export const getProgresses = async (params: RequestPagingDto): Promise<PageResponseDto<Progress>> => {
   const response = await axiosInstance.get<PageResponseDto<Progress>>("/private/v1/progresses", { params });
   return response.data;
 };

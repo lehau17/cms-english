@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { Classroom } from "../interface/classroom.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getClassrooms = async (params: any): Promise<PageResponseDto<Classroom>> => {
+export const getClassrooms = async (params: RequestPagingDto): Promise<PageResponseDto<Classroom>> => {
   const response = await axiosInstance.get<PageResponseDto<Classroom>>("/private/v1/classrooms", { params });
   return response.data;
 };
@@ -39,7 +40,7 @@ export const assignTeacherToClassroom = async (classroomId: string, teacherId: s
   await axiosInstance.put(`/private/v1/classrooms/${classroomId}/teacher`, { teacherId });
 };
 
-export const exportClassrooms = async (params: any): Promise<Blob> => {
+export const exportClassrooms = async (params: RequestPagingDto): Promise<Blob> => {
     const response = await axiosInstance.get<Blob>("/private/v1/classrooms/export", {
         params,
         responseType: "blob",

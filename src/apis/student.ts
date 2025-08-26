@@ -2,8 +2,10 @@ import { ApiResponse, Pagination } from "@/interface/base-response.interface"
 import axiosInstance from "../config/axiosConfig"
 import { Student } from "../interface/student.interface"
 
+import { RequestPagingDto } from "../interface/request-paging.interface";
+
 export const getStudents = async (
-  params: any
+  params: RequestPagingDto
 ): Promise<ApiResponse<Pagination<Student>>> => {
   const response = await axiosInstance.get<
     ApiResponse<Pagination<Student>>

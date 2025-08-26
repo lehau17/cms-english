@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { Course } from "../interface/course.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getCourses = async (params: any): Promise<PageResponseDto<Course>> => {
+export const getCourses = async (params: RequestPagingDto): Promise<PageResponseDto<Course>> => {
   const response = await axiosInstance.get<PageResponseDto<Course>>("/private/v1/courses", { params });
   return response.data;
 };

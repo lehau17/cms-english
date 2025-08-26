@@ -2,8 +2,9 @@
 import axiosInstance from "../config/axiosConfig";
 import { Teacher } from "../interface/teacher.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
+import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getTeachers = async (params: any): Promise<PageResponseDto<Teacher>> => {
+export const getTeachers = async (params: RequestPagingDto): Promise<PageResponseDto<Teacher>> => {
   const response = await axiosInstance.get<PageResponseDto<Teacher>>("/private/v1/teachers", { params });
   return response.data;
 };
@@ -37,7 +38,7 @@ export const importTeachers = async (file: File): Promise<void> => {
   });
 };
 
-export const exportTeachers = async (params: any): Promise<Blob> => {
+export const exportTeachers = async (params: RequestPagingDto): Promise<Blob> => {
   const response = await axiosInstance.get<Blob>("/private/v1/teachers/export", {
     params,
     responseType: "blob",
