@@ -47,8 +47,9 @@ export default function LoginPage() {
   const onSubmit = async (values: FormValues) => {
     try {
       const res = await loginMutation.mutateAsync(values)
+      console.log("Check res", res)
       // res: { token, user }
-      login({ token: res.accessToken, user: res.user })
+      login({ token: res.data.accessToken, user: res.data.user })
       navigate(from, { replace: true })
     } catch (err) {
       console.error("Login failed:", err)
