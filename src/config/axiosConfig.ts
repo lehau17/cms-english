@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // Lấy baseURL từ env
-const baseURL = import.meta.env.VITE_API_URL
+const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 // Tạo instance axios
 const axiosInstance = axios.create({
