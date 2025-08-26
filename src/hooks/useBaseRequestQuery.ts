@@ -1,11 +1,12 @@
 import { BaseRequest, ESoftOrder } from "@/interface/base-request.interface"
 import { ApiResponse, Pagination } from "@/interface/base-response.interface"
+import { PageResponseDto } from "@/interface/pagination.inerface"
 import { UseQueryOptions, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
 type HookProps<T> = {
   queryKey: (string | number | object)[]
-  queryFn: (params: BaseRequest) => Promise<ApiResponse<Pagination<T>>>
+  queryFn: (params: BaseRequest) => Promise<PageResponseDto<T>>
   initial?: Partial<BaseRequest>
   options?: Omit<
     UseQueryOptions<ApiResponse<Pagination<T>>, Error>,
@@ -23,7 +24,7 @@ export function useBaseRequestQuery<T>({
     new BaseRequest(initial || {})
   )
 
-  const query = useQuery<ApiResponse<Pagination<T>>, Error>({
+  const query = useQuery<PageResponseDto<T>, Error>({
     queryKey: [...queryKey, request],
     queryFn: () => queryFn(request),
     ...options,

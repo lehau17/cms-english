@@ -41,7 +41,7 @@ axiosInstance.interceptors.response.use(
       console.error("API Error:", error.response);
       if (error.response.status === 401) {
         console.warn("Unauthorized, redirecting to login...");
-        localStorage.removeItem("access-token");
+        localStorage.removeItem("cms_auth");
         window.location.href = "/login";
       }
     } else {

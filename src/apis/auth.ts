@@ -1,9 +1,10 @@
 
+import { ApiResponse } from "@/interface/base-response.interface";
 import axiosInstance from "../config/axiosConfig";
 import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "../interface/auth.interface";
 
-export const login = async (data: LoginRequest): Promise<LoginResponse> => {
-  const response = await axiosInstance.post<LoginResponse>("/public/v1/auth/admin-login", data);
+export const login = async (data: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
+  const response = await axiosInstance.post<ApiResponse<LoginResponse>>("/public/v1/auth/admin-login", data);
   return response.data;
 };
 
