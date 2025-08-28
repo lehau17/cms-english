@@ -6,13 +6,17 @@ export interface ApiResponse<T> {
 
 // Phân trang
 export interface Pagination<T> {
-  page: number
-  limit: number
-  totalItems: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPrevPage: boolean
-  data: T[]
+  statusCode: number
+  message: string
+  data: {
+    data: T[];
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }
 
 }
 
