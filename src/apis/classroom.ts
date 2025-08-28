@@ -1,4 +1,3 @@
-
 import axiosInstance from "../config/axiosConfig";
 import { Classroom } from "../interface/classroom.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
@@ -28,8 +27,8 @@ export const deleteClassroom = async (id: string): Promise<void> => {
   await axiosInstance.delete(`/private/v1/classrooms/${id}`);
 };
 
-export const addStudentToClassroom = async (classroomId: string, studentId: string): Promise<void> => {
-  await axiosInstance.post(`/private/v1/classrooms/${classroomId}/students`, { studentId });
+export const addStudentsToClassroom = async (classroomId: string, studentIds: string[]): Promise<void> => {
+  await axiosInstance.post(`/private/v1/classrooms/${classroomId}/students`, { studentIds });
 };
 
 export const removeStudentFromClassroom = async (classroomId: string, studentId: string): Promise<void> => {
