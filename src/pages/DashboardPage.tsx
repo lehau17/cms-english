@@ -14,6 +14,8 @@ import {
     TrendingDown,
     TrendingUp,
     Warning,
+    Book,
+    LocalActivity
 } from "@mui/icons-material";
 import {
     Alert,
@@ -57,14 +59,9 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
+import { useDashboardQuery } from "@/hooks/useDashboard";
 
 /* ====================== Types ====================== */
-type RevenuePoint = {
-    month: string;
-    revenue: number;
-    students: number;
-};
-
 type CourseSlice = {
     name: string;
     value: number;
@@ -80,13 +77,6 @@ type UpcomingClass = {
     students: number;
 };
 
-type Teacher = {
-    name: string;
-    rating: number; // 0..5
-    students: number;
-    avatar: string; // initial
-};
-
 type NotifType = "success" | "warning" | "error" | "info";
 
 type NotificationItem = {
@@ -97,14 +87,15 @@ type NotificationItem = {
 type StatCardProps = {
     title: string;
     value: string | number;
-    change: number; // % change (can be negative)
-    icon: React.ElementType; // pass icon component, e.g. People
-    color: string; // e.g. 'primary.main'
+    change?: number; 
+    icon: React.ElementType; 
+    color: string; 
 };
 
 /* ====================== Component ====================== */
 const DashboardPage: React.FC = () => {
     const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+    const { data: dashboardData, isLoading, isError, error } = useDashboardQuery();
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -112,16 +103,7 @@ const DashboardPage: React.FC = () => {
 
     const handleMenuClose = () => setAnchorEl(null);
 
-    // Sample data
-    const revenueData: RevenuePoint[] = [
-        { month: "T1", revenue: 45_000_000, students: 120 },
-        { month: "T2", revenue: 52_000_000, students: 135 },
-        { month: "T3", revenue: 48_000_000, students: 128 },
-        { month: "T4", revenue: 61_000_000, students: 145 },
-        { month: "T5", revenue: 58_000_000, students: 142 },
-        { month: "T6", revenue: 65_000_000, students: 158 },
-    ];
-
+    // TODO: Replace with data from API
     const courseDistribution: CourseSlice[] = [
         { name: "IELTS", value: 35, color: "#0088FE" },
         { name: "TOEIC", value: 25, color: "#00C49F" },
@@ -130,6 +112,7 @@ const DashboardPage: React.FC = () => {
         { name: "Khác", value: 5, color: "#8884D8" },
     ];
 
+    // TODO: Replace with data from API
     const upcomingClasses: UpcomingClass[] = [
         { id: 1, name: "IELTS Foundation", teacher: "Nguyễn Văn A", time: "18:00 - 20:00", room: "A201", students: 12 },
         { id: 2, name: "Business English", teacher: "Trần Thị B", time: "19:00 - 21:00", room: "B102", students: 8 },
@@ -137,13 +120,7 @@ const DashboardPage: React.FC = () => {
         { id: 4, name: "TOEIC 700+", teacher: "Phạm Thị D", time: "20:00 - 22:00", room: "A301", students: 10 },
     ];
 
-    const topTeachers: Teacher[] = [
-        { name: "Nguyễn Văn A", rating: 4.9, students: 45, avatar: "A" },
-        { name: "Trần Thị B", rating: 4.8, students: 38, avatar: "B" },
-        { name: "Lê Văn C", rating: 4.7, students: 42, avatar: "C" },
-        { name: "Phạm Thị D", rating: 4.9, students: 35, avatar: "D" },
-    ];
-
+    // TODO: Replace with data from API
     const notifications: NotificationItem[] = [
         { type: "success", message: "5 học viên mới đăng ký hôm nay" },
         { type: "warning", message: "3 học viên sắp hết hạn học phí" },
@@ -162,16 +139,18 @@ const DashboardPage: React.FC = () => {
                         <Typography variant="h4" component="div" sx={{ mb: 1 }}>
                             {value}
                         </Typography>
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                            {change > 0 ? (
-                                <TrendingUp sx={{ color: "success.main", mr: 0.5, fontSize: 20 }} />
-                            ) : (
-                                <TrendingDown sx={{ color: "error.main", mr: 0.5, fontSize: 20 }} />
-                            )}
-                            <Typography variant="body2" sx={{ color: change > 0 ? "success.main" : "error.main" }}>
-                                {Math.abs(change)}% so với tháng trước
-                            </Typography>
-                        </Box>
+                        {change && (
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                {change > 0 ? (
+                                    <TrendingUp sx={{ color: "success.main", mr: 0.5, fontSize: 20 }} />
+                                ) : (
+                                    <TrendingDown sx={{ color: "error.main", mr: 0.5, fontSize: 20 }} />
+                                )}
+                                <Typography variant="body2" sx={{ color: change > 0 ? "success.main" : "error.main" }}>
+                                    {Math.abs(change)}% so với tháng trước
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
                     <Avatar sx={{ bgcolor: color, width: 56, height: 56 }}>
                         <Icon />
@@ -194,6 +173,16 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    if (isLoading) {
+        return <LinearProgress />;
+    }
+
+    if (isError) {
+        return <Alert severity="error">{error.message}</Alert>;
+    }
+
+    const data = dashboardData?.data;
+
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             {/* Header */}
@@ -202,7 +191,7 @@ const DashboardPage: React.FC = () => {
                     Dashboard
                 </Typography>
                 <Typography variant="body1" color="textSecondary">
-                    Tổng quan hoạt động tháng 6/2024
+                    Tổng quan hoạt động
                 </Typography>
             </Box>
 
@@ -224,16 +213,16 @@ const DashboardPage: React.FC = () => {
             {/* Stats Cards */}
             <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard title="Tổng học viên" value="458" change={12} icon={People} color="primary.main" />
+                    <StatCard title="Tổng học viên" value={data?.totalStudents ?? 0} icon={People} color="primary.main" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard title="Lớp đang hoạt động" value="24" change={8} icon={School} color="secondary.main" />
+                    <StatCard title="Tổng khóa học" value={data?.totalCourses ?? 0} icon={School} color="secondary.main" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard title="Doanh thu tháng" value="65M" change={15} icon={AttachMoney} color="success.main" />
+                    <StatCard title="Tổng bài học" value={data?.totalLessons ?? 0} icon={Book} color="success.main" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard title="Lịch học hôm nay" value="12" change={-5} icon={CalendarMonth} color="warning.main" />
+                    <StatCard title="Tổng hoạt động" value={data?.totalActivities ?? 0} icon={LocalActivity} color="warning.main" />
                 </Grid>
             </Grid>
 
@@ -263,7 +252,7 @@ const DashboardPage: React.FC = () => {
                     <Card>
                         <CardContent>
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                                <Typography variant="h6">Doanh thu & Học viên 6 tháng</Typography>
+                                <Typography variant="h6">Học viên đăng ký (7 ngày)</Typography>
                                 <IconButton onClick={handleMenuClick}>
                                     <MoreVert />
                                 </IconButton>
@@ -273,15 +262,13 @@ const DashboardPage: React.FC = () => {
                                 </Menu>
                             </Box>
                             <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={revenueData}>
+                                <LineChart data={data?.registrationTrend}>
                                     <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" />
-                                    <YAxis yAxisId="left" />
-                                    <YAxis yAxisId="right" orientation="right" />
+                                    <XAxis dataKey="date" />
+                                    <YAxis />
                                     <RechartsTooltip />
                                     <Legend />
-                                    <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#8884d8" name="Doanh thu (VNĐ)" strokeWidth={2} />
-                                    <Line yAxisId="right" type="monotone" dataKey="students" stroke="#82ca9d" name="Số học viên" strokeWidth={2} />
+                                    <Line type="monotone" dataKey="count" stroke="#82ca9d" name="Số học viên" strokeWidth={2} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>
@@ -362,28 +349,21 @@ const DashboardPage: React.FC = () => {
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
-                                Giáo viên xuất sắc
+                                Học viên mới
                             </Typography>
                             <List>
-                                {topTeachers.map((teacher, index) => (
-                                    <React.Fragment key={index}>
+                                {data?.recentStudents.map((student, index) => (
+                                    <React.Fragment key={student.id}>
                                         <ListItem>
                                             <ListItemAvatar>
-                                                <Avatar sx={{ bgcolor: "primary.main" }}>{teacher.avatar}</Avatar>
+                                                <Avatar sx={{ bgcolor: "primary.main" }}>{student.firstName.charAt(0)}</Avatar>
                                             </ListItemAvatar>
                                             <ListItemText
-                                                primary={teacher.name}
-                                                secondary={
-                                                    <Box>
-                                                        <Typography variant="body2" color="textSecondary">
-                                                            {teacher.students} học viên • ⭐ {teacher.rating}
-                                                        </Typography>
-                                                        <LinearProgress variant="determinate" value={teacher.rating * 20} sx={{ mt: 1 }} />
-                                                    </Box>
-                                                }
+                                                primary={`${student.firstName} ${student.lastName}`}
+                                                secondary={student.email}
                                             />
                                         </ListItem>
-                                        {index < topTeachers.length - 1 && <Divider />}
+                                        {index < (data?.recentStudents.length ?? 0) - 1 && <Divider />}
                                     </React.Fragment>
                                 ))}
                             </List>
