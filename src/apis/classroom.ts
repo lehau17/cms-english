@@ -46,3 +46,42 @@ export const exportClassrooms = async (params: RequestPagingDto): Promise<Blob> 
     });
     return response.data;
 };
+
+export interface ImportStudentsResult {
+  totalProcessed: number;
+  successfullyImported: number;
+  failedImports: number;
+  errors: Array<{
+    row: number;
+    email: string;
+    error: string;
+  }>;
+  createdStudents: Array<{
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  }>;
+  existingStudents: Array<{
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  }>;
+}
+
+export const importStudentsFromExcel = async (classroomId: string, file: File): Promise<ImportStudentsResult> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await axiosInstance.post<ImportStudentsResult>(
+    `/private/v1/classrooms/${classroomId}/import-students`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data;
+};
