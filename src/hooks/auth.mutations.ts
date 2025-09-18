@@ -1,4 +1,5 @@
 import { login, logout, register } from '@/apis/auth'
+import { ApiResponse } from '@/interface/base-response.interface'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type {
   LoginRequest,
@@ -10,7 +11,7 @@ import type {
 
 export function useLoginMutation() {
   const queryClient = useQueryClient()
-  return useMutation<LoginResponse, Error, LoginRequest>({
+  return useMutation<ApiResponse<LoginResponse>, Error, LoginRequest>({
     mutationFn: login,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['me'] })
