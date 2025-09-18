@@ -1,4 +1,5 @@
 import { createClassroom } from '@/apis/classroom';
+import { useCourses } from '@/hooks/useCourse';
 import { useTeachers } from '@/hooks/useTeacher';
 import { Classroom } from '@/interface/classroom.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,12 +16,18 @@ interface CreateClassroomModalProps {
   onClose: () => void;
 }
 
+
 interface CreateClassroomFormValues {
   name: string;
   description: string;
   maxStudents: number;
   teacherId: string;
   isActive: boolean;
+  courseId: string;
+  periodStart: string;
+  periodEnd: string;
+  plannedHours: number;
+  sessionDurationHours: number;
 }
 
 const schema = yup.object({
@@ -28,12 +35,19 @@ const schema = yup.object({
   description: yup.string().required('Description is required'),
   maxStudents: yup.number().min(1).required('Max students is required'),
   teacherId: yup.string().required('Teacher is required'),
+  courseId: yup.string().required('Course is required'),
   isActive: yup.boolean().default(true),
+  periodStart: yup.string().required('Start date is required'),
+  periodEnd: yup.string().required('End date is required'),
+  plannedHours: yup.number().min(1).required('Planned hours is required'),
+  sessionDurationHours: yup.number().min(0.1).required('Session duration is required'),
 });
+
 
 const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient();
   const { data: teachersData, isLoading: isLoadingTeachers } = useTeachers({ limit: 1000 });
+  const { data: coursesData, isLoading: isLoadingCourses } = useCourses({ limit: 1000 });
 
   const methods = useForm<CreateClassroomFormValues>({
     resolver: yupResolver(schema),
@@ -43,6 +57,11 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
       maxStudents: 30,
       isActive: true,
       teacherId: '',
+      courseId: '',
+      periodStart: '',
+      periodEnd: '',
+      plannedHours: 36,
+      sessionDurationHours: 1.5,
     },
   });
 
@@ -57,7 +76,13 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
   });
 
   const onSubmit = (data: CreateClassroomFormValues) => {
-    createMutation.mutate(data);
+    // Convert periodStart and periodEnd to Date objects for backend
+    const payload = {
+      ...data,
+      periodStart: new Date(data.periodStart),
+      periodEnd: new Date(data.periodEnd),
+    };
+    createMutation.mutate(payload);
   };
 
   return (
@@ -69,15 +94,33 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
       icon={<Plus className="w-6 h-6 text-purple-600" />}
     >
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 max-h-[calc(90vh-200px)] overflow-y-auto space-y-3">
+
           <FormField name="name" label="Classroom Name *" placeholder="Enter classroom name" />
           <FormField name="description" label="Description" placeholder="Enter classroom description" />
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Assigned Teacher *</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">Course *</label>
+            <select
+              {...register('courseId')}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
+              disabled={isLoadingCourses}
+            >
+              <option value="">{isLoadingCourses ? 'Loading courses...' : 'Select a course'}</option>
+              {coursesData?.data?.data?.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.title}
+                </option>
+              ))}
+            </select>
+            {errors.courseId && <p className="text-red-500 text-sm mt-1">{errors.courseId.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">Assigned Teacher *</label>
             <select
               {...register('teacherId')}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
               disabled={isLoadingTeachers}
             >
               <option value="">{isLoadingTeachers ? 'Loading teachers...' : 'Select a teacher'}</option>
@@ -90,11 +133,12 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
             {errors.teacherId && <p className="text-red-500 text-sm mt-1">{errors.teacherId.message}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-              <div className="flex items-center h-12">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">Status</label>
+              <div className="flex items-center h-10">
                 <input
                   type="checkbox"
                   {...register('isActive')}
@@ -105,7 +149,17 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
             </div>
           </div>
 
-          <div className="p-6 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField name="periodStart" label="Start Date *" type="date" />
+            <FormField name="periodEnd" label="End Date *" type="date" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField name="plannedHours" label="Planned Hours *" type="number" placeholder="36" />
+            <FormField name="sessionDurationHours" label="Session Duration (hours) *" type="number" placeholder="1.5" />
+          </div>
+
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
             <div className="flex justify-end space-x-3">
               <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
               <Button type="submit" isLoading={createMutation.isPending}>
@@ -120,4 +174,3 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
 };
 
 export default CreateClassroomModal;
-
