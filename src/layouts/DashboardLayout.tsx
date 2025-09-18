@@ -56,7 +56,7 @@ export function DashboardLayout() {
             <Typography variant="body2" color="text.secondary">
               {user?.displayName ?? "Unknown"}
             </Typography>
-            <IconButton size="small" onClick={logout}>
+            <IconButton size="small" onClick={logout} aria-label="Logout">
               <LogoutOutlinedIcon />
             </IconButton>
           </Box>

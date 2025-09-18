@@ -1,7 +1,7 @@
 // src/App.tsx
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 // import GoogleTranslateDemo from "./components/GoogleTranslateDemo";
 import ApiReportPage from "./pages/ApiReportPage";
 import ClassroomPage from "./pages/ClassroomPage";
@@ -14,6 +14,7 @@ import RoomPage from "./pages/RoomPage";
 import SchedulePage from "./pages/SchedulePage";
 import StudentPage from "./pages/StudentPage";
 import TeacherPage from "./pages/TeacherPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       {
         element: <DashboardLayout />,
         children: [
+          { path: "/", element: <Navigate to="/dashboard" replace /> },
           { path: "/dashboard", element: <DashboardPage /> },
           { path: "/students", element: <StudentPage /> },
           { path: "/teachers", element: <TeacherPage /> },
@@ -33,6 +35,8 @@ const router = createBrowserRouter([
           { path: "/courses", element: <CoursePage /> },
           { path: "/create-course", element: <CreateCoursePage /> },
           { path: "/api-report", element: <ApiReportPage /> },
+          { path: "/settings", element: <SettingsPage /> },
+          { path: "*", element: <Navigate to="/dashboard" replace /> },
           // { path: "/google-translate-demo", element: <GoogleTranslateDemo /> },
         ],
       },

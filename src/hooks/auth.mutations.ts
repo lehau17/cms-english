@@ -1,41 +1,47 @@
-import { login, logout, register } from '@/apis/auth'
-import { ApiResponse } from '@/interface/base-response.interface'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { login, logout, register, parentLogin } from "@/apis/auth";
+import { ApiResponse } from "@/interface/base-response.interface";
 import type {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
-} from '../interface/auth.interface'
-
-
+} from "../interface/auth.interface";
 export function useLoginMutation() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation<ApiResponse<LoginResponse>, Error, LoginRequest>({
     mutationFn: login,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['me'] })
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
-  })
+  });
 }
 
-
 export function useRegisterMutation() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation<RegisterResponse, Error, RegisterRequest>({
     mutationFn: register,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['me'] })
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
-  })
+  });
 }
 
 export function useLogoutMutation() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation<void, Error, void>({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.clear()
+      queryClient.clear();
     },
-  })
+  });
+}
+
+export function useParentLoginMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<ApiResponse<LoginResponse>, Error, LoginRequest>({
+    mutationFn: parentLogin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
 }

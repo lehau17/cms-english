@@ -44,6 +44,8 @@ export function Sidebar() {
     setCollapsed((v) => {
       const next = !v;
       localStorage.setItem("cms_sidebar", next ? "collapsed" : "expanded");
+      // Notify layout to recalc widths
+      try { window.dispatchEvent(new Event("cms:sidebar-toggle")); } catch {}
       return next;
     });
   };
@@ -90,7 +92,12 @@ export function Sidebar() {
           </Stack>
         )}
         <Tooltip title={collapsed ? "Expand" : "Collapse"}>
-          <IconButton size="small" onClick={toggle} sx={{ color: "text.secondary" }}>
+          <IconButton
+            size="small"
+            onClick={toggle}
+            sx={{ color: "text.secondary" }}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
             {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
           </IconButton>
         </Tooltip>

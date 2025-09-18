@@ -1,4 +1,4 @@
-import { useLoginMutation } from "@/hooks/auth.mutations"; // Tanstack Query hook
+import { useParentLoginMutation } from "@/hooks/auth.mutations"; // Tanstack Query hook
 import { useAuth } from "@/hooks/useAuth";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LoginIcon from "@mui/icons-material/Login";
@@ -31,7 +31,7 @@ export default function ParentLoginPage() {
   const location = useLocation() as any
   const from = location.state?.from?.pathname || "/dashboard"
 
-  const loginMutation = useLoginMutation()
+  const loginMutation = useParentLoginMutation()
 
   const {
     register,

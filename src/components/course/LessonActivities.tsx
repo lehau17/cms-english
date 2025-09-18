@@ -652,8 +652,42 @@ function ActivityContentFields({
     case ActivityType.FILL_BLANK:
       return section(
         <>
-          <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={3} placeholder="Passage with blanks (use underscores or just provide answers below)" />
-          <StringArrayField name={`${basePath}.content.blanks`} control={control} label="Blanks / Answers" placeholder="answer" register={register} />
+          <textarea
+            {...register(`${basePath}.content.passage` as const)}
+            className="w-full px-3 py-2 text-sm border rounded-lg"
+            rows={3}
+            placeholder="Passage with blanks. Use [____] to mark blanks (e.g., The [____] is [____])."
+          />
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+            <span>
+              {(() => {
+                const p = watch(`${basePath}.content.passage` as const) as string;
+                const count = (p?.match(/\[_{2,}\]/g) || []).length;
+                const blanks = (watch(`${basePath}.content.blanks` as const) as string[]) || [];
+                return `Detected ${count} blanks • Answers: ${blanks.length}`;
+              })()}
+            </span>
+            <button
+              type="button"
+              className="px-2 py-1 border rounded"
+              onClick={() => {
+                const passage = (watch(`${basePath}.content.passage` as const) as string) || "";
+                const count = (passage.match(/\[_{2,}\]/g) || []).length;
+                const current: string[] = (watch(`${basePath}.content.blanks` as const) as string[]) || [];
+                const next = Array.from({ length: count }, (_, i) => current[i] || "");
+                setValue(`${basePath}.content.blanks` as any, next, { shouldDirty: true });
+              }}
+            >
+              Sync answers
+            </button>
+          </div>
+          <StringArrayField
+            name={`${basePath}.content.blanks`}
+            control={control}
+            label="Blanks / Answers (in order)"
+            placeholder="answer"
+            register={register}
+          />
         </>,
         "Fill in the Blanks"
       );
@@ -683,9 +717,60 @@ function ActivityContentFields({
     case ActivityType.MATCHING:
       return section(
         <>
-          <StringArrayField name={`${basePath}.content.leftItems`} control={control} label="Left items" placeholder="Left item" register={register} />
-          <StringArrayField name={`${basePath}.content.rightItems`} control={control} label="Right items" placeholder="Right item" register={register} />
-          <p className="text-xs text-gray-500">Items will be paired by index (left[0] ↔ right[0]).</p>
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+            <span>Pairs are matched by index.</span>
+            <button
+              type="button"
+              className="px-2 py-1 border rounded"
+              onClick={() => {
+                const left: string[] = (watch(`${basePath}.content.leftItems` as const) as string[]) || [];
+                const right: string[] = (watch(`${basePath}.content.rightItems` as const) as string[]) || [];
+                setValue(`${basePath}.content.leftItems` as any, [...left, ""], { shouldDirty: true });
+                setValue(`${basePath}.content.rightItems` as any, [...right, ""], { shouldDirty: true });
+              }}
+            >
+              Add Pair
+            </button>
+          </div>
+          {(() => {
+            const left: string[] = (watch(`${basePath}.content.leftItems` as const) as string[]) || [];
+            const right: string[] = (watch(`${basePath}.content.rightItems` as const) as string[]) || [];
+            const len = Math.max(left.length, right.length);
+            return (
+              <div className="space-y-2">
+                {Array.from({ length: len }).map((_, i) => (
+                  <div key={i} className="grid md:grid-cols-3 gap-2 items-center">
+                    <input
+                      {...register(`${basePath}.content.leftItems.${i}` as const)}
+                      className="px-3 py-2 text-sm border rounded-lg"
+                      placeholder={`Left #${i + 1}`}
+                    />
+                    <input
+                      {...register(`${basePath}.content.rightItems.${i}` as const)}
+                      className="px-3 py-2 text-sm border rounded-lg"
+                      placeholder={`Right #${i + 1}`}
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        className="text-red-600 border px-2 py-1 rounded"
+                        onClick={() => {
+                          const l: string[] = (watch(`${basePath}.content.leftItems` as const) as string[]) || [];
+                          const r: string[] = (watch(`${basePath}.content.rightItems` as const) as string[]) || [];
+                          const l2 = l.filter((_, idx) => idx !== i);
+                          const r2 = r.filter((_, idx) => idx !== i);
+                          setValue(`${basePath}.content.leftItems` as any, l2, { shouldDirty: true });
+                          setValue(`${basePath}.content.rightItems` as any, r2, { shouldDirty: true });
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </>,
         "Matching"
       );

@@ -199,7 +199,65 @@ const CreateCoursePage = () => {
   ];
 
   const onSubmit = (data: CreateCourseDto) => {
-    mutate(data);
+    // Sanitize activities content before submit
+    const payload: CreateCourseDto = {
+      ...data,
+      lessons: (data.lessons || []).map((lesson) => ({
+        ...lesson,
+        activities: (lesson.activities || []).map((act) => {
+          const next = { ...act } as any
+          const c = (next as any).activities ? (next as any).activities : next.content
+          const content = next.content ?? {}
+
+          // Fill Blank: support [____] placeholders and [answer] extraction
+          if (next.type === ActivityType.FILL_BLANK) {
+            const passage: string = content.passage || ''
+            // Case 1: [answer] → extract answers and clean passage
+            if (/\[[^_\]]+\]/.test(passage)) {
+              const answers: string[] = []
+              const clean = passage.replace(/\[([^_\]]+)\]/g, (_m: string, g1: string) => {
+                answers.push(g1)
+                return g1
+              })
+              next.content = {
+                ...content,
+                passage: clean,
+                blanks: answers,
+              }
+            } else {
+              // Case 2: [____] placeholders → ensure blanks length
+              const count = (passage.match(/\[_{2,}\]/g) || []).length
+              const blanks: string[] = Array.isArray(content.blanks) ? [...content.blanks] : []
+              if (count > 0 && blanks.length !== count) {
+                const resized = Array.from({ length: count }, (_: unknown, i: number) => blanks[i] || '')
+                next.content = { ...content, blanks: resized }
+              }
+            }
+          }
+
+          // Matching: map leftItems/rightItems → pairs if present
+          if (next.type === ActivityType.MATCHING) {
+            const left: string[] | undefined = (content as any).leftItems
+            const right: string[] | undefined = (content as any).rightItems
+            if (Array.isArray(left) && Array.isArray(right)) {
+              const len = Math.min(left.length, right.length)
+              const pairs = Array.from({ length: len }, (_: unknown, i: number) => ({ left: left[i], right: right[i] }))
+              const { leftItems, rightItems, ...rest } = content as any
+              next.content = { ...rest, pairs }
+            }
+          }
+
+          // Dictation: default minWords
+          if (next.type === ActivityType.DICTATION) {
+            next.content = { ...content, minWords: typeof content.minWords === 'number' ? content.minWords : 0 }
+          }
+
+          return next
+        }),
+      })),
+    }
+
+    mutate(payload)
   };
 
   const renderStepIndicator = () => (

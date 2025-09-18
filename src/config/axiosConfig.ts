@@ -1,5 +1,6 @@
 // utils/axiosConfig.js
 import axios from "axios";
+import toast from "react-hot-toast";
 
 // Lấy baseURL từ env
 const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
@@ -38,15 +39,23 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
+      const status = error.response.status;
+      const message =
+        error.response.data?.message || error.response.statusText || "Request failed";
       console.error("API Error:", error.response);
-      if (error.response.status === 401) {
-        console.warn("Unauthorized, redirecting to login...");
+      if (status === 401) {
+        toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
         localStorage.removeItem("cms_auth");
         window.location.href = "/login";
+      } else if (status >= 500) {
+        toast.error("Lỗi máy chủ. Vui lòng thử lại sau.");
+      } else {
+        toast.error(message);
       }
     } else {
       // Lỗi mạng hoặc timeout
       console.error("Network Error:", error.message);
+      toast.error("Không thể kết nối máy chủ. Kiểm tra mạng của bạn.");
     }
     return Promise.reject(error);
   }
