@@ -8,9 +8,10 @@ interface FormFieldProps {
   label: string;
   type?: string;
   placeholder?: string;
+  size?: 'sm' | 'md';
 }
 
-const FormField: React.FC<FormFieldProps> = ({ name, label, type = 'text', placeholder }) => {
+const FormField: React.FC<FormFieldProps> = ({ name, label, type = 'text', placeholder, size = 'sm' }) => {
   const { control } = useFormContext();
 
   return (
@@ -24,6 +25,7 @@ const FormField: React.FC<FormFieldProps> = ({ name, label, type = 'text', place
           type={type}
           placeholder={placeholder}
           error={error?.message}
+          size={size}
         />
       )}
     />

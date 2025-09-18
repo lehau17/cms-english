@@ -5,15 +5,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'danger';
   isLoading?: boolean;
+  size?: 'sm' | 'md';
 }
 
-const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', isLoading = false, ...props }) => {
-  const baseClasses = 'px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none';
+const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', isLoading = false, size = 'sm', ...props }) => {
+  const sizeClasses = size === 'sm' ? 'px-4 py-2 text-sm rounded-lg' : 'px-5 py-2.5 text-base rounded-xl';
+  const baseClasses = `${sizeClasses} font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed`;
 
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-    danger: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white',
+    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+    secondary: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+    danger: 'bg-red-600 hover:bg-red-700 text-white',
   };
 
   return (
@@ -23,13 +25,11 @@ const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', isLoadin
       disabled={isLoading || props.disabled}
     >
       {isLoading ? (
-        <div className="flex items-center justify-center space-x-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          <span>Loading...</span>
+        <div className="flex items-center justify-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+          <span className="text-inherit">Loading…</span>
         </div>
-      ) : (
-        children
-      )}
+      ) : children}
     </button>
   );
 };

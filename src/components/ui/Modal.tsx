@@ -15,25 +15,31 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, descrip
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center p-4 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-white rounded-xl shadow-sm">{icon}</div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">{title}</h3>
-                <p className="text-sm text-gray-600">{description}</p>
-              </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        aria-describedby="modal-desc"
+        className="relative w-full max-w-xl max-h-[90vh] overflow-hidden rounded-xl bg-white shadow-xl"
+      >
+        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            {icon && <div className="p-2 bg-white rounded-lg shadow-sm">{icon}</div>}
+            <div>
+              <h3 id="modal-title" className="text-lg font-semibold text-gray-800">{title}</h3>
+              <p id="modal-desc" className="text-xs text-gray-600">{description}</p>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-xl text-gray-500 hover:bg-white hover:text-gray-800 transition-all duration-200 shadow-sm"
-            >
-              <X className="w-6 h-6" />
-            </button>
           </div>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-gray-500 hover:bg-white hover:text-gray-800 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
         {children}
       </div>
