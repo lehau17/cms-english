@@ -1,4 +1,5 @@
 
+import { ApiResponse } from "@/interface/base-response.interface";
 import axiosInstance from "../config/axiosConfig";
 import { Course } from "../interface/course.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
@@ -9,21 +10,54 @@ export const getCourses = async (params: RequestPagingDto): Promise<PageResponse
   return response.data;
 };
 
-export const getCourseById = async (id: string): Promise<Course> => {
-  const response = await axiosInstance.get<Course>(`/private/v1/courses/${id}`);
+export const getCourseById = async (id: string): Promise<ApiResponse<Course>> => {
+  const response = await axiosInstance.get<ApiResponse<Course>>(`/private/v1/courses/${id}`);
   return response.data;
 };
 
-export const createCourse = async (data: any): Promise<Course> => {
-  const response = await axiosInstance.post<Course>("/private/v1/courses", data);
+export const createCourse = async (data: any): Promise<ApiResponse<Course>> => {
+  const response = await axiosInstance.post<ApiResponse<Course>>("/private/v1/courses", data);
   return response.data;
 };
 
-export const updateCourse = async (id: string, data: any): Promise<Course> => {
-  const response = await axiosInstance.put<Course>(`/private/v1/courses/${id}`, data);
+export const updateCourse = async (id: string, data: any): Promise<ApiResponse<Course>> => {
+  const response = await axiosInstance.put<ApiResponse<Course>>(`/private/v1/courses/${id}`, data);
   return response.data;
 };
 
 export const deleteCourse = async (id: string): Promise<void> => {
   await axiosInstance.delete(`/private/v1/courses/${id}`);
+};
+
+export interface ImportCoursesResponse {
+  totalFiles: number;
+  successfulImports: number;
+  failedImports: number;
+  results: Array<{
+    fileName: string;
+    success: boolean;
+    data?: {
+      dryRun: boolean;
+      upsert: boolean;
+      publish: boolean;
+      matchBy: string;
+      totalCourses: number;
+      results: any[];
+    };
+    error?: string;
+  }>;
+}
+
+export const importCoursesFromExcel = async (files: File[]) => {
+  const formData = new FormData();
+  files.forEach((file, index) => {
+    formData.append('files', file);
+  });
+
+  const response = await axiosInstance.post<ApiResponse<ImportCoursesResponse>>("/private/v1/courses/import-multiple-excels", formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data.data
 };

@@ -1,4 +1,4 @@
-import { EGender, ERole, EStatus } from "./enum.interface";
+import { ERole, EStatus, Gender } from "./enum.interface";
 
 export interface Teacher {
   id: string;
@@ -7,7 +7,7 @@ export interface Teacher {
   phone: string;
   status: EStatus;
   role: ERole;
-  gender: EGender;
+  gender: Gender;
   avatar: string;
   createdAt: string;
   updatedAt: string;

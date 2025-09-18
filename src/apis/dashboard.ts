@@ -1,8 +1,8 @@
-
+import { ApiResponse } from "@/interface/base-response.interface";
+import { Dashboard } from "@/interface/dashboard.interface";
 import axiosInstance from "../config/axiosConfig";
-import { DashboardData } from "../interface/dashboard.interface";
 
-export const getDashboardData = async (): Promise<DashboardData> => {
-  const response = await axiosInstance.get<DashboardData>("/private/v1/dashboard");
+export const getDashboardData = async (): Promise<ApiResponse<Dashboard>> => {
+  const response = await axiosInstance.get<ApiResponse<Dashboard>>("/private/v1/dashboard");
   return response.data;
 };

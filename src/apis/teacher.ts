@@ -1,26 +1,27 @@
 
+import { ApiResponse } from "@/interface/base-response.interface";
+import { UserResponse } from "@/interface/user.interface";
 import axiosInstance from "../config/axiosConfig";
-import { Teacher } from "../interface/teacher.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
 import { RequestPagingDto } from "../interface/request-paging.interface";
 
-export const getTeachers = async (params: RequestPagingDto): Promise<PageResponseDto<Teacher>> => {
-  const response = await axiosInstance.get<PageResponseDto<Teacher>>("/private/v1/teachers", { params });
+export const getTeachers = async (params: RequestPagingDto): Promise<PageResponseDto<UserResponse>> => {
+  const response = await axiosInstance.get<PageResponseDto<UserResponse>>("/private/v1/teachers", { params });
   return response.data;
 };
 
-export const getTeacherById = async (id: string): Promise<Teacher> => {
-  const response = await axiosInstance.get<Teacher>(`/private/v1/teachers/${id}`);
+export const getTeacherById = async (id: string): Promise<ApiResponse<UserResponse>> => {
+  const response = await axiosInstance.get<ApiResponse<UserResponse>>(`/private/v1/teachers/${id}`);
   return response.data;
 };
 
-export const createTeacher = async (data: any): Promise<Teacher> => {
-  const response = await axiosInstance.post<Teacher>("/private/v1/teachers", data);
+export const createTeacher = async (data: any): Promise<ApiResponse<UserResponse>> => {
+  const response = await axiosInstance.post<ApiResponse<UserResponse>>("/private/v1/teachers", data);
   return response.data;
 };
 
-export const updateTeacher = async (id: string, data: any): Promise<Teacher> => {
-  const response = await axiosInstance.put<Teacher>(`/private/v1/teachers/${id}`, data);
+export const updateTeacher = async (id: string, data: any): Promise<ApiResponse<UserResponse>> => {
+  const response = await axiosInstance.put<ApiResponse<UserResponse>>(`/private/v1/teachers/${id}`, data);
   return response.data;
 };
 

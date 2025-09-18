@@ -1,10 +1,25 @@
+import { Activity, CreateActivityDto } from "./activity.interface";
+import { DifficultyLevel } from "./enums";
 
 export interface Lesson {
-  id: string;
-  courseId: string;
-  title: string;
-  description: string;
-  displayOrder: number;
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    title: string;
+    description?: string;
+    orderNo: number;
+    difficulty?: DifficultyLevel;
+    estimatedTime?: number;
+    isLocked?: boolean;
+    objectives?: string[];
+    activities: Activity[];
+}
+
+export interface CreateLessonDto {
+    title: string;
+    description?: string;
+    orderNo: number;
+    difficulty?: DifficultyLevel;
+    estimatedTime?: number;
+    isLocked?: boolean;
+    objectives?: string[];
+    activities: CreateActivityDto[];
 }

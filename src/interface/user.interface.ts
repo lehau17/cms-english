@@ -1,34 +1,57 @@
-export type UserResponse = {
-    id: string,
-    email: string;
-    phone: string;
-    passwordHash: string;
-    role: string;
-    status: string;
-    provider: string;
-    providerId: null;
-    firstName: string;
-    lastName: string;
-    displayName: null;
-    gender: null;
-    dob: null;
-    nationality: null;
-    nativeLanguage: null;
-    avatarUrl: null;
-    bio: null;
-    language: string;
-    timezone: string;
-    lastLoginAt: null;
-    lastActiveAt: null;
-    emailVerified: boolean;
-    phoneVerified: boolean;
-    twoFactorEnabled: boolean;
-    preferences: null;
-    privacySettings: null;
-    notificationSettings: null;
-    parentalConsent: null;
-    profileCompleteness: number;
-    isOnline: boolean;
-    createdAt: string;
-    updatedAt: string;
+import { Gender, LanguageCode, Status, TimezoneCode, UserRole } from "./enum.interface";
+
+export interface User {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  role: UserRole;
+  status: Status;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+  gender: Gender | null;
+  dob: Date | null;
+  nationality: string | null;
+  nativeLanguage: LanguageCode | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  language: LanguageCode | null;
+  timezone: TimezoneCode | null;
+  lastLoginAt: Date | null;
+  lastActiveAt: Date | null;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  twoFactorEnabled: boolean;
+  profileCompleteness: number;
+  isOnline: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserResponse {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  role: UserRole;
+  status: Status;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+  gender: Gender | null;
+  dob: Date | null;
+  nationality: string | null;
+  nativeLanguage: LanguageCode | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  language: LanguageCode | null;
+  timezone: TimezoneCode | null;
+  lastLoginAt: Date | null;
+  lastActiveAt: Date | null;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  twoFactorEnabled: boolean;
+  profileCompleteness: number;
+  isOnline: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

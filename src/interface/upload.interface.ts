@@ -1,4 +1,8 @@
 
 export interface UploadResponse {
-  url: string;
+  statusCode: number;
+  message: string;
+  data: {
+    url: string;
+  };
 }

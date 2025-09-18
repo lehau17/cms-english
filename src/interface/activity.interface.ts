@@ -1,10 +1,32 @@
+import { ActivityType, DifficultyLevel } from "./enums";
 
 export interface Activity {
-  id: string;
-  lessonId: string;
-  type: string;
-  content: any;
-  displayOrder: number;
-  createdAt: string;
-  updatedAt: string;
+    id: string;
+    type: ActivityType;
+    orderNo: number;
+    title: string;
+    content: any;
+    timeLimit?: number;
+    maxAttempts?: number;
+    passingScore?: number;
+    difficulty?: DifficultyLevel;
+    points?: number;
+    instructions?: string;
+    hints?: any;
+    mediaUrls?: any;
+}
+
+export interface CreateActivityDto {
+    type: ActivityType;
+    orderNo: number;
+    title: string;
+    content: any;
+    timeLimit?: number;
+    maxAttempts?: number;
+    passingScore?: number;
+    difficulty?: DifficultyLevel;
+    points?: number;
+    instructions?: string;
+    hints?: any;
+    mediaUrls?: any;
 }
