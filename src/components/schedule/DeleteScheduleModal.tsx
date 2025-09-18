@@ -25,7 +25,7 @@ const DeleteScheduleModal: React.FC<DeleteScheduleModalProps> = ({ isOpen, onClo
       description={`Are you sure you want to delete "${event?.title}"? This action cannot be undone.`}
       icon={<Trash2 className="w-6 h-6 text-red-600" />}
     >
-      <div className="p-6 flex justify-end space-x-3">
+      <div className="px-4 py-3 flex justify-end space-x-2">
         <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
         <Button type="button" variant="danger" onClick={handleDelete}>
           <span>Delete</span>
