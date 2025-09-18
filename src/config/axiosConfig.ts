@@ -34,7 +34,7 @@ axiosInstance.interceptors.request.use(
 // Interceptor cho response
 axiosInstance.interceptors.response.use(
   (response) => {
-    return response; // Trả luôn response.data
+    return response
   },
   (error) => {
     if (error.response) {

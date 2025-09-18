@@ -1,5 +1,6 @@
 import { UserResponse } from "@/interface/user.interface";
 import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { useGetMe } from "@/hooks/auth.queries";
 
 
 
@@ -30,6 +31,14 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       return { isAuthenticated: false, token: null, user: null };
     }
   });
+
+  const { data: user, isSuccess } = useGetMe({ enabled: state.isAuthenticated });
+
+  useEffect(() => {
+    if (isSuccess && user) {
+      setUser(user.data);
+    }
+  }, [isSuccess, user]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));

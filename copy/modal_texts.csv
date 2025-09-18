@@ -1,0 +1,152 @@
+file,line,context,text
+src/components/classroom/AddStudentToClass96,          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/classroom/AddStudentToClassModal.tsx:50:      title="Add Students to Classroom"
+src/components/classroom/CreateClassroom164,              <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/classroom/CreateClassroomModal.tsx:100:          <FormField name="description" label="Description" placeholder="Enter classroom description" />
+src/components/classroom/CreateClassroomModal.tsx:138:            <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
+src/components/classroom/CreateClassroomModal.tsx:153:            <FormField name="periodStart" label="Start Date *" type="date" />
+src/components/classroom/CreateClassroomModal.tsx:154:            <FormField name="periodEnd" label="End Date *" type="date" />
+src/components/classroom/CreateClassroomModal.tsx:158:            <FormField name="plannedHours" label="Planned Hours *" type="number" placeholder="36" />
+src/components/classroom/CreateClassroomModal.tsx:159:            <FormField name="sessionDurationHours" label="Session Duration (hours) *" type="number" placeholder="1.5" />
+src/components/classroom/CreateClassroomModal.tsx:92:      title="Create New Classroom"
+src/components/classroom/CreateClassroomModal.tsx:93:      description="Add a new classroom to the system"
+src/components/classroom/CreateClassroomModal.tsx:99:          <FormField name="name" label="Classroom Name *" placeholder="Enter classroom name" />
+src/components/classroom/DeleteClassroom65,            <Button variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/classroom/DeleteClassroomModal.tsx:40:          <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Classroom</h3>
+src/components/classroom/DeleteClassroomModal.tsx:52:                <h4 className="text-sm font-semibold text-red-800 mb-1">Warning</h4>
+src/components/classroom/EditClassroom142,                  <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/classroom/EditClassroomModal.tsx:118:              <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
+src/components/classroom/EditClassroomModal.tsx:90:        title="Edit Classroom"
+src/components/classroom/EditClassroomModal.tsx:91:        description="Update classroom information"
+src/components/classroom/EditClassroomModal.tsx:96:            <FormField name="name" label="Classroom Name *" placeholder="Enter classroom name" />
+src/components/classroom/EditClassroomModal.tsx:97:            <FormField name="classCode" label="Class Code" placeholder="Auto-generated if empty" />
+src/components/classroom/EditClassroomModal.tsx:98:            <FormField name="description" label="Description" placeholder="Enter classroom description" />
+src/components/classroom/ImportStudentsModal.tsx:146:            <h4 className="text-sm font-medium text-gray-900 mb-3">Import Results</h4>
+src/components/classroom/ImportStudentsModal.tsx:88:      title="Import Students from Excel"
+src/components/classroom/ImportStudentsModal.tsx:98:              <h4 className="text-sm font-medium text-blue-900">Excel Template</h4>
+src/components/classroom/ViewClassroomModal.tsx:35:                <h3 className="text-2xl font-bold text-gray-800">Classroom Details</h3>
+src/components/classroom/ViewClassroomModal.tsx:36:                <p className="text-sm text-gray-600">View classroom information</p>
+src/components/classroom/ViewClassroomModal.tsx:82:                <p className="text-sm text-gray-500">Students enrolled</p>
+src/components/course/CreateCourseModal.tsx:136:      title="Create New Course"
+src/components/course/CreateCourseModal.tsx:137:      description="Create a comprehensive course with lessons"
+src/components/course/CreateCourseModal.tsx:177:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">📚 Basic Information</h3>
+src/components/course/CreateCourseModal.tsx:179:                    <FormField name="title" label="Course Title *" placeholder="Enter course title" />
+src/components/course/CreateCourseModal.tsx:180:                    <FormField name="description" label="Description *" placeholder="Enter course description" type="textarea" rows={3} />
+src/components/course/CreateCourseModal.tsx:185:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍🏫 Instructor & Settings</h3>
+src/components/course/CreateCourseModal.tsx:205:                      <FormField name="price" label="Price ($)" type="number" placeholder="0" />
+src/components/course/CreateCourseModal.tsx:206:                      <FormField name="difficulty" label="Course Difficulty" placeholder="beginner" />
+src/components/course/CreateCourseModal.tsx:210:                      <FormField name="language" label="Language" placeholder="en" />
+src/components/course/CreateCourseModal.tsx:233:                    <h3 className="text-lg font-semibold text-gray-800">📖 Course Lessons</h3>
+src/components/course/CreateCourseModal.tsx:234:                    <p className="text-sm text-gray-500">Add and organize lessons for your course</p>
+src/components/course/CreateCourseModal.tsx:249:                    <h4 className="text-lg font-semibold text-gray-600 mb-2">No lessons yet</h4>
+src/components/course/CreateCourseModal.tsx:250:                    <p className="text-gray-500 mb-4">Start building your course by adding the first lesson</p>
+src/components/course/DeleteCourse38,        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/course/DeleteCourseModal.tsx:33:      title="Delete Course"
+src/components/course/EditCourseModal.tsx:170:      title="Edit Course"
+src/components/course/EditCourseModal.tsx:171:      description="Update course details and manage lessons"
+src/components/course/EditCourseModal.tsx:212:                  <h3 className="text-lg font-semibold text-gray-800 mb-3">📊 Course Overview</h3>
+src/components/course/EditCourseModal.tsx:234:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">📚 Basic Information</h3>
+src/components/course/EditCourseModal.tsx:236:                    <FormField name="title" label="Course Title *" placeholder="Enter course title" />
+src/components/course/EditCourseModal.tsx:237:                    <FormField name="description" label="Description *" placeholder="Enter course description" type="textarea" rows={3} />
+src/components/course/EditCourseModal.tsx:242:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍🏫 Instructor & Settings</h3>
+src/components/course/EditCourseModal.tsx:262:                      <FormField name="price" label="Price ($)" type="number" placeholder="0" />
+src/components/course/EditCourseModal.tsx:263:                      <FormField name="difficulty" label="Course Difficulty" placeholder="beginner" />
+src/components/course/EditCourseModal.tsx:267:                      <FormField name="language" label="Language" placeholder="en" />
+src/components/course/EditCourseModal.tsx:285:                  <h3 className="text-lg font-semibold text-gray-800 mb-3">📅 Course History</h3>
+src/components/course/EditCourseModal.tsx:309:                    <h3 className="text-lg font-semibold text-gray-800">📖 Course Lessons</h3>
+src/components/course/EditCourseModal.tsx:327:                    <h4 className="font-semibold text-gray-800 mb-2">📊 Lessons Summary</h4>
+src/components/course/EditCourseModal.tsx:360:                    <h4 className="text-lg font-semibold text-gray-600 mb-2">No lessons yet</h4>
+src/components/course/EditCourseModal.tsx:361:                    <p className="text-gray-500 mb-4">Add lessons to make your course more comprehensive</p>
+src/components/course/ViewCourseModal.tsx:110:            <h3 className="text-xl font-semibold text-gray-900 mb-3">Description</h3>
+src/components/course/ViewCourseModal.tsx:119:                  <p className="text-sm font-medium text-blue-600">Lessons</p>
+src/components/course/ViewCourseModal.tsx:129:                  <p className="text-sm font-medium text-green-600">Duration</p>
+src/components/course/ViewCourseModal.tsx:139:                  <p className="text-sm font-medium text-purple-600">Price</p>
+src/components/course/ViewCourseModal.tsx:140:                  <p className="text-2xl font-bold text-purple-900">${course.price || 0}</p>
+src/components/course/ViewCourseModal.tsx:149:                  <p className="text-sm font-medium text-orange-600">Status</p>
+src/components/course/ViewCourseModal.tsx:166:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Instructor</h3>
+src/components/course/ViewCourseModal.tsx:178:                  <p className="text-sm text-gray-500">Course Instructor</p>
+src/components/course/ViewCourseModal.tsx:187:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Course Information</h3>
+src/components/course/ViewCourseModal.tsx:219:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Tags</h3>
+src/components/course/ViewCourseModal.tsx:240:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Lessons ({course.lessons.length})</h3>
+src/components/schedule/CreateSchedule108,              <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/schedule/CreateScheduleModal.tsx:100:            <FormField name="endDate" label="End Date *" type="date" />
+src/components/schedule/CreateScheduleModal.tsx:101:            <FormField name="endTime" label="End Time *" type="time" />
+src/components/schedule/CreateScheduleModal.tsx:103:          <FormField name="description" label="Description" placeholder="Enter event description" />
+src/components/schedule/CreateScheduleModal.tsx:104:          <FormField name="location" label="Location / Link" placeholder="e.g., Google Meet Link" />
+src/components/schedule/CreateScheduleModal.tsx:73:      title="Create New Schedule"
+src/components/schedule/CreateScheduleModal.tsx:74:      description="Add a new event to the calendar"
+src/components/schedule/CreateScheduleModal.tsx:79:          <FormField name="title" label="Event Title *" placeholder="e.g., Advanced Grammar - Live Session" />
+src/components/schedule/CreateScheduleModal.tsx:81:            <FormField name="courseName" label="Course Name *" placeholder="English 101" />
+src/components/schedule/CreateScheduleModal.tsx:82:            <FormField name="teacherName" label="Teacher Name *" placeholder="John Doe" />
+src/components/schedule/CreateScheduleModal.tsx:90:              <option value="live_session">Live Session</option>
+src/components/schedule/CreateScheduleModal.tsx:91:              <option value="exam">Exam</option>
+src/components/schedule/CreateScheduleModal.tsx:92:              <option value="assignment_due">Assignment Due</option>
+src/components/schedule/CreateScheduleModal.tsx:96:            <FormField name="startDate" label="Start Date *" type="date" />
+src/components/schedule/CreateScheduleModal.tsx:97:            <FormField name="startTime" label="Start Time *" type="time" />
+src/components/schedule/DeleteSchedule29,        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/schedule/DeleteScheduleModal.tsx:24:      title="Delete Schedule"
+src/components/schedule/EditSchedule131,              <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/schedule/EditScheduleModal.tsx:102:          <FormField name="title" label="Event Title *" placeholder="e.g., Advanced Grammar - Live Session" />
+src/components/schedule/EditScheduleModal.tsx:104:            <FormField name="courseName" label="Course Name *" placeholder="English 101" />
+src/components/schedule/EditScheduleModal.tsx:105:            <FormField name="teacherName" label="Teacher Name *" placeholder="John Doe" />
+src/components/schedule/EditScheduleModal.tsx:113:              <option value="live_session">Live Session</option>
+src/components/schedule/EditScheduleModal.tsx:114:              <option value="exam">Exam</option>
+src/components/schedule/EditScheduleModal.tsx:115:              <option value="assignment_due">Assignment Due</option>
+src/components/schedule/EditScheduleModal.tsx:119:            <FormField name="startDate" label="Start Date *" type="date" />
+src/components/schedule/EditScheduleModal.tsx:120:            <FormField name="startTime" label="Start Time *" type="time" />
+src/components/schedule/EditScheduleModal.tsx:123:            <FormField name="endDate" label="End Date *" type="date" />
+src/components/schedule/EditScheduleModal.tsx:124:            <FormField name="endTime" label="End Time *" type="time" />
+src/components/schedule/EditScheduleModal.tsx:126:          <FormField name="description" label="Description" placeholder="Enter event description" />
+src/components/schedule/EditScheduleModal.tsx:127:          <FormField name="location" label="Location / Link" placeholder="e.g., Google Meet Link" />
+src/components/schedule/EditScheduleModal.tsx:96:      title="Edit Schedule"
+src/components/schedule/EditScheduleModal.tsx:97:      description="Update event details"
+src/components/student/CreateStudent102,              <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/student/CreateStudentModal.tsx:75:      title="Create New Student"
+src/components/student/CreateStudentModal.tsx:76:      description="Add a new student to the system"
+src/components/student/CreateStudentModal.tsx:81:          <FormField name="displayName" label="Display Name *" placeholder="John Doe" />
+src/components/student/CreateStudentModal.tsx:82:          <FormField name="email" label="Email *" placeholder="student@example.com" />
+src/components/student/CreateStudentModal.tsx:83:          <FormField name="password" label="Password *" type="password" placeholder="Enter password" />
+src/components/student/CreateStudentModal.tsx:85:            <FormField name="firstName" label="First Name *" placeholder="John" />
+src/components/student/CreateStudentModal.tsx:86:            <FormField name="lastName" label="Last Name *" placeholder="Doe" />
+src/components/student/CreateStudentModal.tsx:88:          <FormField name="phone" label="Phone *" placeholder="+84901234567" />
+src/components/student/CreateStudentModal.tsx:95:              <option value={Gender.MALE}>Male</option>
+src/components/student/CreateStudentModal.tsx:96:              <option value={Gender.FEMALE}>Female</option>
+src/components/student/DeleteStudent40,        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/student/DeleteStudentModal.tsx:35:      title="Delete Student"
+src/components/student/EditStudent103,              <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/student/EditStudentModal.tsx:76:      title="Edit Student"
+src/components/student/EditStudentModal.tsx:82:          <FormField name="username" label="Username" placeholder="john.doe" />
+src/components/student/EditStudentModal.tsx:83:          <FormField name="email" label="Email" placeholder="student@example.com" />
+src/components/student/EditStudentModal.tsx:84:          <FormField name="password" label="New Password (optional)" type="password" placeholder="Enter new password" />
+src/components/student/EditStudentModal.tsx:86:            <FormField name="firstName" label="First Name" placeholder="John" />
+src/components/student/EditStudentModal.tsx:87:            <FormField name="lastName" label="Last Name" placeholder="Doe" />
+src/components/student/EditStudentModal.tsx:89:          <FormField name="phone" label="Phone" placeholder="+84901234567" />
+src/components/student/EditStudentModal.tsx:96:              <option value="male">Male</option>
+src/components/student/EditStudentModal.tsx:97:              <option value="female">Female</option>
+src/components/student/ViewStudentModal.tsx:26:      title="Student Details"
+src/components/student/ViewStudentModal.tsx:46:          <p>Could not load student details.</p>
+src/components/teacher/CreateTeacher107,              <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/teacher/CreateTeacherModal.tsx:77:      title="Create New Teacher"
+src/components/teacher/CreateTeacherModal.tsx:78:      description="Add a new teacher to the system"
+src/components/teacher/CreateTeacherModal.tsx:83:          <FormField name="email" label="Email *" placeholder="teacher@example.com" />
+src/components/teacher/CreateTeacherModal.tsx:84:          <FormField name="password" label="Password" type="password" placeholder="Enter password" />
+src/components/teacher/CreateTeacherModal.tsx:86:            <FormField name="firstName" label="First Name *" placeholder="John" />
+src/components/teacher/CreateTeacherModal.tsx:87:            <FormField name="lastName" label="Last Name *" placeholder="Doe" />
+src/components/teacher/CreateTeacherModal.tsx:89:          <FormField name="displayName" label="Display Name *" placeholder="John Doe" />
+src/components/teacher/CreateTeacherModal.tsx:90:          <FormField name="phone" label="Phone *" placeholder="+84901234567" />
+src/components/teacher/CreateTeacherModal.tsx:97:              <option value="male">Male</option>
+src/components/teacher/CreateTeacherModal.tsx:98:              <option value="female">Female</option>
+src/components/teacher/DeleteTeacher35,        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/teacher/DeleteTeacherModal.tsx:30:      title="Delete Teacher"
+src/components/teacher/EditTeacher98,              <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>,button,Cancel</Button>
+src/components/teacher/EditTeacherModal.tsx:71:      title="Edit Teacher"
+src/components/teacher/EditTeacherModal.tsx:77:          <FormField name="email" label="Email *" placeholder="teacher@example.com" />
+src/components/teacher/EditTeacherModal.tsx:78:          <FormField name="password" label="New Password (optional)" type="password" placeholder="Enter new password" />
+src/components/teacher/EditTeacherModal.tsx:80:            <FormField name="firstName" label="First Name *" placeholder="John" />
+src/components/teacher/EditTeacherModal.tsx:81:            <FormField name="lastName" label="Last Name *" placeholder="Doe" />
+src/components/teacher/EditTeacherModal.tsx:83:          <FormField name="displayName" label="Display Name *" placeholder="John Doe" />
+src/components/teacher/EditTeacherModal.tsx:84:          <FormField name="phone" label="Phone *" placeholder="+84901234567" />
+src/components/teacher/EditTeacherModal.tsx:91:              <option value="MALE">Male</option>
+src/components/teacher/EditTeacherModal.tsx:92:              <option value="FEMALE">Female</option>
+src/components/teacher/ViewTeacherModal.tsx:26:      title="Teacher Details"
+src/components/teacher/ViewTeacherModal.tsx:47:          <p>Could not load teacher details.</p>

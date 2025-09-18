@@ -1,0 +1,297 @@
+file,line,context,text
+src/components/GoogleTranslateDemo.tsx:160:                placeholder="Enter text to translate..."
+src/components/classroom/AddStudentToClassModal.tsx,96,button,
+src/components/classroom/AddStudentToClassModal.tsx:50:      title="Add Students to Classroom"
+src/components/classroom/CreateClassroomModal.tsx,164,button,
+src/components/classroom/CreateClassroomModal.tsx:100:          <FormField name="description" label="Description" placeholder="Enter classroom description" />
+src/components/classroom/CreateClassroomModal.tsx:138:            <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
+src/components/classroom/CreateClassroomModal.tsx:153:            <FormField name="periodStart" label="Start Date *" type="date" />
+src/components/classroom/CreateClassroomModal.tsx:154:            <FormField name="periodEnd" label="End Date *" type="date" />
+src/components/classroom/CreateClassroomModal.tsx:158:            <FormField name="plannedHours" label="Planned Hours *" type="number" placeholder="36" />
+src/components/classroom/CreateClassroomModal.tsx:159:            <FormField name="sessionDurationHours" label="Session Duration (hours) *" type="number" placeholder="1.5" />
+src/components/classroom/CreateClassroomModal.tsx:92:      title="Create New Classroom"
+src/components/classroom/CreateClassroomModal.tsx:93:      description="Add a new classroom to the system"
+src/components/classroom/CreateClassroomModal.tsx:99:          <FormField name="name" label="Classroom Name *" placeholder="Enter classroom name" />
+src/components/classroom/DeleteClassroomModal.tsx,65,button,
+src/components/classroom/DeleteClassroomModal.tsx:40:          <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Classroom</h3>
+src/components/classroom/DeleteClassroomModal.tsx:52:                <h4 className="text-sm font-semibold text-red-800 mb-1">Warning</h4>
+src/components/classroom/EditClassroomModal.tsx,142,button,
+src/components/classroom/EditClassroomModal.tsx:118:              <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
+src/components/classroom/EditClassroomModal.tsx:90:        title="Edit Classroom"
+src/components/classroom/EditClassroomModal.tsx:91:        description="Update classroom information"
+src/components/classroom/EditClassroomModal.tsx:96:            <FormField name="name" label="Classroom Name *" placeholder="Enter classroom name" />
+src/components/classroom/EditClassroomModal.tsx:97:            <FormField name="classCode" label="Class Code" placeholder="Auto-generated if empty" />
+src/components/classroom/EditClassroomModal.tsx:98:            <FormField name="description" label="Description" placeholder="Enter classroom description" />
+src/components/classroom/ImportStudentsModal.tsx:146:            <h4 className="text-sm font-medium text-gray-900 mb-3">Import Results</h4>
+src/components/classroom/ImportStudentsModal.tsx:88:      title="Import Students from Excel"
+src/components/classroom/ImportStudentsModal.tsx:98:              <h4 className="text-sm font-medium text-blue-900">Excel Template</h4>
+src/components/classroom/ViewClassroomModal.tsx:35:                <h3 className="text-2xl font-bold text-gray-800">Classroom Details</h3>
+src/components/classroom/ViewClassroomModal.tsx:36:                <p className="text-sm text-gray-600">View classroom information</p>
+src/components/classroom/ViewClassroomModal.tsx:82:                <p className="text-sm text-gray-500">Students enrolled</p>
+src/components/course/CreateCourseModal.tsx:136:      title="Create New Course"
+src/components/course/CreateCourseModal.tsx:137:      description="Create a comprehensive course with lessons"
+src/components/course/CreateCourseModal.tsx:177:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">📚 Basic Information</h3>
+src/components/course/CreateCourseModal.tsx:179:                    <FormField name="title" label="Course Title *" placeholder="Enter course title" />
+src/components/course/CreateCourseModal.tsx:180:                    <FormField name="description" label="Description *" placeholder="Enter course description" type="textarea" rows={3} />
+src/components/course/CreateCourseModal.tsx:185:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍🏫 Instructor & Settings</h3>
+src/components/course/CreateCourseModal.tsx:205:                      <FormField name="price" label="Price ($)" type="number" placeholder="0" />
+src/components/course/CreateCourseModal.tsx:206:                      <FormField name="difficulty" label="Course Difficulty" placeholder="beginner" />
+src/components/course/CreateCourseModal.tsx:210:                      <FormField name="language" label="Language" placeholder="en" />
+src/components/course/CreateCourseModal.tsx:233:                    <h3 className="text-lg font-semibold text-gray-800">📖 Course Lessons</h3>
+src/components/course/CreateCourseModal.tsx:234:                    <p className="text-sm text-gray-500">Add and organize lessons for your course</p>
+src/components/course/CreateCourseModal.tsx:249:                    <h4 className="text-lg font-semibold text-gray-600 mb-2">No lessons yet</h4>
+src/components/course/CreateCourseModal.tsx:250:                    <p className="text-gray-500 mb-4">Start building your course by adding the first lesson</p>
+src/components/course/CreateCourseModal.tsx:290:                              label="Lesson Title *"
+src/components/course/CreateCourseModal.tsx:291:                              placeholder="e.g., Introduction to React"
+src/components/course/CreateCourseModal.tsx:311:                              label="Description"
+src/components/course/CreateCourseModal.tsx:312:                              placeholder="Brief lesson description..."
+src/components/course/CreateCourseModal.tsx:335:                                placeholder="30"
+src/components/course/CreateCourseModal.tsx:357:                              placeholder="Enter objectives (one per line)..."
+src/components/course/DeleteCourseModal.tsx,38,button,
+src/components/course/DeleteCourseModal.tsx:33:      title="Delete Course"
+src/components/course/EditCourseModal.tsx:170:      title="Edit Course"
+src/components/course/EditCourseModal.tsx:171:      description="Update course details and manage lessons"
+src/components/course/EditCourseModal.tsx:212:                  <h3 className="text-lg font-semibold text-gray-800 mb-3">📊 Course Overview</h3>
+src/components/course/EditCourseModal.tsx:234:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">📚 Basic Information</h3>
+src/components/course/EditCourseModal.tsx:236:                    <FormField name="title" label="Course Title *" placeholder="Enter course title" />
+src/components/course/EditCourseModal.tsx:237:                    <FormField name="description" label="Description *" placeholder="Enter course description" type="textarea" rows={3} />
+src/components/course/EditCourseModal.tsx:242:                  <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍🏫 Instructor & Settings</h3>
+src/components/course/EditCourseModal.tsx:262:                      <FormField name="price" label="Price ($)" type="number" placeholder="0" />
+src/components/course/EditCourseModal.tsx:263:                      <FormField name="difficulty" label="Course Difficulty" placeholder="beginner" />
+src/components/course/EditCourseModal.tsx:267:                      <FormField name="language" label="Language" placeholder="en" />
+src/components/course/EditCourseModal.tsx:285:                  <h3 className="text-lg font-semibold text-gray-800 mb-3">📅 Course History</h3>
+src/components/course/EditCourseModal.tsx:309:                    <h3 className="text-lg font-semibold text-gray-800">📖 Course Lessons</h3>
+src/components/course/EditCourseModal.tsx:327:                    <h4 className="font-semibold text-gray-800 mb-2">📊 Lessons Summary</h4>
+src/components/course/EditCourseModal.tsx:360:                    <h4 className="text-lg font-semibold text-gray-600 mb-2">No lessons yet</h4>
+src/components/course/EditCourseModal.tsx:361:                    <p className="text-gray-500 mb-4">Add lessons to make your course more comprehensive</p>
+src/components/course/EditCourseModal.tsx:430:                              label="Lesson Title *"
+src/components/course/EditCourseModal.tsx:431:                              placeholder="e.g., Introduction to React"
+src/components/course/EditCourseModal.tsx:451:                              label="Description"
+src/components/course/EditCourseModal.tsx:452:                              placeholder="Brief lesson description..."
+src/components/course/EditCourseModal.tsx:475:                                placeholder="30"
+src/components/course/EditCourseModal.tsx:497:                              placeholder="Enter objectives (one per line)..."
+src/components/course/LessonActivities.tsx:255:              placeholder="Word *"
+src/components/course/LessonActivities.tsx:260:              placeholder="Definition *"
+src/components/course/LessonActivities.tsx:268:              label="Image"
+src/components/course/LessonActivities.tsx:270:              placeholder="Drag & drop or click to upload image"
+src/components/course/LessonActivities.tsx:279:              label="Audio"
+src/components/course/LessonActivities.tsx:281:              placeholder="Drag & drop or click to upload audio"
+src/components/course/LessonActivities.tsx:293:            label="Examples"
+src/components/course/LessonActivities.tsx:294:            placeholder="Example sentence"
+src/components/course/LessonActivities.tsx:397:            placeholder="Explanation (optional)"
+src/components/course/LessonActivities.tsx:427:            <input {...register(`${name}.${i}.front` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Front *" />
+src/components/course/LessonActivities.tsx:428:            <input {...register(`${name}.${i}.back` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Back *" />
+src/components/course/LessonActivities.tsx:436:                  placeholder="Upload image"
+src/components/course/LessonActivities.tsx:499:          <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+src/components/course/LessonActivities.tsx:525:              label="Audio File"
+src/components/course/LessonActivities.tsx:527:              placeholder="Drag & drop or click to upload audio"
+src/components/course/LessonActivities.tsx:533:            <input {...register(`${basePath}.content.prompt` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+src/components/course/LessonActivities.tsx:543:          <input {...register(`${basePath}.content.phrase` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Target phrase *" />
+src/components/course/LessonActivities.tsx:545:            <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
+src/components/course/LessonActivities.tsx:549:              label="Sample Audio"
+src/components/course/LessonActivities.tsx:551:              placeholder="Upload sample pronunciation"
+src/components/course/LessonActivities.tsx:565:          <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+src/components/course/LessonActivities.tsx:572:              placeholder="Min seconds (e.g., 15)"
+src/components/course/LessonActivities.tsx:574:            <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
+src/components/course/LessonActivities.tsx:584:            <input {...register(`${basePath}.content.target` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Target *" />
+src/components/course/LessonActivities.tsx:590:              placeholder="Rounds *"
+src/components/course/LessonActivities.tsx:593:          <StringArrayField name={`${basePath}.content.pool`} control={control} label="Word pool *" placeholder="Word" register={register} />
+src/components/course/LessonActivities.tsx:601:          <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={4} placeholder="Passage *" />
+src/components/course/LessonActivities.tsx:602:          <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+src/components/course/LessonActivities.tsx:611:          <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+src/components/course/LessonActivities.tsx:618:              placeholder="Min words (e.g., 40)"
+src/components/course/LessonActivities.tsx:620:            <StringArrayField name={`${basePath}.content.rubric`} control={control} label="Rubric" placeholder="Criterion" register={register} />
+src/components/course/LessonActivities.tsx:629:          <input {...register(`${basePath}.content.rule` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Rule *" />
+src/components/course/LessonActivities.tsx:630:          <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+src/components/course/LessonActivities.tsx:642:          <input {...register(`${basePath}.content.scenario` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Scenario *" />
+src/components/course/LessonActivities.tsx:645:          <StringArrayField name={`${basePath}.content.suggestions`} control={control} label="Suggestions" placeholder="Suggestion" register={register} />
+src/components/course/LessonActivities.tsx:655:          <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={3} placeholder="Passage with blanks (use underscores or just provide answers below)" />
+src/components/course/LessonActivities.tsx:656:          <StringArrayField name={`${basePath}.content.blanks`} control={control} label="Blanks / Answers" placeholder="answer" register={register} />
+src/components/course/LessonActivities.tsx:668:              label="Audio File (optional)"
+src/components/course/LessonActivities.tsx:670:              placeholder="Upload audio for dictation"
+src/components/course/LessonActivities.tsx:676:            <input {...register(`${basePath}.content.minWords` as const, { valueAsNumber: true })} className="px-3 py-2 text-sm border rounded-lg" placeholder="Min words (optional)" />
+src/components/course/LessonActivities.tsx:678:          <textarea {...register(`${basePath}.content.transcript` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={2} placeholder="Expected transcript / answer" />
+src/components/course/LessonActivities.tsx:686:          <StringArrayField name={`${basePath}.content.leftItems`} control={control} label="Left items" placeholder="Left item" register={register} />
+src/components/course/LessonActivities.tsx:687:          <StringArrayField name={`${basePath}.content.rightItems`} control={control} label="Right items" placeholder="Right item" register={register} />
+src/components/course/LessonActivities.tsx:688:          <p className="text-xs text-gray-500">Items will be paired by index (left[0] ↔ right[0]).</p>
+src/components/course/LessonActivities.tsx:713:            <option value="assistant">assistant</option>
+src/components/course/LessonActivities.tsx:714:            <option value="user">user</option>
+src/components/course/LessonActivities.tsx:716:          <input {...register(`${basePath}.${i}.text` as const)} className="md:col-span-2 px-3 py-2 text-sm border rounded-lg" placeholder="Text *" />
+src/components/course/LessonActivities.tsx:754:      <h4 className="text-lg font-semibold text-gray-700 mb-4">Activities</h4>
+src/components/course/LessonActivities.tsx:775:                  placeholder="e.g., Grammar Quiz"
+src/components/course/LessonActivities.tsx:803:                  placeholder="1"
+src/components/course/LessonActivities.tsx:837:              <textarea {...register(`${base}.instructions` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={2} placeholder="Short instructions..." />
+src/components/course/ViewCourseModal.tsx:110:            <h3 className="text-xl font-semibold text-gray-900 mb-3">Description</h3>
+src/components/course/ViewCourseModal.tsx:119:                  <p className="text-sm font-medium text-blue-600">Lessons</p>
+src/components/course/ViewCourseModal.tsx:129:                  <p className="text-sm font-medium text-green-600">Duration</p>
+src/components/course/ViewCourseModal.tsx:139:                  <p className="text-sm font-medium text-purple-600">Price</p>
+src/components/course/ViewCourseModal.tsx:140:                  <p className="text-2xl font-bold text-purple-900">${course.price || 0}</p>
+src/components/course/ViewCourseModal.tsx:149:                  <p className="text-sm font-medium text-orange-600">Status</p>
+src/components/course/ViewCourseModal.tsx:166:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Instructor</h3>
+src/components/course/ViewCourseModal.tsx:178:                  <p className="text-sm text-gray-500">Course Instructor</p>
+src/components/course/ViewCourseModal.tsx:187:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Course Information</h3>
+src/components/course/ViewCourseModal.tsx:219:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Tags</h3>
+src/components/course/ViewCourseModal.tsx:240:              <h3 className="text-xl font-semibold text-gray-900 mb-4">Lessons ({course.lessons.length})</h3>
+src/components/schedule/CreateScheduleModal.tsx,108,button,
+src/components/schedule/CreateScheduleModal.tsx:100:            <FormField name="endDate" label="End Date *" type="date" />
+src/components/schedule/CreateScheduleModal.tsx:101:            <FormField name="endTime" label="End Time *" type="time" />
+src/components/schedule/CreateScheduleModal.tsx:103:          <FormField name="description" label="Description" placeholder="Enter event description" />
+src/components/schedule/CreateScheduleModal.tsx:104:          <FormField name="location" label="Location / Link" placeholder="e.g., Google Meet Link" />
+src/components/schedule/CreateScheduleModal.tsx:73:      title="Create New Schedule"
+src/components/schedule/CreateScheduleModal.tsx:74:      description="Add a new event to the calendar"
+src/components/schedule/CreateScheduleModal.tsx:79:          <FormField name="title" label="Event Title *" placeholder="e.g., Advanced Grammar - Live Session" />
+src/components/schedule/CreateScheduleModal.tsx:81:            <FormField name="courseName" label="Course Name *" placeholder="English 101" />
+src/components/schedule/CreateScheduleModal.tsx:82:            <FormField name="teacherName" label="Teacher Name *" placeholder="John Doe" />
+src/components/schedule/CreateScheduleModal.tsx:90:              <option value="live_session">Live Session</option>
+src/components/schedule/CreateScheduleModal.tsx:91:              <option value="exam">Exam</option>
+src/components/schedule/CreateScheduleModal.tsx:92:              <option value="assignment_due">Assignment Due</option>
+src/components/schedule/CreateScheduleModal.tsx:96:            <FormField name="startDate" label="Start Date *" type="date" />
+src/components/schedule/CreateScheduleModal.tsx:97:            <FormField name="startTime" label="Start Time *" type="time" />
+src/components/schedule/DeleteScheduleModal.tsx,29,button,
+src/components/schedule/DeleteScheduleModal.tsx:24:      title="Delete Schedule"
+src/components/schedule/EditScheduleModal.tsx,131,button,
+src/components/schedule/EditScheduleModal.tsx:102:          <FormField name="title" label="Event Title *" placeholder="e.g., Advanced Grammar - Live Session" />
+src/components/schedule/EditScheduleModal.tsx:104:            <FormField name="courseName" label="Course Name *" placeholder="English 101" />
+src/components/schedule/EditScheduleModal.tsx:105:            <FormField name="teacherName" label="Teacher Name *" placeholder="John Doe" />
+src/components/schedule/EditScheduleModal.tsx:113:              <option value="live_session">Live Session</option>
+src/components/schedule/EditScheduleModal.tsx:114:              <option value="exam">Exam</option>
+src/components/schedule/EditScheduleModal.tsx:115:              <option value="assignment_due">Assignment Due</option>
+src/components/schedule/EditScheduleModal.tsx:119:            <FormField name="startDate" label="Start Date *" type="date" />
+src/components/schedule/EditScheduleModal.tsx:120:            <FormField name="startTime" label="Start Time *" type="time" />
+src/components/schedule/EditScheduleModal.tsx:123:            <FormField name="endDate" label="End Date *" type="date" />
+src/components/schedule/EditScheduleModal.tsx:124:            <FormField name="endTime" label="End Time *" type="time" />
+src/components/schedule/EditScheduleModal.tsx:126:          <FormField name="description" label="Description" placeholder="Enter event description" />
+src/components/schedule/EditScheduleModal.tsx:127:          <FormField name="location" label="Location / Link" placeholder="e.g., Google Meet Link" />
+src/components/schedule/EditScheduleModal.tsx:96:      title="Edit Schedule"
+src/components/schedule/EditScheduleModal.tsx:97:      description="Update event details"
+src/components/student/CreateStudentModal.tsx,102,button,
+src/components/student/CreateStudentModal.tsx:75:      title="Create New Student"
+src/components/student/CreateStudentModal.tsx:76:      description="Add a new student to the system"
+src/components/student/CreateStudentModal.tsx:81:          <FormField name="displayName" label="Display Name *" placeholder="John Doe" />
+src/components/student/CreateStudentModal.tsx:82:          <FormField name="email" label="Email *" placeholder="student@example.com" />
+src/components/student/CreateStudentModal.tsx:83:          <FormField name="password" label="Password *" type="password" placeholder="Enter password" />
+src/components/student/CreateStudentModal.tsx:85:            <FormField name="firstName" label="First Name *" placeholder="John" />
+src/components/student/CreateStudentModal.tsx:86:            <FormField name="lastName" label="Last Name *" placeholder="Doe" />
+src/components/student/CreateStudentModal.tsx:88:          <FormField name="phone" label="Phone *" placeholder="+84901234567" />
+src/components/student/CreateStudentModal.tsx:95:              <option value={Gender.MALE}>Male</option>
+src/components/student/CreateStudentModal.tsx:96:              <option value={Gender.FEMALE}>Female</option>
+src/components/student/DeleteStudentModal.tsx,40,button,
+src/components/student/DeleteStudentModal.tsx:35:      title="Delete Student"
+src/components/student/EditStudentModal.tsx,103,button,
+src/components/student/EditStudentModal.tsx:76:      title="Edit Student"
+src/components/student/EditStudentModal.tsx:82:          <FormField name="username" label="Username" placeholder="john.doe" />
+src/components/student/EditStudentModal.tsx:83:          <FormField name="email" label="Email" placeholder="student@example.com" />
+src/components/student/EditStudentModal.tsx:84:          <FormField name="password" label="New Password (optional)" type="password" placeholder="Enter new password" />
+src/components/student/EditStudentModal.tsx:86:            <FormField name="firstName" label="First Name" placeholder="John" />
+src/components/student/EditStudentModal.tsx:87:            <FormField name="lastName" label="Last Name" placeholder="Doe" />
+src/components/student/EditStudentModal.tsx:89:          <FormField name="phone" label="Phone" placeholder="+84901234567" />
+src/components/student/EditStudentModal.tsx:96:              <option value="male">Male</option>
+src/components/student/EditStudentModal.tsx:97:              <option value="female">Female</option>
+src/components/student/ViewStudentModal.tsx:26:      title="Student Details"
+src/components/student/ViewStudentModal.tsx:46:          <p>Could not load student details.</p>
+src/components/teacher/CreateTeacherModal.tsx,107,button,
+src/components/teacher/CreateTeacherModal.tsx:77:      title="Create New Teacher"
+src/components/teacher/CreateTeacherModal.tsx:78:      description="Add a new teacher to the system"
+src/components/teacher/CreateTeacherModal.tsx:83:          <FormField name="email" label="Email *" placeholder="teacher@example.com" />
+src/components/teacher/CreateTeacherModal.tsx:84:          <FormField name="password" label="Password" type="password" placeholder="Enter password" />
+src/components/teacher/CreateTeacherModal.tsx:86:            <FormField name="firstName" label="First Name *" placeholder="John" />
+src/components/teacher/CreateTeacherModal.tsx:87:            <FormField name="lastName" label="Last Name *" placeholder="Doe" />
+src/components/teacher/CreateTeacherModal.tsx:89:          <FormField name="displayName" label="Display Name *" placeholder="John Doe" />
+src/components/teacher/CreateTeacherModal.tsx:90:          <FormField name="phone" label="Phone *" placeholder="+84901234567" />
+src/components/teacher/CreateTeacherModal.tsx:97:              <option value="male">Male</option>
+src/components/teacher/CreateTeacherModal.tsx:98:              <option value="female">Female</option>
+src/components/teacher/DeleteTeacherModal.tsx,35,button,
+src/components/teacher/DeleteTeacherModal.tsx:30:      title="Delete Teacher"
+src/components/teacher/EditTeacherModal.tsx,98,button,
+src/components/teacher/EditTeacherModal.tsx:71:      title="Edit Teacher"
+src/components/teacher/EditTeacherModal.tsx:77:          <FormField name="email" label="Email *" placeholder="teacher@example.com" />
+src/components/teacher/EditTeacherModal.tsx:78:          <FormField name="password" label="New Password (optional)" type="password" placeholder="Enter new password" />
+src/components/teacher/EditTeacherModal.tsx:80:            <FormField name="firstName" label="First Name *" placeholder="John" />
+src/components/teacher/EditTeacherModal.tsx:81:            <FormField name="lastName" label="Last Name *" placeholder="Doe" />
+src/components/teacher/EditTeacherModal.tsx:83:          <FormField name="displayName" label="Display Name *" placeholder="John Doe" />
+src/components/teacher/EditTeacherModal.tsx:84:          <FormField name="phone" label="Phone *" placeholder="+84901234567" />
+src/components/teacher/EditTeacherModal.tsx:91:              <option value="MALE">Male</option>
+src/components/teacher/EditTeacherModal.tsx:92:              <option value="FEMALE">Female</option>
+src/components/teacher/ViewTeacherModal.tsx:26:      title="Teacher Details"
+src/components/teacher/ViewTeacherModal.tsx:47:          <p>Could not load teacher details.</p>
+src/components/ui/Button.tsx,10,button, {
+src/pages/ApiReportPage.tsx:288:            <p>Start a conversation with the AI agent</p>
+src/pages/ApiReportPage.tsx:289:            <p className="text-sm mt-2">Ask about student data, analytics, or get learning recommendations</p>
+src/pages/ApiReportPage.tsx:291:              <p className="text-xs text-gray-500">Example queries:</p>
+src/pages/ApiReportPage.tsx:344:                      <p className="text-xs text-gray-500 mb-1">Sources:</p>
+src/pages/ApiReportPage.tsx:454:            placeholder="Ask about student analytics, API data, system policies, or upload documents..."
+src/pages/ApiReportPage.tsx:504:          <p>No tool usage data yet</p>
+src/pages/ApiReportPage.tsx:505:          <p className="text-sm">Start chatting to see tool analytics</p>
+src/pages/ApiReportPage.tsx:525:              <p className="text-blue-100">Total Chats</p>
+src/pages/ApiReportPage.tsx:535:              <p className="text-green-100">Avg Confidence</p>
+src/pages/ApiReportPage.tsx:545:              <p className="text-purple-100">Avg Response Time</p>
+src/pages/ApiReportPage.tsx:690:    <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+src/pages/ApiReportPage.tsx:701:        <p className="text-sm text-gray-500">No recent activity</p>
+src/pages/ApiReportPage.tsx:764:                  placeholder="Enter document title..."
+src/pages/ApiReportPage.tsx:794:                  placeholder="e.g., Phòng CTSV, Admin Department..."
+src/pages/ApiReportPage.tsx:808:                  placeholder="Enter the document content here..."
+src/pages/ApiReportPage.tsx:831:          <h3 className="text-lg font-semibold mb-4">Document Guidelines</h3>
+src/pages/ApiReportPage.tsx:834:              <h4 className="font-medium text-gray-900 mb-2">Best Practices:</h4>
+src/pages/ApiReportPage.tsx:843:              <h4 className="font-medium text-gray-900 mb-2">Supported Types:</h4>
+src/pages/ClassroomPage.tsx:117:                  placeholder="Search by classroom name..."
+src/pages/ClassroomPage.tsx:220:              <h3 className="text-xl font-medium text-gray-900 mb-2">No Classrooms Found</h3>
+src/pages/ClassroomPage.tsx:221:              <p className="text-gray-600 mb-4">Create a new classroom to get started.</p>
+src/pages/ClassroomPage.tsx:98:            <h1 className="text-4xl font-bold text-gray-900 mb-2">Classroom Management</h1>
+src/pages/ClassroomPage.tsx:99:            <p className="text-gray-600">Oversee all classrooms and their activities.</p>
+src/pages/CoursePage.tsx:117:                  placeholder="Search by course name..."
+src/pages/CoursePage.tsx:218:              <h3 className="text-xl font-medium text-gray-900 mb-2">No Courses Found</h3>
+src/pages/CoursePage.tsx:219:              <p className="text-gray-600 mb-4">Create a new course to get started.</p>
+src/pages/CoursePage.tsx:98:            <h1 className="text-4xl font-bold text-gray-900 mb-2">Course Management</h1>
+src/pages/CoursePage.tsx:99:            <p className="text-gray-600">Oversee all courses and their activities.</p>
+src/pages/CreateCoursePage.tsx:242:        <h3 className="text-xl font-semibold text-gray-800 mb-6">Basic Information</h3>
+src/pages/CreateCoursePage.tsx:311:                  <p className="text-sm text-gray-600">Click to change image or drag a new one here</p>
+src/pages/CreateCoursePage.tsx:322:                    <p className="text-sm text-gray-500">or click to browse files</p>
+src/pages/CreateCoursePage.tsx:360:              placeholder="Enter course title"
+src/pages/CreateCoursePage.tsx:370:              placeholder="Enter course description"
+src/pages/CreateCoursePage.tsx:378:        <h3 className="text-xl font-semibold text-gray-800 mb-6">Instructor & Settings</h3>
+src/pages/CreateCoursePage.tsx:402:              placeholder="0"
+src/pages/CreateCoursePage.tsx:452:          <h3 className="text-2xl font-bold text-gray-800">📖 Course Lessons</h3>
+src/pages/CreateCoursePage.tsx:453:          <p className="text-gray-600">Add and organize lessons for your course</p>
+src/pages/CreateCoursePage.tsx:468:          <h4 className="text-xl font-semibold text-gray-600 mb-2">No lessons yet</h4>
+src/pages/CreateCoursePage.tsx:469:          <p className="text-gray-500 mb-6">Start building your course by adding the first lesson</p>
+src/pages/CreateCoursePage.tsx:505:                    placeholder="e.g., Introduction to React"
+src/pages/CreateCoursePage.tsx:530:                  placeholder="Brief lesson description..."
+src/pages/CreateCoursePage.tsx:545:      <h3 className="text-2xl font-bold text-gray-800 mb-2">🔍 Review & Submit</h3>
+src/pages/CreateCoursePage.tsx:554:          <h1 className="text-4xl font-bold text-gray-800 mb-4">Create New Course</h1>
+src/pages/CreateCoursePage.tsx:555:          <p className="text-xl text-gray-600">Build a comprehensive course with lessons and activities</p>
+src/pages/CreateCoursePage.tsx:595:                  <p className="text-sm text-gray-500">or click to browse files (.xlsx, .xls)</p>
+src/pages/CreateCoursePage.tsx:596:                  <p className="text-xs text-gray-400 mt-2">Multiple files supported • Auto-generates audio for vocabulary activities</p>
+src/pages/CreateCoursePage.tsx:612:                <h4 className="text-md font-semibold text-gray-700 mb-3">Selected Files ({selectedExcelFiles.length})</h4>
+src/pages/CreateCoursePage.tsx:674:                <p className="text-xs text-gray-500 mt-2">This may take a few minutes for large files</p>
+src/pages/DashboardPage.tsx,201,button,
+src/pages/DashboardPage.tsx,204,button,
+src/pages/DashboardPage.tsx,207,button,
+src/pages/LoginPage.tsx:122:                label="Password"
+src/pages/LoginPage.tsx:137:                        aria-label="toggle password visibility"
+src/pages/LoginPage.tsx:99:                label="Email"
+src/pages/ParentLoginPage.tsx:122:                label="Password"
+src/pages/ParentLoginPage.tsx:137:                        aria-label="toggle password visibility"
+src/pages/ParentLoginPage.tsx:99:                label="Email"
+src/pages/RoomPage.tsx:159:            placeholder="Enter room name"
+src/pages/RoomPage.tsx:167:            placeholder="e.g., A101, B205"
+src/pages/RoomPage.tsx:176:              placeholder="Building A, Floor 1"
+src/pages/RoomPage.tsx:184:              placeholder="30"
+src/pages/RoomPage.tsx:347:          <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Room</h3>
+src/pages/RoomPage.tsx:463:            <h1 className="text-4xl font-bold text-gray-900 mb-2">Room Management</h1>
+src/pages/RoomPage.tsx:464:            <p className="text-gray-600">Manage all rooms and their facilities.</p>
+src/pages/RoomPage.tsx:482:                  placeholder="Search by room name, code, or location..."
+src/pages/RoomPage.tsx:590:              <h3 className="text-xl font-medium text-gray-900 mb-2">No Rooms Found</h3>
+src/pages/RoomPage.tsx:591:              <p className="text-gray-600 mb-4">Create a new room to get started.</p>
+src/pages/SchedulePage.tsx:363:          <h2 className="text-xl font-semibold">Create Schedule</h2>
+src/pages/SchedulePage.tsx:508:            <h1 className="text-4xl font-bold text-gray-900 mb-2">Course Schedule</h1>
+src/pages/SchedulePage.tsx:509:            <p className="text-gray-600">View and manage course schedules and events.</p>
+src/pages/StudentPage.tsx:116:                  placeholder="Search by name, email..."
+src/pages/StudentPage.tsx:208:              <h3 className="text-xl font-medium text-gray-900 mb-2">No Students Found</h3>
+src/pages/StudentPage.tsx:209:              <p className="text-gray-600 mb-4">Create a new student to get started.</p>
+src/pages/StudentPage.tsx:97:            <h1 className="text-4xl font-bold text-gray-900 mb-2">Student Management</h1>
+src/pages/StudentPage.tsx:98:            <p className="text-gray-600">Oversee all students and their activities.</p>
+src/pages/TeacherPage.tsx:116:                  placeholder="Search by name, email..."
+src/pages/TeacherPage.tsx:209:              <h3 className="text-xl font-medium text-gray-900 mb-2">No Teachers Found</h3>
+src/pages/TeacherPage.tsx:210:              <p className="text-gray-600 mb-4">Create a new teacher to get started.</p>
+src/pages/TeacherPage.tsx:97:            <h1 className="text-4xl font-bold text-gray-900 mb-2">Teacher Management</h1>
+src/pages/TeacherPage.tsx:98:            <p className="text-gray-600">Oversee all teachers and their activities.</p>

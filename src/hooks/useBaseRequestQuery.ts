@@ -1,5 +1,4 @@
 import { BaseRequest, ESoftOrder } from "@/interface/base-request.interface"
-import { ApiResponse, Pagination } from "@/interface/base-response.interface"
 import { PageResponseDto } from "@/interface/pagination.inerface"
 import { UseQueryOptions, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
@@ -9,7 +8,7 @@ type HookProps<T> = {
   queryFn: (params: BaseRequest) => Promise<PageResponseDto<T>>
   initial?: Partial<BaseRequest>
   options?: Omit<
-    UseQueryOptions<ApiResponse<Pagination<T>>, Error>,
+    UseQueryOptions<PageResponseDto<T>, Error>,
     "queryKey" | "queryFn"
   >
 }

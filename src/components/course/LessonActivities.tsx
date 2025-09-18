@@ -1,0 +1,874 @@
+import { uploadFile } from "@/apis/upload";
+import { CreateCourseDto } from "@/interface/course.interface";
+import { ActivityType, DifficultyLevel } from "@/interface/enums";
+import { useMutation } from "@tanstack/react-query";
+import { Brain, Image, Music, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  type Control,
+  type FieldErrors,
+  type Path,
+  useFieldArray,
+  type UseFormRegister,
+  type UseFormSetValue,
+  type UseFormWatch
+} from "react-hook-form";
+import toast from "react-hot-toast";
+const asPath = (s: string) => s as Path<CreateCourseDto>;
+
+
+const activityTypes = Object.values(ActivityType).map(type => ({
+  value: type,
+  label: type.charAt(0).toUpperCase() + type.slice(1),
+  icon: Brain,
+  description: `A ${type} activity.`
+}));
+
+const difficultyOptions = Object.values(DifficultyLevel).map(level => ({ value: level, label: level.charAt(0).toUpperCase() + level.slice(1), }));
+
+// UploadField component tái sử dụng cho image và audio
+function UploadField({
+  name,
+  label,
+  accept,
+  placeholder,
+  register,
+  setValue,
+  watch,
+  type = 'image'
+}: {
+  name: string;
+  label: string;
+  accept: string;
+  placeholder: string;
+  register: UseFormRegister<any>;
+  setValue: UseFormSetValue<any>;
+  watch: UseFormWatch<any>;
+  type?: 'image' | 'audio';
+}) {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sử dụng watch với callback để theo dõi giá trị
+  const currentValue = watch(name);
+
+  const uploadMutation = useMutation({
+    mutationFn: uploadFile,
+    onSuccess: (data) => {
+      console.log(`Upload success for ${name}:`, data.data.url);
+      setValue(name, data.data.url, { shouldDirty: true, shouldValidate: true });
+      toast.success(`${type === 'image' ? 'Image' : 'Audio'} uploaded successfully!`);
+    },
+    onError: (error) => {
+      console.error(`Upload error for ${name}:`, error);
+      toast.error(`Failed to upload ${type}`);
+    }
+  });
+
+  const handleFileSelect = (file: File) => {
+    if (file && file.type.startsWith(type === 'image' ? 'image/' : 'audio/')) {
+      console.log(`Starting upload for ${name}:`, file.name);
+      uploadMutation.mutate(file);
+    } else {
+      toast.error(`Please upload a valid ${type} file`);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-gray-600">{label}</label>
+      <div
+        className={`relative border border-dashed rounded-lg p-4 text-center transition-all duration-200 ${uploadMutation.isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          } ${isDragOver
+            ? 'border-purple-500 bg-purple-50'
+            : 'border-gray-300 hover:border-purple-400'
+          } ${currentValue ? 'bg-gray-50' : 'bg-white'}`}
+        onClick={() => {
+          if (!currentValue && fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          const files = e.dataTransfer.files;
+          if (files.length > 0 && files[0]) {
+            handleFileSelect(files[0]);
+          }
+        }}
+      >
+        {currentValue ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-center">
+              {type === 'image' ? (
+                <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
+                  <img
+                    src={currentValue}
+                    alt="Uploaded image"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('Image failed to load:', currentValue);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                    <div className="opacity-0 hover:opacity-100 transition-opacity duration-200">
+                      <Image className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-16 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Music className="w-8 h-8 text-blue-600" />
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-600 truncate" title={currentValue}>
+              {currentValue.split('/').pop() || 'File uploaded'}
+            </p>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log(`Clearing value for ${name}`);
+                setValue(name, '', { shouldDirty: true, shouldValidate: true });
+              }}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow-sm"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-center">
+              {type === 'image' ? (
+                <Image className={`w-6 h-6 ${isDragOver ? 'text-purple-600' : 'text-gray-400'}`} />
+              ) : (
+                <Music className={`w-6 h-6 ${isDragOver ? 'text-purple-600' : 'text-gray-400'}`} />
+              )}
+            </div>
+            <p className="text-xs text-gray-500">{placeholder}</p>
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              console.log(`File selected for ${name}:`, file.name);
+              handleFileSelect(file);
+            }
+            // Reset input để có thể chọn cùng file lần nữa
+            e.target.value = '';
+          }}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          style={{ pointerEvents: currentValue ? 'none' : 'auto' }}
+        />
+      </div>
+      {uploadMutation.isPending && (
+        <div className="text-center">
+          <div className="inline-flex items-center text-purple-600 text-xs">
+            <div className="animate-spin rounded-full h-3 w-3 border-b border-purple-600 mr-1"></div>
+            Uploading...
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+const defaultContentByType = (type: ActivityType) => {
+  switch (type) {
+    case ActivityType.QUIZ:
+      return { question: "", options: ["", ""], correctIndex: 0, explanation: "" };
+    case ActivityType.VOCAB:
+      return {
+        items: [
+          { word: "", definition: "", examples: [""], imageUrl: "", audioUrl: "" }
+        ]
+      };
+    case ActivityType.LISTENING:
+      return { audioUrl: "", prompt: "", options: ["", ""], correctIndex: 0 };
+    case ActivityType.PRONUNCIATION:
+      return { phrase: "", tips: [""], sampleUrl: "" };
+    case ActivityType.SPEAKING:
+      return { prompt: "", minSeconds: 15, tips: [""] };
+    case ActivityType.MINI_GAME:
+      return { target: "", pool: [""], rounds: 3 };
+    case ActivityType.READING:
+      return { passage: "", question: "", options: ["", ""], correctIndex: 0 };
+    case ActivityType.WRITING:
+      return { prompt: "", minWords: 40, rubric: [""] };
+    case ActivityType.GRAMMAR:
+      return { rule: "", question: "", options: ["", ""], correctIndex: 0 };
+    case ActivityType.FLASHCARD:
+      return { cards: [{ front: "", back: "", imageUrl: "" }] };
+    case ActivityType.CONVERSATION:
+      return { scenario: "", initialDialog: [{ role: "assistant", text: "" }], suggestions: [""] };
+    case ActivityType.FILL_BLANK:
+      return { passage: "", blanks: [""] };
+    case ActivityType.DICTATION:
+      return { audioUrl: "", transcript: "", minWords: 0 };
+    case ActivityType.MATCHING:
+      return { pairs: [{ left: "", right: "" }] };
+    default:
+      return {};
+  }
+};
+
+
+function VocabItemsEditor({
+  basePath, control, register, setValue, watch
+}: {
+  basePath: string;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+  setValue: UseFormSetValue<any>;
+  watch: UseFormWatch<any>;
+}) {
+  const name = `${basePath}.items`;
+  const { fields, append, remove } = useFieldArray({ control, name: name as any });
+
+  return (
+    <div className="space-y-3">
+      <label className="block text-xs font-medium text-gray-600">Vocabulary Items *</label>
+
+      {fields.map((f, i) => (
+        <div key={f.id} className="p-3 border rounded-lg bg-white space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-sm text-purple-800">Item #{i + 1}</div>
+            <button type="button" onClick={() => remove(i)} className="text-red-500">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-3">
+            <input
+              {...register(`${name}.${i}.word` as const)}
+              className="px-3 py-2 text-sm border rounded-lg"
+              placeholder="Word *"
+            />
+            <input
+              {...register(`${name}.${i}.definition` as const)}
+              className="px-3 py-2 text-sm border rounded-lg"
+              placeholder="Definition *"
+            />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-3">
+            <UploadField
+              key={`image-${f.id}`}
+              name={`${name}.${i}.imageUrl`}
+              label="Image"
+              accept="image/*"
+              placeholder="Drag & drop or click to upload image"
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              type="image"
+            />
+            <UploadField
+              key={`audio-${f.id}`}
+              name={`${name}.${i}.audioUrl`}
+              label="Audio"
+              accept="audio/*"
+              placeholder="Drag & drop or click to upload audio"
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              type="audio"
+            />
+          </div>
+
+          {/* examples: string[] */}
+          <StringArrayField
+            name={`${name}.${i}.examples`}
+            control={control}
+            label="Examples"
+            placeholder="Example sentence"
+            register={register}
+          />
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={() => append({ word: "", definition: "", examples: [""], imageUrl: "", audioUrl: "" })}
+        className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs"
+      >
+        + Add vocab item
+      </button>
+    </div>
+  );
+}
+
+
+function StringArrayField({
+  name, control, label, placeholder = "Value", register
+}: {
+  name: string;
+  control: Control<CreateCourseDto>;
+  label: string;
+  placeholder?: string;
+  register: UseFormRegister<any>;
+}) {
+  const { fields, append, remove } = useFieldArray({ control, name: name as any });
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-gray-600">{label}</label>
+      {fields.map((f, i) => (
+        <div key={f.id} className="flex items-center gap-2">
+          <input
+            // ⬇️ dùng register được truyền vào, KHÔNG dùng control._options.context
+            {...register(`${name}.${i}` as const)}
+            className="w-full px-3 py-2 text-sm border rounded-lg"
+            placeholder={placeholder}
+          />
+          <button type="button" onClick={() => remove(i)} className="text-red-500">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => append("")}
+        className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs"
+      >
+        + Add
+      </button>
+    </div>
+  );
+}
+
+
+// ====== Biên tập options + correctIndex cho các dạng trắc nghiệm ======
+function OptionsEditor({
+  basePath,
+  control,
+  register,
+  showExplanation = false,
+}: {
+  basePath: string; // ví dụ "lessons.0.activities.1.content"
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+  showExplanation?: boolean;
+}) {
+  const name = `${basePath}.options`;
+  const { fields, append, remove } = useFieldArray({ control, name: name as any });
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-gray-600">Options *</label>
+      <div className="space-y-2">
+        {fields.map((f, i) => (
+          <div key={f.id} className="flex items-center gap-2">
+            <input
+              {...register(`${name}.${i}` as const)}
+              className="w-full px-3 py-2 text-sm border rounded-lg"
+              placeholder={`Option #${i + 1}`}
+            />
+            <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border rounded-lg">
+              <input type="radio" value={i} {...register(`${basePath}.correctIndex` as const, { valueAsNumber: true })} />
+              Correct
+            </label>
+            <button type="button" onClick={() => remove(i)} className="text-red-500">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => append("")}
+          className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs"
+        >
+          + Add option
+        </button>
+        {showExplanation && (
+          <input
+            {...register(`${basePath}.explanation` as const)}
+            className="flex-1 px-3 py-2 text-sm border rounded-lg"
+            placeholder="Explanation (optional)"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ====== Editor cho FLASHCARD ======
+function FlashcardsEditor({
+  basePath,
+  control,
+  register,
+  setValue,
+  watch,
+}: {
+  basePath: string;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+  setValue: UseFormSetValue<any>;
+  watch: UseFormWatch<any>;
+}) {
+  const name = `${basePath}.cards`;
+  const { fields, append, remove } = useFieldArray({ control, name: name as any });
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-gray-600">Cards *</label>
+      <div className="space-y-3">
+        {fields.map((f, i) => (
+          <div key={f.id} className="grid md:grid-cols-3 gap-2">
+            <input {...register(`${name}.${i}.front` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Front *" />
+            <input {...register(`${name}.${i}.back` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Back *" />
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <UploadField
+                  key={`flashcard-image-${f.id}`}
+                  name={`${name}.${i}.imageUrl`}
+                  label=""
+                  accept="image/*"
+                  placeholder="Upload image"
+                  register={register}
+                  setValue={setValue}
+                  watch={watch}
+                  type="image"
+                />
+              </div>
+              <button type="button" onClick={() => remove(i)} className="text-red-500">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => append({ front: "", back: "", imageUrl: "" })} className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs">
+        + Add card
+      </button>
+    </div>
+  );
+}
+
+// ====== Form theo từng ActivityType ======
+function ActivityContentFields({
+  lessonIndex,
+  activityIndex,
+  control,
+  register,
+  watch,
+  setValue,
+}: {
+  lessonIndex: number;
+  activityIndex: number;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+  watch: UseFormWatch<any>;
+  setValue: UseFormSetValue<any>;
+}) {
+  const basePath = `lessons.${lessonIndex}.activities.${activityIndex}`;
+  const type: ActivityType | undefined = watch(`${basePath}.type` as const);
+
+  // Gán default content khi đổi type
+  const prevTypeRef = useRef<ActivityType | undefined>(type);
+  useEffect(() => {
+    if (!type) return;
+    if (prevTypeRef.current !== type) {
+      setValue(`${basePath}.content` as const, defaultContentByType(type), { shouldDirty: true, shouldValidate: false });
+      prevTypeRef.current = type;
+    }
+  }, [type, basePath, setValue]);
+
+  if (!type) return null;
+
+  const section = (children: React.ReactNode, title: string) => (
+    <div className="mt-4 p-4 bg-white border border-purple-200 rounded-lg">
+      <div className="font-semibold text-purple-800 mb-3">{title}</div>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+
+  switch (type) {
+    case ActivityType.QUIZ:
+      return section(
+        <>
+          <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+          <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} showExplanation />
+        </>,
+        "Quiz"
+      );
+
+    case ActivityType.VOCAB:
+      return section(
+        // ⬇️ dùng editor mới cho danh sách items
+        <VocabItemsEditor
+          basePath={`${basePath}.content`}
+          control={control}
+          register={register}
+          setValue={setValue}
+          watch={watch}
+        />,
+        "Vocabulary"
+      );
+
+    case ActivityType.LISTENING:
+      return section(
+        <>
+          <div className="grid md:grid-cols-2 gap-3">
+            <UploadField
+              key={`listening-audio-${lessonIndex}-${activityIndex}`}
+              name={`${basePath}.content.audioUrl`}
+              label="Audio File"
+              accept="audio/*"
+              placeholder="Drag & drop or click to upload audio"
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              type="audio"
+            />
+            <input {...register(`${basePath}.content.prompt` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+          </div>
+          <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
+        </>,
+        "Listening"
+      );
+
+    case ActivityType.PRONUNCIATION:
+      return section(
+        <>
+          <input {...register(`${basePath}.content.phrase` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Target phrase *" />
+          <div className="grid md:grid-cols-2 gap-3">
+            <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
+            <UploadField
+              key={`pronunciation-audio-${lessonIndex}-${activityIndex}`}
+              name={`${basePath}.content.sampleUrl`}
+              label="Sample Audio"
+              accept="audio/*"
+              placeholder="Upload sample pronunciation"
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              type="audio"
+            />
+          </div>
+        </>,
+        "Pronunciation"
+      );
+
+    case ActivityType.SPEAKING:
+      return section(
+        <>
+          <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+          <div className="grid md:grid-cols-2 gap-3">
+            <input
+              type="number"
+              min={0}
+              {...register(`${basePath}.content.minSeconds` as const, { valueAsNumber: true })}
+              className="px-3 py-2 text-sm border rounded-lg"
+              placeholder="Min seconds (e.g., 15)"
+            />
+            <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
+          </div>
+        </>,
+        "Speaking"
+      );
+
+    case ActivityType.MINI_GAME:
+      return section(
+        <>
+          <div className="grid md:grid-cols-3 gap-3">
+            <input {...register(`${basePath}.content.target` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Target *" />
+            <input
+              type="number"
+              min={1}
+              {...register(`${basePath}.content.rounds` as const, { valueAsNumber: true })}
+              className="px-3 py-2 text-sm border rounded-lg"
+              placeholder="Rounds *"
+            />
+          </div>
+          <StringArrayField name={`${basePath}.content.pool`} control={control} label="Word pool *" placeholder="Word" register={register} />
+        </>,
+        "Mini Game"
+      );
+
+    case ActivityType.READING:
+      return section(
+        <>
+          <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={4} placeholder="Passage *" />
+          <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+          <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
+        </>,
+        "Reading"
+      );
+
+    case ActivityType.WRITING:
+      return section(
+        <>
+          <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+          <div className="grid md:grid-cols-2 gap-3">
+            <input
+              type="number"
+              min={0}
+              {...register(`${basePath}.content.minWords` as const, { valueAsNumber: true })}
+              className="px-3 py-2 text-sm border rounded-lg"
+              placeholder="Min words (e.g., 40)"
+            />
+            <StringArrayField name={`${basePath}.content.rubric`} control={control} label="Rubric" placeholder="Criterion" register={register} />
+          </div>
+        </>,
+        "Writing"
+      );
+
+    case ActivityType.GRAMMAR:
+      return section(
+        <>
+          <input {...register(`${basePath}.content.rule` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Rule *" />
+          <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+          <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
+        </>,
+        "Grammar"
+      );
+
+    case ActivityType.FLASHCARD:
+      return section(<FlashcardsEditor basePath={`${basePath}.content`} control={control} register={register} setValue={setValue} watch={watch} />, "Flashcards");
+
+    case ActivityType.CONVERSATION:
+      return section(
+        <>
+          <input {...register(`${basePath}.content.scenario` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Scenario *" />
+          {/* initialDialog: array of {role,text} */}
+          <ConversationDialogEditor basePath={`${basePath}.content.initialDialog`} control={control} register={register} />
+          <StringArrayField name={`${basePath}.content.suggestions`} control={control} label="Suggestions" placeholder="Suggestion" register={register} />
+        </>,
+        "Conversation"
+      );
+
+    default:
+
+    case ActivityType.FILL_BLANK:
+      return section(
+        <>
+          <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={3} placeholder="Passage with blanks (use underscores or just provide answers below)" />
+          <StringArrayField name={`${basePath}.content.blanks`} control={control} label="Blanks / Answers" placeholder="answer" register={register} />
+        </>,
+        "Fill in the Blanks"
+      );
+
+    case ActivityType.DICTATION:
+      return section(
+        <>
+          <div className="grid md:grid-cols-2 gap-3">
+            <UploadField
+              key={`dictation-audio-${lessonIndex}-${activityIndex}`}
+              name={`${basePath}.content.audioUrl`}
+              label="Audio File (optional)"
+              accept="audio/*"
+              placeholder="Upload audio for dictation"
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              type="audio"
+            />
+            <input {...register(`${basePath}.content.minWords` as const, { valueAsNumber: true })} className="px-3 py-2 text-sm border rounded-lg" placeholder="Min words (optional)" />
+          </div>
+          <textarea {...register(`${basePath}.content.transcript` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={2} placeholder="Expected transcript / answer" />
+        </>,
+        "Dictation"
+      );
+
+    case ActivityType.MATCHING:
+      return section(
+        <>
+          <StringArrayField name={`${basePath}.content.leftItems`} control={control} label="Left items" placeholder="Left item" register={register} />
+          <StringArrayField name={`${basePath}.content.rightItems`} control={control} label="Right items" placeholder="Right item" register={register} />
+          <p className="text-xs text-gray-500">Items will be paired by index (left[0] ↔ right[0]).</p>
+        </>,
+        "Matching"
+      );
+      return null;
+  }
+}
+
+// Editor cho initialDialog (role + text)
+function ConversationDialogEditor({
+  basePath,
+  control,
+  register,
+}: {
+  basePath: string;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+}) {
+  const { fields, append, remove } = useFieldArray({ control, name: basePath as any });
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-gray-600">Initial Dialog</label>
+      {fields.map((f, i) => (
+        <div key={f.id} className="grid md:grid-cols-3 gap-2">
+          <select {...register(`${basePath}.${i}.role` as const)} className="px-3 py-2 text-sm border rounded-lg">
+            <option value="assistant">assistant</option>
+            <option value="user">user</option>
+          </select>
+          <input {...register(`${basePath}.${i}.text` as const)} className="md:col-span-2 px-3 py-2 text-sm border rounded-lg" placeholder="Text *" />
+          <div className="md:col-span-3 flex justify-end">
+            <button type="button" onClick={() => remove(i)} className="text-red-500">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={() => append({ role: "assistant", text: "" })} className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs">
+        + Add message
+      </button>
+    </div>
+  );
+}
+
+// ====== COMPONENT CHÍNH: LessonActivities ======
+const LessonActivities = ({
+  lessonIndex,
+  control,
+  register,
+  errors,
+  setValue,
+  watch,
+}: {
+  lessonIndex: number;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<CreateCourseDto>;
+  errors: FieldErrors<CreateCourseDto>;
+  setValue: UseFormSetValue<CreateCourseDto>;
+  watch: UseFormWatch<CreateCourseDto>;
+}) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `lessons.${lessonIndex}.activities` as const,
+  });
+
+  return (
+    <div className="mt-6 pl-6 border-l-4 border-purple-200">
+      <h4 className="text-lg font-semibold text-gray-700 mb-4">Activities</h4>
+
+      {fields.map((activity, activityIndex) => {
+        const base = `lessons.${lessonIndex}.activities.${activityIndex}` as const;
+        const currentType: ActivityType | undefined = watch(`${base}.type` as const);
+
+        return (
+          <div key={activity.id} className="bg-purple-50 p-4 rounded-lg mb-4 border border-purple-200">
+            <div className="flex justify-between items-center mb-4">
+              <h5 className="font-semibold text-purple-800">Activity #{activityIndex + 1}</h5>
+              <button type="button" onClick={() => remove(activityIndex)} className="text-red-500 hover:text-red-700">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Activity Title *</label>
+                <input
+                  {...register(`${base}.title`)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g., Grammar Quiz"
+                />
+                {errors.lessons?.[lessonIndex]?.activities?.[activityIndex]?.title && (
+                  <p className="text-red-500 text-xs mt-1">{(errors.lessons![lessonIndex]!.activities![activityIndex]! as any).title?.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Type *</label>
+                <select
+                  {...register(`${base}.type` as const)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  {activityTypes.map((t) => (
+                    <option key={t.value as any} value={t.value as any}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Order No</label>
+                <input
+                  type="number"
+                  min={1}
+                  {...register(`${base}.orderNo` as const, { valueAsNumber: true })}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                  placeholder="1"
+                />
+              </div>
+            </div>
+
+            {/* Meta optional */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Difficulty</label>
+                <select {...register(`${base}.difficulty` as const)} className="w-full px-3 py-2 text-sm border rounded-lg">
+                  {difficultyOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Time limit (min)</label>
+                <input type="number" min={0} {...register(`${base}.timeLimit` as const, { valueAsNumber: true })} className="w-full px-3 py-2 text-sm border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Max attempts</label>
+                <input type="number" min={1} {...register(`${base}.maxAttempts` as const, { valueAsNumber: true })} className="w-full px-3 py-2 text-sm border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Passing score (%)</label>
+                <input type="number" min={0} max={100} {...register(`${base}.passingScore` as const, { valueAsNumber: true })} className="w-full px-3 py-2 text-sm border rounded-lg" />
+              </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Instructions</label>
+              <textarea {...register(`${base}.instructions` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={2} placeholder="Short instructions..." />
+            </div>
+
+            {/* —— KHU VỰC NỘI DUNG RIÊNG THEO TYPE —— */}
+            <ActivityContentFields
+              lessonIndex={lessonIndex}
+              activityIndex={activityIndex}
+              control={control}
+              register={register}
+              watch={watch}
+              setValue={setValue}
+            />
+          </div>
+        );
+      })}
+
+      <button
+        type="button"
+        onClick={() =>
+          append({
+            type: ActivityType.QUIZ,
+            orderNo: fields.length + 1,
+            title: "",
+            difficulty: DifficultyLevel.BEGINNER,
+            points: 10,
+            content: defaultContentByType(ActivityType.QUIZ),
+          } as any)
+        }
+        className="bg-white hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-semibold transition-all flex items-center border border-purple-300 text-sm"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add Activity
+      </button>
+    </div>
+  );
+};
+
+export default LessonActivities;
