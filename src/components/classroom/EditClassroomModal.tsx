@@ -92,16 +92,16 @@ const EditClassroomModal: React.FC<EditClassroomModalProps> = ({ isOpen, onClose
         icon={<Edit className="w-6 h-6 text-green-600" />}
       >
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(onSubmit)} className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="p-4 max-h-[calc(90vh-200px)] overflow-y-auto space-y-3">
             <FormField name="name" label="Classroom Name *" placeholder="Enter classroom name" />
             <FormField name="classCode" label="Class Code" placeholder="Auto-generated if empty" />
             <FormField name="description" label="Description" placeholder="Enter classroom description" />
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Assigned Teacher *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">Assigned Teacher *</label>
               <select
                 {...register('teacherId')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                 disabled={isLoadingTeachers}
               >
                 <option value="">{isLoadingTeachers ? 'Loading teachers...' : 'Select a teacher'}</option>
@@ -114,11 +114,11 @@ const EditClassroomModal: React.FC<EditClassroomModalProps> = ({ isOpen, onClose
               {errors.teacherId && <p className="text-red-500 text-sm mt-1">{errors.teacherId.message}</p>}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                <div className="flex items-center h-12">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">Status</label>
+                <div className="flex items-center h-10">
                   <input
                     type="checkbox"
                     {...register('isActive')}
@@ -129,7 +129,7 @@ const EditClassroomModal: React.FC<EditClassroomModalProps> = ({ isOpen, onClose
               </div>
             </div>
 
-            <div className="p-6 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
               <div className="flex justify-between items-center">
                 <Button
                   type="button"
