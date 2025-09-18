@@ -51,28 +51,28 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
       description={`Add students to ${classroom?.name}`}
       icon={<UserPlus className="w-6 h-6 text-blue-600" />}
     >
-      <div className="p-6">
+      <div className="p-4">
         <div className="max-h-96 overflow-y-auto border rounded-lg">
-          <table className="w-full text-sm text-left text-gray-500">
+          <table className="w-full text-xs sm:text-sm text-left text-gray-600">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
-                <th scope="col" className="p-4">
+                <th scope="col" className="px-3 py-2">
                   <div className="flex items-center">
                     <input id="checkbox-all-search" type="checkbox" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
                     <label htmlFor="checkbox-all-search" className="sr-only">checkbox</label>
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3">Username</th>
-                <th scope="col" className="px-6 py-3">Email</th>
+                <th scope="col" className="px-3 py-2">Username</th>
+                <th scope="col" className="px-3 py-2">Email</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={3} className="text-center p-4">Loading...</td></tr>
+                <tr><td colSpan={3} className="text-center px-3 py-3">Loading...</td></tr>
               ) : (
                 students.map((student) => (
                   <tr key={student.id} className="bg-white border-b hover:bg-gray-50">
-                    <td className="w-4 p-4">
+                    <td className="w-4 px-3 py-2">
                       <div className="flex items-center">
                         <input 
                           id={`checkbox-table-search-${student.id}`}
@@ -84,15 +84,15 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                         <label htmlFor={`checkbox-table-search-${student.id}`} className="sr-only">checkbox</label>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{student.username}</td>
-                    <td className="px-6 py-4">{student.email}</td>
+                    <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">{student.username}</td>
+                    <td className="px-3 py-2">{student.email}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-        <div className="flex justify-end space-x-3 mt-6">
+        <div className="flex justify-end space-x-3 mt-4">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="button" onClick={handleAddStudents} isLoading={addStudentsMutation.isPending} disabled={selectedStudentIds.length === 0}>
             <span>Add Selected Students</span>
