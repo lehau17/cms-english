@@ -6,7 +6,7 @@ import { CreateCourseDto } from "@/interface/course.interface";
 import { ActivityType, DifficultyLevel, LanguageCode } from "@/interface/enums";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Brain, Check, ChevronLeft, ChevronRight, Eye, GripVertical, Plus, Trash2, Upload, X } from 'lucide-react';
+import { BookOpen, Brain, Check, ChevronLeft, ChevronRight, Eye, GripVertical, Plus, Trash2, Upload, X, Users, AlertCircle } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -597,12 +597,185 @@ const CreateCoursePage = () => {
 
   const renderStep3 = () => renderStep2(); // Merged into step 2
 
-  const renderStep4 = () => (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <h3 className="text-2xl font-bold text-gray-800 mb-2">🔍 Review & Submit</h3>
-      {/* Review content here */}
-    </div>
-  );
+  const renderStep4 = () => {
+    const formData = watch();
+    const selectedTeacher = teachers?.data?.data?.find(t => t.id === formData.instructorId);
+    
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <h3 className="text-2xl font-bold text-gray-800 mb-2">🔍 Review & Submit</h3>
+        <p className="text-gray-600 mb-8">Please review all course details before submitting.</p>
+
+        {/* Course Overview Card */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <BookOpen className="w-5 h-5 mr-2" />
+            Course Overview
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Course Title</label>
+                <p className="text-gray-900 font-medium">{formData.title || 'Not specified'}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-500">Description</label>
+                <p className="text-gray-900 text-sm">{formData.description || 'No description provided'}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-500">Instructor</label>
+                <p className="text-gray-900">{selectedTeacher?.fullName || 'Not selected'}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Price</label>
+                <p className="text-gray-900 font-medium">${formData.price || 0}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-500">Difficulty Level</label>
+                <p className="text-gray-900 capitalize">{formData.difficulty?.toLowerCase()}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-500">Language</label>
+                <p className="text-gray-900 uppercase">{formData.language}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-500">Status</label>
+                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                  formData.isPublished ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {formData.isPublished ? 'Published' : 'Draft'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {formData.imageUrl && (
+            <div className="mt-4">
+              <label className="text-sm font-medium text-gray-500">Course Image</label>
+              <div className="mt-2">
+                <img
+                  src={formData.imageUrl}
+                  alt="Course preview"
+                  className="w-32 h-20 object-cover rounded-lg border border-gray-200"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Lessons Overview Card */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Lessons ({formData.lessons?.length || 0})
+          </h4>
+          
+          {formData.lessons && formData.lessons.length > 0 ? (
+            <div className="space-y-4">
+              {formData.lessons.map((lesson, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h5 className="font-medium text-gray-900">
+                      Lesson {lesson.orderNo || index + 1}: {lesson.title || 'Untitled Lesson'}
+                    </h5>
+                    <span className="text-xs text-gray-500">
+                      {lesson.activities?.length || 0} activities
+                    </span>
+                  </div>
+                  
+                  {lesson.description && (
+                    <p className="text-sm text-gray-600 mb-2">{lesson.description}</p>
+                  )}
+                  
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {lesson.difficulty && (
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        {lesson.difficulty}
+                      </span>
+                    )}
+                    {lesson.estimatedTime && (
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                        {lesson.estimatedTime} min
+                      </span>
+                    )}
+                    {lesson.isLocked && (
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
+                        Locked
+                      </span>
+                    )}
+                  </div>
+                  
+                  {lesson.objectives && lesson.objectives.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-gray-500">Objectives:</p>
+                      <ul className="text-xs text-gray-600 ml-2">
+                        {lesson.objectives.slice(0, 3).map((objective, idx) => (
+                          <li key={idx}>• {objective}</li>
+                        ))}
+                        {lesson.objectives.length > 3 && (
+                          <li className="text-gray-400">... and {lesson.objectives.length - 3} more</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No lessons added yet</p>
+          )}
+        </div>
+
+        {/* Validation Summary */}
+        <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+          <h4 className="text-lg font-semibold text-blue-900 mb-4">Validation Summary</h4>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              {formData.title ? (
+                <Check className="w-4 h-4 text-green-600 mr-2" />
+              ) : (
+                <X className="w-4 h-4 text-red-600 mr-2" />
+              )}
+              <span className={formData.title ? 'text-green-700' : 'text-red-700'}>
+                Course title {formData.title ? 'provided' : 'required'}
+              </span>
+            </div>
+            
+            <div className="flex items-center">
+              {formData.instructorId ? (
+                <Check className="w-4 h-4 text-green-600 mr-2" />
+              ) : (
+                <X className="w-4 h-4 text-red-600 mr-2" />
+              )}
+              <span className={formData.instructorId ? 'text-green-700' : 'text-red-700'}>
+                Instructor {formData.instructorId ? 'selected' : 'required'}
+              </span>
+            </div>
+            
+            <div className="flex items-center">
+              {formData.lessons && formData.lessons.length > 0 ? (
+                <Check className="w-4 h-4 text-green-600 mr-2" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-yellow-600 mr-2" />
+              )}
+              <span className={formData.lessons && formData.lessons.length > 0 ? 'text-green-700' : 'text-yellow-700'}>
+                {formData.lessons?.length || 0} lesson(s) added
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">

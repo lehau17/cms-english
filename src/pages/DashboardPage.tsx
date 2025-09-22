@@ -103,7 +103,8 @@ const DashboardPage: React.FC = () => {
 
     const handleMenuClose = () => setAnchorEl(null);
 
-    // TODO: Replace with data from API
+    // Course distribution data - this could be fetched from a separate API endpoint
+    // For now, using mock data as the current dashboard API doesn't include this info
     const courseDistribution: CourseSlice[] = [
         { name: "IELTS", value: 35, color: "#0088FE" },
         { name: "TOEIC", value: 25, color: "#00C49F" },
@@ -112,7 +113,8 @@ const DashboardPage: React.FC = () => {
         { name: "Khác", value: 5, color: "#8884D8" },
     ];
 
-    // TODO: Replace with data from API
+    // Upcoming classes data - this could be fetched from schedule/classroom APIs
+    // For now, using mock data as the current dashboard API doesn't include this info
     const upcomingClasses: UpcomingClass[] = [
         { id: 1, name: "IELTS Foundation", teacher: "Nguyễn Văn A", time: "18:00 - 20:00", room: "A201", students: 12 },
         { id: 2, name: "Business English", teacher: "Trần Thị B", time: "19:00 - 21:00", room: "B102", students: 8 },
@@ -120,7 +122,8 @@ const DashboardPage: React.FC = () => {
         { id: 4, name: "TOEIC 700+", teacher: "Phạm Thị D", time: "20:00 - 22:00", room: "A301", students: 10 },
     ];
 
-    // TODO: Replace with data from API
+    // Notification data - this could be fetched from notifications API
+    // For now, using mock data as the current dashboard API doesn't include this info
     const notifications: NotificationItem[] = [
         { type: "success", message: "5 học viên mới đăng ký hôm nay" },
         { type: "warning", message: "3 học viên sắp hết hạn học phí" },
