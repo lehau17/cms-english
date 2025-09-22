@@ -2,12 +2,15 @@ import { createClassroom } from '@/apis/classroom';
 import { useCourses } from '@/hooks/useCourse';
 import { useTeachers } from '@/hooks/useTeacher';
 import { Classroom } from '@/interface/classroom.interface';
+import { Weekday } from '@/interface/enums';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { Calendar, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import FormField from '../forms/FormField';
+import IntegratedScheduleModal from '../schedule/IntegratedScheduleModal';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 
@@ -16,6 +19,12 @@ interface CreateClassroomModalProps {
   onClose: () => void;
 }
 
+
+interface ClassroomSlot {
+  dayOfWeek: Weekday;
+  startMinuteOfDay: number;
+  endMinuteOfDay: number;
+}
 
 interface CreateClassroomFormValues {
   name: string;
@@ -26,21 +35,25 @@ interface CreateClassroomFormValues {
   courseId: string;
   periodStart: string;
   periodEnd: string;
-  plannedHours: number;
-  sessionDurationHours: number;
+  slots: ClassroomSlot[];
 }
 
 const schema = yup.object({
   name: yup.string().required('Classroom name is required'),
   description: yup.string().required('Description is required'),
-  maxStudents: yup.number().min(1).required('Max students is required'),
+  maxStudents: yup.number().positive('Max students must be positive').required('Max students is required'),
   teacherId: yup.string().required('Teacher is required'),
   courseId: yup.string().required('Course is required'),
   isActive: yup.boolean().default(true),
   periodStart: yup.string().required('Start date is required'),
   periodEnd: yup.string().required('End date is required'),
-  plannedHours: yup.number().min(1).required('Planned hours is required'),
-  sessionDurationHours: yup.number().min(0.1).required('Session duration is required'),
+  slots: yup.array().of(
+    yup.object({
+      dayOfWeek: yup.mixed<Weekday>().oneOf(Object.values(Weekday)).required(),
+      startMinuteOfDay: yup.number().min(0).max(1439).required(),
+      endMinuteOfDay: yup.number().min(0).max(1439).required()
+    })
+  ).required('At least one time slot is required').min(1, 'At least one time slot is required')
 });
 
 
@@ -48,6 +61,11 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
   const queryClient = useQueryClient();
   const { data: teachersData, isLoading: isLoadingTeachers } = useTeachers({ limit: 1000 });
   const { data: coursesData, isLoading: isLoadingCourses } = useCourses({ limit: 1000 });
+
+  // State for integrated schedule modal
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
+  const [selectedTeacherName, setSelectedTeacherName] = useState<string>('');
 
   const methods = useForm<CreateClassroomFormValues>({
     resolver: yupResolver(schema),
@@ -60,12 +78,18 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
       courseId: '',
       periodStart: '',
       periodEnd: '',
-      plannedHours: 36,
-      sessionDurationHours: 1.5,
+      slots: [],
     },
   });
 
-  const { register, handleSubmit, formState: { errors } } = methods;
+  const { register, handleSubmit, control, setValue, formState: { errors }, watch } = methods;
+  const { fields, append, remove, replace } = useFieldArray({
+    control,
+    name: 'slots',
+  });
+
+  // Watch for teacher changes to enable schedule viewing
+  const selectedTeacherValue = watch('teacherId');
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Classroom>) => createClassroom(data),
@@ -75,6 +99,28 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
     },
   });
 
+  // Utility functions for time conversion
+  const minutesToTimeString = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+
+  const timeStringToMinutes = (timeString: string): number => {
+    const [hoursStr, minutesStr] = timeString.split(':');
+    const hours = parseInt(hoursStr || '0', 10) || 0;
+    const minutes = parseInt(minutesStr || '0', 10) || 0;
+    return hours * 60 + minutes;
+  }; const weekdayLabels = {
+    [Weekday.MON]: 'Monday',
+    [Weekday.TUE]: 'Tuesday',
+    [Weekday.WED]: 'Wednesday',
+    [Weekday.THU]: 'Thursday',
+    [Weekday.FRI]: 'Friday',
+    [Weekday.SAT]: 'Saturday',
+    [Weekday.SUN]: 'Sunday',
+  };
+
   const onSubmit = (data: CreateClassroomFormValues) => {
     // Convert periodStart and periodEnd to Date objects for backend
     const payload = {
@@ -83,6 +129,21 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
       periodEnd: new Date(data.periodEnd),
     };
     createMutation.mutate(payload);
+  };
+
+  const handleViewSchedule = () => {
+    if (!selectedTeacherValue) return;
+
+    const teacher = teachersData?.data.data.find(t => t.id === selectedTeacherValue);
+    if (teacher) {
+      setSelectedTeacherId(selectedTeacherValue);
+      setSelectedTeacherName(`${teacher.firstName} ${teacher.lastName}`);
+      setShowScheduleModal(true);
+    }
+  };
+
+  const handleSlotsChange = (newSlots: ClassroomSlot[]) => {
+    replace(newSlots);
   };
 
   return (
@@ -117,7 +178,21 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Assigned Teacher *</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-gray-700">Assigned Teacher *</label>
+              {selectedTeacherValue && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleViewSchedule}
+                  size="sm"
+                  className="text-xs px-2 py-1"
+                >
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Select Schedule
+                </Button>
+              )}
+            </div>
             <select
               {...register('teacherId')}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
@@ -133,6 +208,41 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
             {errors.teacherId && <p className="text-red-500 text-sm mt-1">{errors.teacherId.message}</p>}
           </div>
 
+          {/* Selected Slots Preview */}
+          {fields.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-700">Selected Schedule</h4>
+              <div className="space-y-2">
+                {fields.map((field, index) => {
+                  const duration = (field.endMinuteOfDay - field.startMinuteOfDay) / 60;
+                  return (
+                    <div key={field.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-green-800">
+                          {weekdayLabels[field.dayOfWeek]} {minutesToTimeString(field.startMinuteOfDay)} - {minutesToTimeString(field.endMinuteOfDay)}
+                        </span>
+                        <span className="text-xs text-green-600 ml-2">({duration.toFixed(1)}h)</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => remove(index)}
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+                <div className="text-sm text-gray-600 pt-2 border-t border-gray-200">
+                  Total weekly hours: {fields.reduce((total, field) =>
+                    total + ((field.endMinuteOfDay - field.startMinuteOfDay) / 60), 0
+                  ).toFixed(1)}h
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
@@ -154,11 +264,6 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
             <FormField name="periodEnd" label="End Date *" type="date" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <FormField name="plannedHours" label="Planned Hours *" type="number" placeholder="36" />
-            <FormField name="sessionDurationHours" label="Session Duration (hours) *" type="number" placeholder="1.5" />
-          </div>
-
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
             <div className="flex justify-end space-x-3">
               <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
@@ -169,6 +274,23 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
           </div>
         </form>
       </FormProvider>
+
+      {/* Integrated Schedule Modal */}
+      {showScheduleModal && selectedTeacherValue && (
+        <IntegratedScheduleModal
+          isOpen={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          teacherName={
+            teachersData?.data.data.find(t => t.id === selectedTeacherValue)
+              ? `${teachersData.data.data.find(t => t.id === selectedTeacherValue)?.firstName} ${teachersData.data.data.find(t => t.id === selectedTeacherValue)?.lastName}`
+              : 'Teacher'
+          }
+          schedule={null}
+          isLoading={false}
+          onSlotsChange={handleSlotsChange}
+          currentSlots={fields}
+        />
+      )}
     </Modal>
   );
 };

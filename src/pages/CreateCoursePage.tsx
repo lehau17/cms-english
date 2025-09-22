@@ -97,8 +97,7 @@ const CreateCoursePage = () => {
   const uploadMutation = useMutation({
     mutationFn: uploadFile,
     onSuccess: (data) => {
-      console.log('Upload success for course image:', data.data.url);
-      // Add timestamp to avoid caching issues
+      console.log(data)
       const imageUrl = data.data.url + '?t=' + Date.now();
       setValue('imageUrl', imageUrl);
       toast.success('Upload ảnh thành công!');
