@@ -13,6 +13,8 @@ import {
   Wifi
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
+import { getRooms } from '@/apis/room';
 
 // Mock data interface
 interface Room {
@@ -72,50 +74,18 @@ const generateMockRooms = (): Room[] => {
   return rooms.sort((a, b) => a.code.localeCompare(b.code));
 };
 
-// Mock hook for room management
+// Data hook wired to API (fallback UI stays the same)
 const useRoomManagement = () => {
-  const [allRooms] = useState<Room[]>(generateMockRooms());
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const filteredRooms = useMemo(() => {
-    return allRooms.filter(room =>
-      room.name.toLowerCase().includes(search.toLowerCase()) ||
-      room.code.toLowerCase().includes(search.toLowerCase()) ||
-      (room.location && room.location.toLowerCase().includes(search.toLowerCase()))
-    );
-  }, [allRooms, search]);
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const data = filteredRooms.slice(startIndex, endIndex);
-    const totalItems = filteredRooms.length;
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data: {
-        data: data,
-        page,
-        limit,
-        totalItems,
-        totalPages,
-        hasPrevPage: page > 1,
-        hasNextPage: page < totalPages,
-      }
-    };
-  }, [filteredRooms, page, limit]);
-
-  return {
-    data: paginatedData,
+  const {
+    data,
     isLoading,
     setPage,
     setLimit,
     setSearch,
-    request: { page, limit, search },
-  };
+    request,
+  } = useBaseRequestQuery<Room>({ queryKey: ['rooms'], queryFn: getRooms });
+
+  return { data, isLoading, setPage, setLimit, setSearch, request };
 };
 
 // Modal components (simplified for demo)
