@@ -10,7 +10,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', isLoading = false, size = 'sm', ...props }) => {
   const sizeClasses = size === 'sm' ? 'px-4 py-2 text-sm rounded-lg' : 'px-5 py-2.5 text-base rounded-xl';
-  const baseClasses = `${sizeClasses} font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed`;
+  const baseClasses = `${sizeClasses} font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex flex-rol items-center justify-center gap-2`;
 
   const variantClasses = {
     primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',

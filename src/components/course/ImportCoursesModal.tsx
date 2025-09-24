@@ -151,6 +151,10 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
       setSelectedFiles(prev => [...prev, ...newFiles]);
       toast.success(`✅ Thêm ${newFiles.length} file thành công`);
     }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const removeFile = (index: number) => {
@@ -190,10 +194,14 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={handleClose} />
+      <div className="relative flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 z-0 transition-opacity bg-gray-900/25 backdrop-blur-sm"
+          onClick={handleClose}
+        />
 
-        <div className="inline-block w-full max-w-4xl px-6 py-8 overflow-hidden text-left align-bottom transition-all transform bg-white shadow-xl rounded-2xl sm:my-8 sm:align-middle">
+        <div className="relative z-10 inline-block w-full max-w-4xl px-6 py-8 overflow-hidden text-left align-bottom transition-all transform bg-white shadow-xl rounded-2xl sm:my-8 sm:align-middle">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-gray-900">
@@ -214,7 +222,6 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
                 ? 'border-blue-500 bg-blue-50 scale-105'
                 : 'border-gray-300 hover:border-blue-400 hover:bg-blue-25'
               } ${importMutation.isPending ? 'pointer-events-none opacity-50' : ''}`}
-            onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => {
               e.preventDefault();
               setIsDragOver(true);

@@ -1,8 +1,8 @@
-import { updateCourse } from '@/apis/course';
+import { getCourseById, updateCourse } from '@/apis/course';
 import { useTeachers } from '@/hooks/useTeacher';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, BookOpen, Edit, GripVertical, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
@@ -70,6 +70,19 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
   const queryClient = useQueryClient();
   const { data: teachersData, isLoading: isLoadingTeachers } = useTeachers({ limit: 1000 });
   const [activeTab, setActiveTab] = useState<'course' | 'lessons'>('course');
+  const courseId = course?.id;
+
+  const {
+    data: courseDetailResponse,
+    isLoading: isLoadingCourseDetail,
+  } = useQuery({
+    queryKey: ['course-detail', courseId],
+    queryFn: () => getCourseById(courseId as string),
+    enabled: Boolean(isOpen && courseId),
+    staleTime: 30 * 1000,
+  });
+
+  const detailCourse = courseDetailResponse?.data ?? course ?? null;
 
   const methods = useForm<EditCourseFormValues>({
     resolver: yupResolver(schema),
@@ -82,16 +95,16 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
   });
 
   useEffect(() => {
-    if (course) {
+    if (isOpen && detailCourse) {
       reset({
-        title: course.title,
-        description: course.description || '',
-        price: course.price || 0,
-        instructorId: course.instructorId,
-        difficulty: course.difficulty,
-        language: course.language,
-        isPublished: course.isPublished,
-        lessons: course.lessons?.map(lesson => ({
+        title: detailCourse.title,
+        description: detailCourse.description || '',
+        price: detailCourse.price || 0,
+        instructorId: detailCourse.instructorId,
+        difficulty: detailCourse.difficulty,
+        language: detailCourse.language,
+        isPublished: detailCourse.isPublished ?? false,
+        lessons: detailCourse.lessons?.map(lesson => ({
           id: lesson.id,
           title: lesson.title,
           description: lesson.description || '',
@@ -103,7 +116,13 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
         })) || [],
       });
     }
-  }, [course, reset]);
+  }, [detailCourse, reset, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setActiveTab('course');
+    }
+  }, [isOpen]);
 
   const editMutation = useMutation({
     mutationFn: (data: Partial<Course>) => {
@@ -114,10 +133,13 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
           objectives: lesson.objectives ? lesson.objectives.split('\n').filter(obj => obj.trim()) : [],
         })),
       };
-      return updateCourse(course!.id, courseData);
+      return updateCourse(courseId as string, courseData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      if (courseId) {
+        queryClient.invalidateQueries({ queryKey: ['course-detail', courseId] });
+      }
       onClose();
     },
   });
@@ -161,7 +183,7 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
     return total + time;
   }, 0);
 
-  if (!course) return null;
+  if (!course || !detailCourse) return null;
 
   return (
     <Modal
@@ -170,12 +192,46 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
       title="Edit Course"
       description="Update course details and manage lessons"
       icon={<Edit className="w-6 h-6 text-purple-600" />}
+      maxWidthClass="max-w-4xl"
+      overlayClassName="bg-gray-900/25 backdrop-blur-sm"
+      contentClassName="bg-white/95 border border-gray-100"
     >
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="max-h-[calc(90vh-200px)] overflow-hidden flex flex-col">
+        <form onSubmit={handleSubmit(onSubmit)} className="relative max-h-[calc(90vh-200px)] overflow-hidden flex flex-col">
+          {isLoadingCourseDetail && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-purple-600">
+                <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
+                <span className="text-sm font-medium">Loading course details...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Hero Header */}
+          <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white px-5 py-4 rounded-t-xl shadow-inner">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide opacity-80">Editing course</p>
+                <h2 className="text-xl font-semibold leading-snug">{detailCourse.title}</h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1">
+                  <BookOpen className="h-4 w-4" /> ID: <span className="font-mono text-[11px]">{detailCourse.id}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1">
+                  {detailCourse.isPublished ? '✅ Published' : '📝 Draft'}
+                </span>
+                {detailCourse.language && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1">
+                    🌐 {detailCourse.language.toUpperCase()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Tab Navigation */}
-          <div className="flex bg-gray-50 rounded-t-xl border-b border-gray-200">
+          <div className="flex bg-gray-50 border-b border-gray-200">
             <button
               type="button"
               onClick={() => setActiveTab('course')}
@@ -220,7 +276,7 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
                       <div className="text-gray-600">Duration</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-green-600 text-lg">{course.isPublished ? '✅' : '❌'}</div>
+                      <div className="font-semibold text-green-600 text-lg">{detailCourse.isPublished ? '✅' : '❌'}</div>
                       <div className="text-gray-600">Published</div>
                     </div>
                     <div className="text-center">
@@ -287,13 +343,13 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
                     <div>
                       <span className="text-gray-600">Created:</span>
                       <span className="ml-2 font-medium">
-                        {new Date(course.createdAt).toLocaleDateString('vi-VN')} at {new Date(course.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        {detailCourse.createdAt ? `${new Date(detailCourse.createdAt).toLocaleDateString('vi-VN')} at ${new Date(detailCourse.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'N/A'}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-600">Last Updated:</span>
                       <span className="ml-2 font-medium">
-                        {new Date(course.updatedAt).toLocaleDateString('vi-VN')} at {new Date(course.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        {detailCourse.updatedAt ? `${new Date(detailCourse.updatedAt).toLocaleDateString('vi-VN')} at ${new Date(detailCourse.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -351,6 +407,12 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
                         <span className="text-gray-600 ml-1">🔒 Locked</span>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {lessonFields.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 p-6 text-center text-sm text-gray-500">
+                    No lessons added yet. Use “Add Lesson” to create the first lesson for this course.
                   </div>
                 )}
 
