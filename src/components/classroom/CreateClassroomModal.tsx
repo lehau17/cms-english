@@ -1,6 +1,7 @@
 import { createClassroom } from '@/apis/classroom';
 import { useCourses } from '@/hooks/useCourse';
 import { useTeachers } from '@/hooks/useTeacher';
+import { useTeacherSchedule } from '@/hooks/useTeacherSchedule';
 import { Classroom } from '@/interface/classroom.interface';
 import { Weekday } from '@/interface/enums';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -90,6 +91,16 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
 
   // Watch for teacher changes to enable schedule viewing
   const selectedTeacherValue = watch('teacherId');
+  const selectedPeriodStart = watch('periodStart');
+  const selectedPeriodEnd = watch('periodEnd');
+
+  const weekStartParam = selectedPeriodStart ? new Date(selectedPeriodStart).toISOString() : undefined;
+  const weekEndParam = selectedPeriodEnd ? new Date(selectedPeriodEnd).toISOString() : undefined;
+
+  const {
+    data: teacherSchedule,
+    isLoading: isTeacherScheduleLoading,
+  } = useTeacherSchedule(selectedTeacherId, weekStartParam, weekEndParam, showScheduleModal);
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Classroom>) => createClassroom(data),
@@ -276,17 +287,13 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
       </FormProvider>
 
       {/* Integrated Schedule Modal */}
-      {showScheduleModal && selectedTeacherValue && (
+      {showScheduleModal && selectedTeacherId && (
         <IntegratedScheduleModal
           isOpen={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
-          teacherName={
-            teachersData?.data.data.find(t => t.id === selectedTeacherValue)
-              ? `${teachersData.data.data.find(t => t.id === selectedTeacherValue)?.firstName} ${teachersData.data.data.find(t => t.id === selectedTeacherValue)?.lastName}`
-              : 'Teacher'
-          }
-          schedule={null}
-          isLoading={false}
+          teacherName={selectedTeacherName || 'Teacher'}
+          schedule={teacherSchedule?.schedule ?? null}
+          isLoading={isTeacherScheduleLoading}
           onSlotsChange={handleSlotsChange}
           currentSlots={fields}
         />
