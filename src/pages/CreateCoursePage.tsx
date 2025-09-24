@@ -1,12 +1,13 @@
-import { createCourse, importCoursesFromExcel } from "@/apis/course";
+import { createCourse } from "@/apis/course";
 import { getTeachers } from "@/apis/teacher";
 import { uploadFile } from "@/apis/upload";
+import ImportCoursesModal from "@/components/course/ImportCoursesModal";
 import LessonActivities from "@/components/course/LessonActivities";
 import { CreateCourseDto } from "@/interface/course.interface";
 import { ActivityType, DifficultyLevel, LanguageCode } from "@/interface/enums";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Brain, Check, ChevronLeft, ChevronRight, Eye, GripVertical, Plus, Trash2, Upload, X } from 'lucide-react';
+import { BookOpen, Brain, Check, ChevronLeft, ChevronRight, Eye, FileSpreadsheet, GripVertical, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -17,7 +18,6 @@ const difficultyOptions = Object.values(DifficultyLevel).map(level => ({
   value: level,
   label: level.charAt(0).toUpperCase() + level.slice(1),
 }));
-
 
 const courseSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -54,16 +54,14 @@ const courseSchema = z.object({
 const CreateCoursePage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [selectedExcelFiles, setSelectedExcelFiles] = useState<File[]>([]);
-  const [isImportDragOver, setIsImportDragOver] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const excelInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: teachersData, isLoading: isLoadingTeachers } = useQuery({
     queryKey: ['teachers'],
-    queryFn: () => getTeachers({ page: 1, limit: 100 }), // Fetch all teachers
+    queryFn: () => getTeachers({ page: 1, limit: 100 }),
   });
 
   const { mutate, isPending: isCreating } = useMutation({
@@ -73,7 +71,7 @@ const CreateCoursePage = () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       navigate('/courses');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message || 'Failed to create course');
     }
   });
@@ -96,50 +94,14 @@ const CreateCoursePage = () => {
   // Hook upload file
   const uploadMutation = useMutation({
     mutationFn: uploadFile,
-    onSuccess: (data) => {
-      console.log(data)
+    onSuccess: (data: any) => {
       const imageUrl = data.data.url + '?t=' + Date.now();
       setValue('imageUrl', imageUrl);
       toast.success('Upload ảnh thành công!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Upload error for course image:', error);
       toast.error('Upload ảnh thất bại!');
-    }
-  });
-
-  // Hook import Excel
-  const importMutation = useMutation({
-    mutationFn: importCoursesFromExcel,
-    onSuccess: (data) => {
-      console.log('Import success:', data);
-      const totalImportedCourses = data.results
-        .filter(r => r.success)
-        .reduce((sum, r) => sum + (r.data?.totalCourses || 0), 0);
-
-      const totalLessons = data.results
-        .filter(r => r.success)
-        .reduce((sum, r) => sum + r.data?.results?.length! || 0, 0);
-
-      const totalActivities = data.results
-        .filter(r => r.success)
-        .reduce((sum, r) => sum + r.data?.results?.reduce((actSum, course) => actSum + (course.activities || 0), 0) || 0, 0);
-
-      toast.success(`Import thành công! Đã tạo ${totalImportedCourses} khóa học, ${totalLessons} bài học, ${totalActivities} hoạt động từ ${data.successfulImports}/${data.totalFiles} file.`);
-
-      setSelectedExcelFiles([]);
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
-
-      // Show errors if any
-      const errors = data.results.filter(r => !r.success);
-      if (errors.length > 0) {
-        toast.error(`Có ${errors.length} file import thất bại. Kiểm tra console để biết chi tiết.`);
-        console.warn('Import errors:', errors);
-      }
-    },
-    onError: (error: any) => {
-      console.error('Import error:', error);
-      toast.error(error.response?.data?.message || 'Import thất bại!');
     }
   });
 
@@ -147,48 +109,6 @@ const CreateCoursePage = () => {
     control,
     name: "lessons",
   });
-
-  // Helper functions for Excel import
-  const handleExcelFileSelect = (files: FileList | null) => {
-    if (!files) return;
-
-    const excelFiles = Array.from(files).filter(file => {
-      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-        file.type === 'application/vnd.ms-excel' ||
-        file.name.endsWith('.xlsx') ||
-        file.name.endsWith('.xls');
-      return isExcel;
-    });
-
-    if (excelFiles.length === 0) {
-      toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
-      return;
-    }
-
-    const duplicateFiles = excelFiles.filter(file =>
-      selectedExcelFiles.some(selected => selected.name === file.name && selected.size === file.size)
-    );
-
-    if (duplicateFiles.length > 0) {
-      toast.error(`File ${duplicateFiles[0]?.name || 'unknown'} đã được chọn`);
-      return;
-    }
-
-    setSelectedExcelFiles(prev => [...prev, ...excelFiles]);
-    toast.success(`Đã thêm ${excelFiles.length} file Excel`);
-  };
-
-  const removeExcelFile = (index: number) => {
-    setSelectedExcelFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleImportExcel = () => {
-    if (selectedExcelFiles.length === 0) {
-      toast.error('Vui lòng chọn ít nhất một file Excel');
-      return;
-    }
-    importMutation.mutate(selectedExcelFiles);
-  };
 
   const steps = [
     { number: 1, title: 'Course Info', icon: BookOpen, color: 'text-blue-600' },
@@ -610,127 +530,19 @@ const CreateCoursePage = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">Create New Course</h1>
           <p className="text-xl text-gray-600">Build a comprehensive course with lessons and activities</p>
-        </div>
 
-        {/* Excel Import Section */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-              Import Courses from Excel
-            </h3>
-
-            {/* Drag & Drop Area */}
-            <div
-              className={`group relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer mb-6 ${isImportDragOver
-                ? 'border-green-500 bg-green-50 scale-105 shadow-lg'
-                : 'border-gray-300 hover:border-green-400 hover:bg-green-25 hover:shadow-md'
-                } ${selectedExcelFiles.length > 0 ? 'bg-gray-50' : 'bg-white'}`}
-              onClick={() => {
-                if (!importMutation.isPending && excelInputRef.current) {
-                  excelInputRef.current.click();
-                }
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsImportDragOver(true);
-              }}
-              onDragLeave={() => setIsImportDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsImportDragOver(false);
-                handleExcelFileSelect(e.dataTransfer.files);
-              }}
+          {/* Quick Import Button */}
+          <div className="mt-6">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <div className="space-y-4">
-                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Upload className={`w-8 h-8 ${isImportDragOver ? 'text-green-600 animate-bounce' : 'text-green-400 group-hover:text-green-600'} transition-all duration-300`} />
-                </div>
-                <div>
-                  <p className="text-lg font-medium text-gray-700 mb-1">
-                    {isImportDragOver ? 'Drop your Excel files here!' : 'Drag & drop Excel files'}
-                  </p>
-                  <p className="text-sm text-gray-500">or click to browse files (.xlsx, .xls)</p>
-                  <p className="text-xs text-gray-400 mt-2">Multiple files supported • Auto-generates audio for vocabulary activities</p>
-                </div>
-              </div>
-              <input
-                ref={excelInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                multiple
-                onChange={(e) => handleExcelFileSelect(e.target.files)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-            </div>
-
-            {/* Selected Files List */}
-            {selectedExcelFiles.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-md font-semibold text-gray-700 mb-3">Selected Files ({selectedExcelFiles.length})</h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {selectedExcelFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <BookOpen className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">{file.name}</p>
-                          <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeExcelFile(index)}
-                        className="text-red-500 hover:text-red-700 transition-colors p-1"
-                        disabled={importMutation.isPending}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Import Button */}
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={handleImportExcel}
-                disabled={selectedExcelFiles.length === 0 || importMutation.isPending}
-                className={`flex items-center px-8 py-3 rounded-xl font-semibold transition-all ${selectedExcelFiles.length === 0 || importMutation.isPending
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
-                  }`}
-              >
-                {importMutation.isPending ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                    Importing...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5 mr-2" />
-                    Import {selectedExcelFiles.length} Course{selectedExcelFiles.length !== 1 ? 's' : ''}
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Import Progress */}
-            {importMutation.isPending && (
-              <div className="mt-4 text-center">
-                <div className="inline-flex items-center text-green-600 bg-green-50 px-4 py-2 rounded-full">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600 mr-3"></div>
-                  <span className="font-medium">Processing Excel files and generating audio...</span>
-                </div>
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">This may take a few minutes for large files</p>
-              </div>
-            )}
+              <FileSpreadsheet className="w-5 h-5 mr-2" />
+              📚 Import from Excel
+            </button>
+            <p className="text-sm text-gray-500 mt-2">
+              Quickly create multiple courses with auto-generated audio
+            </p>
           </div>
         </div>
 
@@ -787,6 +599,12 @@ const CreateCoursePage = () => {
             </div>
           </div>
         </form>
+
+        {/* Import Modal */}
+        <ImportCoursesModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+        />
       </div>
     </div>
   );
