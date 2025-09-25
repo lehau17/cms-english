@@ -54,6 +54,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import moment from "moment";
 
 /* ====================== Types ====================== */
 type CourseSlice = {
@@ -63,20 +64,28 @@ type CourseSlice = {
 };
 
 type UpcomingClass = {
-  id: number | string;
-  name: string;
-  teacher: string;
-  time: string;
-  room: string;
-  students: number;
+  id: string;
+  classroomName: string;
+  courseTitle?: string;
+  teacherName: string;
+  startTime: string;
+  endTime: string;
+  roomName?: string | null;
+  activeStudents: number;
+  maxStudents?: number | null;
 };
 
 type NotifType = "success" | "warning" | "error" | "info";
 
 type NotificationItem = {
+  id: string;
+  title: string;
+  message?: string | null;
   type: NotifType;
-  message: string;
+  createdAt: string;
 };
+
+const COURSE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#9254DE", "#F759AB"];
 
 type StatCardProps = {
   title: string;
@@ -97,30 +106,42 @@ const DashboardPage: React.FC = () => {
 
   const handleMenuClose = () => setAnchorEl(null);
 
-  // TODO: Replace with data from API
-  const courseDistribution: CourseSlice[] = [
-    { name: "IELTS", value: 35, color: "#0088FE" },
-    { name: "TOEIC", value: 25, color: "#00C49F" },
-    { name: "Giao tiếp", value: 20, color: "#FFBB28" },
-    { name: "Thiếu nhi", value: 15, color: "#FF8042" },
-    { name: "Khác", value: 5, color: "#8884D8" },
-  ];
+  const data = dashboardData?.data;
 
-  // TODO: Replace with data from API
-  const upcomingClasses: UpcomingClass[] = [
-    { id: 1, name: "IELTS Foundation", teacher: "Nguyễn Văn A", time: "18:00 - 20:00", room: "A201", students: 12 },
-    { id: 2, name: "Business English", teacher: "Trần Thị B", time: "19:00 - 21:00", room: "B102", students: 8 },
-    { id: 3, name: "Kids English", teacher: "Lê Văn C", time: "17:00 - 18:30", room: "C203", students: 15 },
-    { id: 4, name: "TOEIC 700+", teacher: "Phạm Thị D", time: "20:00 - 22:00", room: "A301", students: 10 },
-  ];
+  const courseDistribution = React.useMemo<CourseSlice[]>(() => {
+    if (!data?.courseDistribution?.length) return [];
+    return data.courseDistribution.map((item, index) => ({
+      name: item.label,
+      value: item.value,
+      color: COURSE_COLORS[index % COURSE_COLORS.length],
+    }));
+  }, [data?.courseDistribution]);
 
-  // TODO: Replace with data from API
-  const notifications: NotificationItem[] = [
-    { type: "success", message: "5 học viên mới đăng ký hôm nay" },
-    { type: "warning", message: "3 học viên sắp hết hạn học phí" },
-    { type: "info", message: "Cuộc họp giáo viên lúc 14:00" },
-    { type: "error", message: "2 lớp thiếu giáo viên tuần sau" },
-  ];
+  const upcomingClasses: UpcomingClass[] = React.useMemo(() => {
+    return data?.upcomingClasses ?? [];
+  }, [data?.upcomingClasses]);
+
+  const normalizeNotificationType = (type: string): NotifType => {
+    switch (type) {
+      case "success":
+      case "warning":
+      case "error":
+      case "info":
+        return type;
+      default:
+        return "info";
+    }
+  };
+
+  const notifications: NotificationItem[] = React.useMemo(() => {
+    return (data?.notifications ?? []).map((notif) => ({
+      id: notif.id,
+      title: notif.title,
+      message: notif.message,
+      type: normalizeNotificationType(notif.type),
+      createdAt: notif.createdAt,
+    }));
+  }, [data?.notifications]);
 
   const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon, color }) => (
     <Card sx={{ height: "100%" }}>
@@ -175,8 +196,6 @@ const DashboardPage: React.FC = () => {
     return <Alert severity="error">{error.message}</Alert>;
   }
 
-  const data = dashboardData?.data;
-
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       {/* Header */}
@@ -219,11 +238,33 @@ const DashboardPage: React.FC = () => {
                 Thông báo quan trọng
               </Typography>
               <Stack spacing={2}>
-                {notifications.map((notif, index) => (
-                  <Alert key={index} severity={notif.type} icon={getNotificationIcon(notif.type)}>
-                    {notif.message}
+                {notifications.length === 0 ? (
+                  <Alert severity="info" icon={getNotificationIcon('info')}>
+                    Không có thông báo mới.
                   </Alert>
-                ))}
+                ) : (
+                  notifications.map((notif) => (
+                    <Alert
+                      key={notif.id}
+                      severity={notif.type}
+                      icon={getNotificationIcon(notif.type)}
+                    >
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                          {notif.title}
+                        </Typography>
+                        {notif.message && (
+                          <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
+                            {notif.message}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="textSecondary">
+                          {moment(notif.createdAt).fromNow()}
+                        </Typography>
+                      </Box>
+                    </Alert>
+                  ))
+                )}
               </Stack>
             </CardContent>
           </Card>
@@ -245,16 +286,28 @@ const DashboardPage: React.FC = () => {
                   <MenuItem onClick={handleMenuClose}>Xem chi tiết</MenuItem>
                 </Menu>
               </Box>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={data?.registrationTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <RechartsTooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="count" stroke="#82ca9d" name="Số học viên" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              {data?.registrationTrend?.length ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={data.registrationTrend}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <RechartsTooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#82ca9d"
+                      name="Số học viên"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <Typography variant="body2" color="textSecondary">
+                  Chưa có dữ liệu đăng ký gần đây.
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -265,23 +318,30 @@ const DashboardPage: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Phân bố khóa học
               </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={courseDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false} outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {courseDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              {courseDistribution.length ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={courseDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {courseDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <Typography variant="body2" color="textSecondary">
+                  Chưa có dữ liệu phân bố khóa học.
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -307,19 +367,48 @@ const DashboardPage: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {upcomingClasses.map((cls) => (
-                      <TableRow key={cls.id}>
-                        <TableCell>{cls.name}</TableCell>
-                        <TableCell>{cls.teacher}</TableCell>
-                        <TableCell>
-                          <Chip icon={<Schedule />} label={cls.time} size="small" variant="outlined" />
-                        </TableCell>
-                        <TableCell>{cls.room}</TableCell>
-                        <TableCell align="right">
-                          {cls.students}/15
+                    {upcomingClasses.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">
+                          <Typography variant="body2" color="textSecondary">
+                            Không có lớp học nào trong vài giờ tới.
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      upcomingClasses.map((cls) => (
+                        <TableRow key={cls.id}>
+                          <TableCell>
+                            <Stack spacing={0.5}>
+                              <Typography variant="body2" fontWeight={600}>
+                                {cls.classroomName}
+                              </Typography>
+                              {cls.courseTitle && (
+                                <Typography variant="caption" color="textSecondary">
+                                  {cls.courseTitle}
+                                </Typography>
+                              )}
+                            </Stack>
+                          </TableCell>
+                          <TableCell>{cls.teacherName}</TableCell>
+                          <TableCell>
+                            <Chip
+                              icon={<Schedule />}
+                              label={`${moment(cls.startTime).format('HH:mm')} - ${moment(cls.endTime).format('HH:mm')}`}
+                              size="small"
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>{cls.roomName ?? 'Chưa phân phòng'}</TableCell>
+                          <TableCell align="right">
+                            {cls.activeStudents}
+                            {typeof cls.maxStudents === 'number' && cls.maxStudents > 0
+                              ? `/${cls.maxStudents}`
+                              : ''}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
