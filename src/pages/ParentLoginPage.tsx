@@ -47,12 +47,11 @@ export default function ParentLoginPage() {
   const onSubmit = async (values: FormValues) => {
     try {
       const res = await loginMutation.mutateAsync(values)
-      console.log("Check res", res)
       // res: { token, user }
       login({ token: res.data.accessToken, user: res.data.user })
       navigate(from, { replace: true })
     } catch (err) {
-      console.error("Login failed:", err)
+      // Login error will be handled by toast notifications
     }
   }
 
