@@ -47,7 +47,7 @@ const ViewCourseModal: React.FC<ViewCourseModalProps> = ({
           onClick={onClose}
         />
 
-        <div className="relative z-10 inline-block w-full max-w-4xl overflow-y-auto text-left align-bottom transition-all transform bg-white shadow-xl rounded-2xl sm:my-8 sm:align-middle max-h-[90vh]">
+        <div className="relative z-10 inline-block w-full max-w-5xl overflow-y-auto text-left align-bottom transition-all transform bg-white shadow-xl rounded-2xl sm:my-8 sm:align-middle max-h-[90vh]">
           {/* Header */}
           <div className="relative">
             {/* Course Image */}

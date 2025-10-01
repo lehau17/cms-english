@@ -136,6 +136,7 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({ isOpen, onClose }
       title="Create New Course"
       description="Create a comprehensive course with lessons"
       icon={<BookOpen className="w-6 h-6 text-purple-600" />}
+      maxWidthClass="max-w-5xl"
     >
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} className="max-h-[calc(90vh-200px)] overflow-hidden flex flex-col">
