@@ -1,5 +1,6 @@
-import { CalendarMonth, Class, Person, RoomOutlined, School } from "@mui/icons-material";
+import { CalendarMonth, Class, FamilyRestroom, Person, RoomOutlined, School } from "@mui/icons-material";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
+import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -24,8 +25,10 @@ const NAV: NavItem[] = [
   { to: "/settings", label: "Settings", icon: <SettingsOutlinedIcon /> },
   { to: "/students", label: "Student", icon: <Person /> },
   { to: "/teachers", label: "Teacher", icon: <Person /> },
+  { to: "/parents", label: "Parents", icon: <FamilyRestroom /> },
   { to: "/classrooms", label: "Class", icon: <Class /> },
   { to: "/courses", label: "Course", icon: <School /> },
+  { to: "/assignments", label: "Assignments", icon: <AssignmentOutlinedIcon /> },
   { to: "/schedule", label: "Schedule", icon: <CalendarMonth /> },
   { to: "/rooms", label: "Room", icon: <RoomOutlined /> },
   { to: "/api-report", label: "API Report", icon: <AssessmentOutlinedIcon /> },
@@ -45,7 +48,7 @@ export function Sidebar() {
       const next = !v;
       localStorage.setItem("cms_sidebar", next ? "collapsed" : "expanded");
       // Notify layout to recalc widths
-      try { window.dispatchEvent(new Event("cms:sidebar-toggle")); } catch {}
+      try { window.dispatchEvent(new Event("cms:sidebar-toggle")); } catch { }
       return next;
     });
   };

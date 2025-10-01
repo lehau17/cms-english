@@ -1,6 +1,7 @@
 import { importCoursesFromExcel, ImportCoursesResponse } from '@/apis/course';
+import { useDownloadCourseTemplate } from '@/hooks/useCourse';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, FileText, RefreshCw, Trash2, Upload, X } from 'lucide-react';
+import { CheckCircle, Download, FileText, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -28,6 +29,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
   const [importResults, setImportResults] = useState<ImportCoursesResponse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const downloadTemplateMutation = useDownloadCourseTemplate();
 
   // Validate file before adding
   const validateFile = (file: File): string | null => {
@@ -207,20 +209,31 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
             <h3 className="text-2xl font-bold text-gray-900">
               📚 Import Courses from Excel
             </h3>
-            <button
-              onClick={handleClose}
-              disabled={importMutation.isPending}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => downloadTemplateMutation.mutate()}
+                disabled={downloadTemplateMutation.isPending}
+                className="flex items-center px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-medium rounded-lg transition-colors disabled:opacity-50"
+                title="Download template Excel để import"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {downloadTemplateMutation.isPending ? 'Downloading...' : 'Template'}
+              </button>
+              <button
+                onClick={handleClose}
+                disabled={importMutation.isPending}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
           {/* File Drop Zone */}
           <div
             className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer mb-6 ${isDragOver
-                ? 'border-blue-500 bg-blue-50 scale-105'
-                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-25'
+              ? 'border-blue-500 bg-blue-50 scale-105'
+              : 'border-gray-300 hover:border-blue-400 hover:bg-blue-25'
               } ${importMutation.isPending ? 'pointer-events-none opacity-50' : ''}`}
             onDragOver={(e) => {
               e.preventDefault();
@@ -402,8 +415,8 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
               onClick={handleImport}
               disabled={selectedFiles.length === 0 || importMutation.isPending}
               className={`px-6 py-2 font-semibold rounded-lg transition-colors ${selectedFiles.length === 0 || importMutation.isPending
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
             >
               {importMutation.isPending ? (

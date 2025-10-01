@@ -61,3 +61,10 @@ export const importCoursesFromExcel = async (files: File[]) => {
   });
   return response.data.data
 };
+
+export const downloadCourseTemplate = async (): Promise<Blob> => {
+  const response = await axiosInstance.get("/private/v1/courses/templates/download", {
+    responseType: 'blob',
+  });
+  return response.data;
+};

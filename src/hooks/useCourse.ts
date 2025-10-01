@@ -1,4 +1,4 @@
-import { createCourse, deleteCourse, getCourseById, getCourses, updateCourse } from "@/apis/course";
+import { createCourse, deleteCourse, downloadCourseTemplate, getCourseById, getCourses, updateCourse } from "@/apis/course";
 import { ApiResponse } from "@/interface/base-response.interface";
 import { Course } from "@/interface/course.interface";
 import { PageResponseDto } from "@/interface/pagination.inerface";
@@ -50,6 +50,23 @@ export const useDeleteCourse = () => {
     mutationFn: deleteCourse,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
+    },
+  });
+};
+
+export const useDownloadCourseTemplate = () => {
+  return useMutation<Blob, Error>({
+    mutationFn: downloadCourseTemplate,
+    onSuccess: (blob) => {
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'course-import-template.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     },
   });
 };

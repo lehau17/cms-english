@@ -194,7 +194,12 @@ const defaultContentByType = (type: ActivityType) => {
         ]
       };
     case ActivityType.LISTENING:
-      return { audioUrl: "", prompt: "", options: ["", ""], correctIndex: 0 };
+      return {
+        audioUrl: "",
+        questions: [
+          { question: "", options: ["", ""], correctIndex: 0 }
+        ]
+      };
     case ActivityType.PRONUNCIATION:
       return { phrase: "", tips: [""], sampleUrl: "" };
     case ActivityType.SPEAKING:
@@ -402,6 +407,129 @@ function OptionsEditor({
   );
 }
 
+// ====== Editor cho LISTENING QUESTIONS ======
+function ListeningQuestionsEditor({
+  basePath,
+  control,
+  register,
+}: {
+  basePath: string;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+}) {
+  const { fields, append, remove } = useFieldArray({ control, name: basePath as any });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">Questions</label>
+        <button
+          type="button"
+          onClick={() => append({ question: "", options: ["", ""], correctIndex: 0 })}
+          className="text-purple-700 border border-purple-300 px-3 py-1 rounded text-sm hover:bg-purple-50"
+        >
+          + Add Question
+        </button>
+      </div>
+
+      {fields.map((field, questionIndex) => (
+        <div key={field.id} className="p-4 border border-gray-200 rounded-lg bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-gray-700">Question #{questionIndex + 1}</h4>
+            <button
+              type="button"
+              onClick={() => remove(questionIndex)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <input
+              {...register(`${basePath}.${questionIndex}.question` as const)}
+              className="w-full px-3 py-2 text-sm border rounded-lg"
+              placeholder="Enter your question"
+            />
+
+            <ListeningQuestionOptionsEditor
+              basePath={`${basePath}.${questionIndex}`}
+              control={control}
+              register={register}
+            />
+          </div>
+        </div>
+      ))}
+
+      {fields.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p className="mb-2">No questions added yet</p>
+          <button
+            type="button"
+            onClick={() => append({ question: "", options: ["", ""], correctIndex: 0 })}
+            className="text-purple-700 border border-purple-300 px-4 py-2 rounded hover:bg-purple-50"
+          >
+            Add First Question
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ====== Editor cho LISTENING QUESTION OPTIONS ======
+function ListeningQuestionOptionsEditor({
+  basePath,
+  control,
+  register,
+}: {
+  basePath: string;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+}) {
+  const optionsName = `${basePath}.options`;
+  const { fields, append, remove } = useFieldArray({ control, name: optionsName as any });
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-gray-600">Answer Options</label>
+      <div className="space-y-2">
+        {fields.map((field, optionIndex) => (
+          <div key={field.id} className="flex items-center gap-2">
+            <input
+              {...register(`${optionsName}.${optionIndex}` as const)}
+              className="flex-1 px-3 py-2 text-sm border rounded-lg"
+              placeholder={`Option ${optionIndex + 1}`}
+            />
+            <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border rounded-lg whitespace-nowrap">
+              <input
+                type="radio"
+                value={optionIndex}
+                {...register(`${basePath}.correctIndex` as const, { valueAsNumber: true })}
+              />
+              Correct
+            </label>
+            <button
+              type="button"
+              onClick={() => remove(optionIndex)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => append("")}
+        className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs hover:bg-purple-50"
+      >
+        + Add Option
+      </button>
+    </div>
+  );
+}
+
 // ====== Editor cho FLASHCARD ======
 function FlashcardsEditor({
   basePath,
@@ -518,7 +646,7 @@ function ActivityContentFields({
     case ActivityType.LISTENING:
       return section(
         <>
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="mb-4">
             <UploadField
               key={`listening-audio-${lessonIndex}-${activityIndex}`}
               name={`${basePath}.content.audioUrl`}
@@ -530,9 +658,12 @@ function ActivityContentFields({
               watch={watch}
               type="audio"
             />
-            <input {...register(`${basePath}.content.prompt` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
           </div>
-          <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
+          <ListeningQuestionsEditor
+            basePath={`${basePath}.content.questions`}
+            control={control}
+            register={register}
+          />
         </>,
         "Listening"
       );
