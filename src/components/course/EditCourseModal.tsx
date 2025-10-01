@@ -192,7 +192,7 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
       title="Edit Course"
       description="Update course details and manage lessons"
       icon={<Edit className="w-6 h-6 text-purple-600" />}
-      maxWidthClass="max-w-4xl"
+      maxWidthClass="max-w-5xl"
       overlayClassName="bg-gray-900/25 backdrop-blur-sm"
       contentClassName="bg-white/95 border border-gray-100"
     >

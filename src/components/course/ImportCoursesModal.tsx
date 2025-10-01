@@ -203,7 +203,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
           onClick={handleClose}
         />
 
-        <div className="relative z-10 inline-block w-full max-w-4xl px-6 py-8 overflow-hidden text-left align-bottom transition-all transform bg-white shadow-xl rounded-2xl sm:my-8 sm:align-middle">
+        <div className="relative z-10 inline-block w-full max-w-5xl px-6 py-8 overflow-hidden text-left align-bottom transition-all transform bg-white shadow-xl rounded-2xl sm:my-8 sm:align-middle">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-gray-900">
