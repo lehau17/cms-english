@@ -1,4 +1,4 @@
-import { assignmentApi } from '@/apis/assignment';
+import { Assignment, assignmentApi } from '@/apis/assignment';
 import { getClassroomById } from '@/apis/classroom';
 import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
@@ -44,12 +44,12 @@ const ClassroomDetailPage: React.FC = () => {
   });
 
   // Fetch course data if classroom has a courseId
-  const classroom = (classroomData?.data || classroomDetailData?.data) as Classroom | undefined;
+  const classroom = (classroomData || classroomDetailData?.data) as Classroom | undefined;
   const courseId = classroom?.courseId;
 
   const { data: courseData, isLoading: isLoadingCourse } = useQuery({
     queryKey: ['course', courseId],
-    queryFn: () => getCourseById(courseId),
+    queryFn: () => getCourseById(courseId as string),
     enabled: !!courseId,
   });
 
@@ -88,7 +88,7 @@ const ClassroomDetailPage: React.FC = () => {
   }
 
   const course = courseData?.data;
-  const assignments = assignmentsData?.data?.assignments || [];
+  const assignments: Assignment[] = assignmentsData?.data?.assignments || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50 p-6">
