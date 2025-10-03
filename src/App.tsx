@@ -10,6 +10,7 @@ import CoursePage from "./pages/CoursePage";
 import CreateAssignmentPage from "./pages/CreateAssignmentPage";
 import CreateCoursePage from "./pages/CreateCoursePage";
 import DashboardPage from "./pages/DashboardPage";
+import EditCoursePage from "./pages/EditCoursePage";
 import LoginPage from "./pages/LoginPage";
 import ParentLoginPage from "./pages/ParentLoginPage";
 import ParentPage from "./pages/ParentPage";
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
           { path: "/rooms", element: <RoomPage /> },
           { path: "/courses", element: <CoursePage /> },
           { path: "/create-course", element: <CreateCoursePage /> },
+          { path: "/courses/edit/:id", element: <EditCoursePage /> },
           { path: "/assignments", element: <AssignmentPage /> },
           { path: "/create-assignment", element: <CreateAssignmentPage /> },
           { path: "/assignments/create", element: <CreateAssignmentPage /> },

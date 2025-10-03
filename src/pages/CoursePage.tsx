@@ -1,6 +1,5 @@
 import { getCourses } from '@/apis/course';
 import DeleteCourseModal from '@/components/course/DeleteCourseModal';
-import EditCourseModal from '@/components/course/EditCourseModal';
 import ViewCourseModal from '@/components/course/ViewCourseModal';
 import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
 import { Course } from '@/interface/course.interface';
@@ -33,9 +32,7 @@ const CoursePage: React.FC = () => {
 
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const navigate = useNavigate()
   const handleView = (course: Course) => {
     setSelectedCourse(course);
@@ -43,8 +40,7 @@ const CoursePage: React.FC = () => {
   };
 
   const handleEdit = (course: Course) => {
-    setSelectedCourse(course);
-    setIsEditModalOpen(true);
+    navigate(`/courses/edit/${course.id}`);
   };
 
   const handleDelete = (course: Course) => {
@@ -58,9 +54,7 @@ const CoursePage: React.FC = () => {
 
   const handleCloseModals = () => {
     setIsViewModalOpen(false);
-    setIsEditModalOpen(false);
     setIsDeleteModalOpen(false);
-    setIsCreateModalOpen(false);
     setSelectedCourse(null);
   };
 
@@ -268,14 +262,6 @@ const CoursePage: React.FC = () => {
           </div>
         )}
       </div>
-
-
-
-      <EditCourseModal
-        isOpen={isEditModalOpen}
-        onClose={handleCloseModals}
-        course={selectedCourse}
-      />
 
       <DeleteCourseModal
         isOpen={isDeleteModalOpen}
