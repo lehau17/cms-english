@@ -5,6 +5,7 @@ export interface Classroom {
     description: string;
     createdAt: Date;
     teacherId: string;
+    courseId?: string;
     isActive: boolean;
     maxStudents: number;
     id: string;

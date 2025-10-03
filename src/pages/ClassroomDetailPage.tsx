@@ -45,7 +45,7 @@ const ClassroomDetailPage: React.FC = () => {
 
   // Fetch course data if classroom has a courseId
   const classroom = (classroomData?.data || classroomDetailData?.data) as Classroom | undefined;
-  const courseId = (classroom as any)?.courseId;
+  const courseId = classroom?.courseId;
 
   const { data: courseData, isLoading: isLoadingCourse } = useQuery({
     queryKey: ['course', courseId],
