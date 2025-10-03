@@ -14,7 +14,7 @@ interface ImportProgress {
   total: number;
   completed: number;
   current: string;
-  phase: 'uploading' | 'processing' | 'generating' | 'completed';
+  phase: 'uploading' | 'processing' | 'generating' | 'session_schedules' | 'completed';
 }
 
 const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose }) => {
@@ -62,14 +62,33 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
 
       // Simulate progress for better UX
       for (let i = 1; i <= files.length; i++) {
+        const isLastFile = i === files.length;
+
+        // First set to generating phase
         setImportProgress(prev => ({
           ...prev,
           completed: i,
           current: files[i - 1]?.name || '',
-          phase: i === files.length ? 'completed' : 'generating'
+          phase: 'generating'
         }));
+
         if (i < files.length) {
-          await new Promise(resolve => setTimeout(resolve, 800));
+          await new Promise(resolve => setTimeout(resolve, 600));
+        } else {
+          // For the last file, show session schedules phase before completion
+          await new Promise(resolve => setTimeout(resolve, 400));
+
+          setImportProgress(prev => ({
+            ...prev,
+            phase: 'session_schedules'
+          }));
+
+          await new Promise(resolve => setTimeout(resolve, 600));
+
+          setImportProgress(prev => ({
+            ...prev,
+            phase: 'completed'
+          }));
         }
       }
 
@@ -86,8 +105,14 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
         .filter(r => r.success)
         .reduce((sum, r) => sum + r.data?.results?.reduce((actSum, course) => actSum + (course.activities || 0), 0) || 0, 0);
 
+      // Calculate total session schedules if available
+      const totalSessionSchedules = data.results
+        .filter(r => r.success)
+        .reduce((sum, r) => sum + (r.data?.totalSessionSchedules || 0), 0);
+
       if (data.successfulImports === data.totalFiles) {
-        toast.success(`🎉 Import thành công! Tạo ${totalCourses} khóa học với ${totalActivities} hoạt động`, {
+        const sessionInfo = totalSessionSchedules > 0 ? ` và ${totalSessionSchedules} lộ trình buổi học` : '';
+        toast.success(`🎉 Import thành công! Tạo ${totalCourses} khóa học với ${totalActivities} hoạt động${sessionInfo}`, {
           duration: 5000
         });
       } else {
@@ -319,6 +344,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
                   {importProgress.phase === 'uploading' && 'Đang upload files...'}
                   {importProgress.phase === 'processing' && 'Đang xử lý nội dung...'}
                   {importProgress.phase === 'generating' && 'Đang tạo audio cho từ vựng...'}
+                  {importProgress.phase === 'session_schedules' && 'Đang tạo lộ trình buổi học...'}
                   {importProgress.phase === 'completed' && 'Hoàn thành!'}
                 </span>
               </div>
@@ -367,11 +393,16 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
                   <p className="font-medium mb-1">✅ Đã tạo thành công:</p>
                   {importResults.results
                     .filter(r => r.success)
-                    .map((result, index) => (
-                      <p key={index} className="ml-4">
-                        • {result.fileName}: {result.data?.totalCourses || 0} khóa học
-                      </p>
-                    ))}
+                    .map((result, index) => {
+                      const sessionInfo = result.data?.totalSessionSchedules
+                        ? `, ${result.data.totalSessionSchedules} lộ trình buổi học`
+                        : '';
+                      return (
+                        <p key={index} className="ml-4">
+                          • {result.fileName}: {result.data?.totalCourses || 0} khóa học{sessionInfo}
+                        </p>
+                      );
+                    })}
                 </div>
               )}
 

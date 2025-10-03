@@ -2,6 +2,18 @@
 import { DifficultyLevel, LanguageCode } from "./enums";
 import { CreateLessonDto, Lesson } from "./lesson.interface";
 
+export interface SessionActivityDto {
+  activityId: string;
+  orderNo: number;
+}
+
+export interface SessionScheduleDto {
+  sessionNumber: number;
+  title?: string;
+  description?: string;
+  activities: SessionActivityDto[];
+}
+
 export interface Course {
     id: string;
     title: string;
@@ -29,6 +41,8 @@ export interface Course {
     totalLessons?: number;
     totalDuration?: number;
     lessons: Lesson[];
+    plannedSessions?: number;
+    sessionSchedules?: SessionScheduleDto[];
     createdAt?: string;
     updatedAt?: string;
 }
@@ -50,5 +64,7 @@ export interface CreateCourseDto {
     isPublished?: boolean;
     totalLessons?: number;
     totalDuration?: number;
+    plannedSessions?: number;
+    sessionSchedules?: SessionScheduleDto[];
     lessons: CreateLessonDto[];
 }

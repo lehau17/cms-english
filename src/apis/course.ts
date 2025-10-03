@@ -42,6 +42,7 @@ export interface ImportCoursesResponse {
       publish: boolean;
       matchBy: string;
       totalCourses: number;
+      totalSessionSchedules?: number;
       results: any[];
     };
     error?: string;

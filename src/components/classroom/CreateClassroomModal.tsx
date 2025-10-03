@@ -93,6 +93,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
   const selectedTeacherValue = watch('teacherId');
   const selectedPeriodStart = watch('periodStart');
   const selectedPeriodEnd = watch('periodEnd');
+  const selectedCourseId = watch('courseId');
 
   const weekStartParam = selectedPeriodStart ? new Date(selectedPeriodStart).toISOString() : undefined;
   const weekEndParam = selectedPeriodEnd ? new Date(selectedPeriodEnd).toISOString() : undefined;
@@ -187,6 +188,33 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
             </select>
             {errors.courseId && <p className="text-red-500 text-sm mt-1">{errors.courseId.message}</p>}
           </div>
+
+          {/* Course Info Preview */}
+          {selectedCourseId && coursesData?.data?.data && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <h4 className="text-sm font-medium text-blue-800 mb-2">Course Information</h4>
+              {(() => {
+                const selectedCourse = coursesData.data.data.find(c => c.id === selectedCourseId);
+                if (!selectedCourse) return null;
+
+                return (
+                  <div className="space-y-1 text-sm text-blue-700">
+                    <div>📚 <strong>Title:</strong> {selectedCourse.title}</div>
+                    <div>⏱️ <strong>Planned Sessions:</strong> {selectedCourse.plannedSessions || 'Not specified'}</div>
+                    <div>📝 <strong>Total Lessons:</strong> {selectedCourse.totalLessons || 0}</div>
+                    <div>⏰ <strong>Duration:</strong> {selectedCourse.totalDuration ? `${Math.round(selectedCourse.totalDuration / 60)} hours` : 'Not specified'}</div>
+                    <div>📊 <strong>Difficulty:</strong> {selectedCourse.difficulty}</div>
+                    {selectedCourse.plannedSessions && (
+                      <div className="mt-2 p-2 bg-blue-100 rounded text-xs">
+                        💡 <strong>Note:</strong> This course has {selectedCourse.plannedSessions} planned sessions.
+                        The classroom will automatically organize activities according to the course's session schedule.
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
           <div>
             <div className="flex items-center justify-between mb-1.5">

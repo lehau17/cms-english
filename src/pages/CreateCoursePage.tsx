@@ -3,11 +3,12 @@ import { getTeachers } from "@/apis/teacher";
 import { uploadFile } from "@/apis/upload";
 import ImportCoursesModal from "@/components/course/ImportCoursesModal";
 import LessonActivities from "@/components/course/LessonActivities";
+import SessionSchedules from "@/components/course/SessionSchedules";
 import { CreateCourseDto } from "@/interface/course.interface";
 import { ActivityType, DifficultyLevel, LanguageCode } from "@/interface/enums";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Brain, Check, ChevronLeft, ChevronRight, Eye, FileSpreadsheet, GripVertical, Plus, Trash2, Upload, X } from 'lucide-react';
+import { BookOpen, Brain, Check, ChevronLeft, ChevronRight, Clock, Eye, FileSpreadsheet, GripVertical, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -87,6 +88,8 @@ const CreateCoursePage = () => {
       language: LanguageCode.EN,
       isPublished: false,
       imageUrl: '',
+      plannedSessions: 8,
+      sessionSchedules: [],
       lessons: [],
     },
   });
@@ -114,13 +117,68 @@ const CreateCoursePage = () => {
     { number: 1, title: 'Course Info', icon: BookOpen, color: 'text-blue-600' },
     { number: 2, title: 'Add Lessons', icon: BookOpen, color: 'text-green-600' },
     { number: 3, title: 'Add Activities', icon: Brain, color: 'text-purple-600' },
-    { number: 4, title: 'Review & Submit', icon: Eye, color: 'text-orange-600' },
+    { number: 4, title: 'Session Schedules', icon: Clock, color: 'text-indigo-600' },
+    { number: 5, title: 'Review & Submit', icon: Eye, color: 'text-orange-600' },
   ];
 
+  // Hàm chuyển đổi tempId thành activityId theo format L1A2
+  const convertTempActivityIds = (sessionSchedules: any[]) => {
+    if (!sessionSchedules) return sessionSchedules;
+
+    return sessionSchedules.map(session => {
+      if (!session.activities) return session;
+
+      const convertedActivities = session.activities.map((activity: any) => {
+        const { activityId } = activity;
+
+        // Nếu là tempId, chuyển đổi sang format L1A2
+        if (activityId && activityId.startsWith('temp_')) {
+          const parts = activityId.split('_');
+          if (parts.length === 3 && parts[1] !== undefined && parts[2] !== undefined) {
+            const lessonIndex = parseInt(parts[1]);
+            const activityIndex = parseInt(parts[2]);
+
+            // Lấy activity từ cấu trúc lessons để validation
+            const lessons = watch('lessons') || [];
+            if (lessons[lessonIndex]?.activities?.[activityIndex]) {
+              // Chuyển đổi sang format L{lessonOrderNo}A{activityOrderNo}
+              const lessonOrderNo = lessons[lessonIndex].orderNo || (lessonIndex + 1);
+              const activityOrderNo = lessons[lessonIndex].activities[activityIndex].orderNo || (activityIndex + 1);
+
+              return {
+                ...activity,
+                activityId: `L${lessonOrderNo}A${activityOrderNo}`
+              };
+            }
+          }
+        }
+
+        return activity;
+      });
+
+      return {
+        ...session,
+        activities: convertedActivities
+      };
+    });
+  };
+
   const onSubmit = (data: CreateCourseDto) => {
+    // Debug: Log session schedules data
+    console.log('🔍 DEBUG - Original form data:', {
+      sessionSchedules: data.sessionSchedules,
+      sessionSchedulesLength: data.sessionSchedules?.length || 0,
+      plannedSessions: data.plannedSessions
+    });
+
     // Sanitize activities content before submit
+    const convertedSessionSchedules = data.sessionSchedules ? convertTempActivityIds(data.sessionSchedules) : undefined;
+
+    console.log('🔍 DEBUG - Converted session schedules:', convertedSessionSchedules);
+
     const payload: CreateCourseDto = {
       ...data,
+      sessionSchedules: convertedSessionSchedules,
       lessons: (data.lessons || []).map((lesson) => ({
         ...lesson,
         activities: (lesson.activities || []).map((act) => {
@@ -519,8 +577,70 @@ const CreateCoursePage = () => {
 
   const renderStep4 = () => (
     <div className="max-w-4xl mx-auto space-y-8">
+      <h3 className="text-2xl font-bold text-gray-800 mb-2">� Lộ trình buổi học</h3>
+      <p className="text-gray-600">Sắp xếp hoạt động cho từng buổi học trong khóa học</p>
+      <SessionSchedules
+        control={control}
+        register={register}
+        errors={errors}
+        setValue={setValue}
+        watch={watch}
+      />
+    </div>
+  );
+
+  const renderStep5 = () => (
+    <div className="max-w-4xl mx-auto space-y-8">
       <h3 className="text-2xl font-bold text-gray-800 mb-2">🔍 Review & Submit</h3>
-      {/* Review content here */}
+      <p className="text-gray-600">Xem lại thông tin khóa học trước khi tạo mới</p>
+
+      {/* Course Summary */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h4 className="font-semibold text-lg mb-4">Thông tin cơ bản</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <span className="block text-sm font-medium text-gray-500">Tên khóa học</span>
+            <span className="block font-medium">{watch('title')}</span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">Mức độ</span>
+            <span className="block font-medium">{watch('difficulty')}</span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">Số buổi học</span>
+            <span className="block font-medium">{watch('plannedSessions') || 8}</span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">Số bài học</span>
+            <span className="block font-medium">{watch('lessons')?.length || 0}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Session Schedules Summary */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h4 className="font-semibold text-lg mb-4">Lộ trình buổi học</h4>
+        <div className="space-y-4">
+          {watch('sessionSchedules')?.map((session, i) => (
+            <div key={i} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center">
+                  <span className="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full mr-3">
+                    Buổi #{session.sessionNumber}
+                  </span>
+                  <h5 className="font-medium">{session.title}</h5>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {session.activities?.length || 0} hoạt động
+                </span>
+              </div>
+              {session.description && (
+                <p className="text-sm text-gray-600">{session.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 
@@ -555,6 +675,7 @@ const CreateCoursePage = () => {
               {currentStep === 2 && renderStep2()}
               {currentStep === 3 && renderStep2()} {/* Merged step 3 into 2 */}
               {currentStep === 4 && renderStep4()}
+              {currentStep === 5 && renderStep5()}
             </div>
 
             <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-2xl">
@@ -576,10 +697,10 @@ const CreateCoursePage = () => {
                   Step {currentStep} of {steps.length}
                 </div>
 
-                {currentStep < 4 ? (
+                {currentStep < 5 ? (
                   <button
                     type="button"
-                    onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
+                    onClick={() => setCurrentStep(Math.min(5, currentStep + 1))}
                     className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white`}
                   >
                     Next
