@@ -2,7 +2,6 @@ import { getClassrooms } from '@/apis/classroom';
 import CreateClassroomModal from '@/components/classroom/CreateClassroomModal';
 import DeleteClassroomModal from '@/components/classroom/DeleteClassroomModal';
 import EditClassroomModal from '@/components/classroom/EditClassroomModal';
-import ViewClassroomModal from '@/components/classroom/ViewClassroomModal';
 import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
 import { Classroom } from '@/interface/classroom.interface';
 import {
@@ -17,6 +16,7 @@ import {
   Users
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ClassroomPage: React.FC = () => {
   const {
@@ -31,15 +31,14 @@ const ClassroomPage: React.FC = () => {
     queryFn: getClassrooms,
   });
 
+  const navigate = useNavigate();
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
   const handleView = (classroom: Classroom) => {
-    setSelectedClassroom(classroom);
-    setIsViewModalOpen(true);
+    navigate(`/classrooms/${classroom.id}`);
   };
 
   const handleEdit = (classroom: Classroom) => {
@@ -57,7 +56,6 @@ const ClassroomPage: React.FC = () => {
   };
 
   const handleCloseModals = () => {
-    setIsViewModalOpen(false);
     setIsEditModalOpen(false);
     setIsDeleteModalOpen(false);
     setIsCreateModalOpen(false);
@@ -284,12 +282,6 @@ const ClassroomPage: React.FC = () => {
 
       <DeleteClassroomModal
         isOpen={isDeleteModalOpen}
-        onClose={handleCloseModals}
-        classroom={selectedClassroom}
-      />
-
-      <ViewClassroomModal
-        isOpen={isViewModalOpen}
         onClose={handleCloseModals}
         classroom={selectedClassroom}
       />
