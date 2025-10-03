@@ -18,6 +18,7 @@ import SchedulePage from "./pages/SchedulePage";
 import SettingsPage from "./pages/SettingsPage";
 import StudentPage from "./pages/StudentPage";
 import TeacherPage from "./pages/TeacherPage";
+import TeacherSchedulePage from "./pages/TeacherSchedulePage";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
           { path: "/parents", element: <ParentPage /> },
           { path: "/classrooms", element: <ClassroomPage /> },
           { path: "/schedule", element: <SchedulePage /> },
+          { path: "/teacher-schedule", element: <TeacherSchedulePage /> },
           { path: "/rooms", element: <RoomPage /> },
           { path: "/courses", element: <CoursePage /> },
           { path: "/create-course", element: <CreateCoursePage /> },
