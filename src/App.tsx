@@ -5,6 +5,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 // import GoogleTranslateDemo from "./components/GoogleTranslateDemo";
 import ApiReportPage from "./pages/ApiReportPage";
 import AssignmentPage from "./pages/AssignmentPage";
+import ClassroomDetailPage from "./pages/ClassroomDetailPage";
 import ClassroomPage from "./pages/ClassroomPage";
 import CoursePage from "./pages/CoursePage";
 import CreateAssignmentPage from "./pages/CreateAssignmentPage";
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
           { path: "/teachers", element: <TeacherPage /> },
           { path: "/parents", element: <ParentPage /> },
           { path: "/classrooms", element: <ClassroomPage /> },
+          { path: "/classrooms/:id", element: <ClassroomDetailPage /> },
           { path: "/schedule", element: <SchedulePage /> },
           { path: "/rooms", element: <RoomPage /> },
           { path: "/courses", element: <CoursePage /> },
