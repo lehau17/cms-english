@@ -1,7 +1,10 @@
 import { useStudent } from '@/hooks/useStudent';
+import { useStudentSchedule } from '@/hooks/useStudentSchedule';
 import { Student } from '@/interface/student.interface';
-import { Eye } from 'lucide-react';
+import { Calendar, Eye } from 'lucide-react';
+import { useState } from 'react';
 import Modal from '../ui/Modal';
+import StudentScheduleModal from './StudentScheduleModal';
 
 interface ViewStudentModalProps {
   isOpen: boolean;
@@ -11,6 +14,20 @@ interface ViewStudentModalProps {
 
 const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, student }) => {
   const { data: studentData, isLoading } = useStudent(student?.id || '');
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  
+  const {
+    data: scheduleData,
+    isLoading: isScheduleLoading,
+  } = useStudentSchedule(student?.id || null, undefined, undefined, isScheduleModalOpen);
+
+  const handleViewSchedule = () => {
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleCloseSchedule = () => {
+    setIsScheduleModalOpen(false);
+  };
 
   const renderDetail = (label: string, value: any) => (
     <div className="py-1.5 sm:grid sm:grid-cols-3 sm:gap-3">
@@ -33,19 +50,40 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : studentData ? (
-          <dl>
-            {renderDetail('Username', studentData.data.username)}
-            {renderDetail('Email', studentData.data.email)}
-            {renderDetail('Phone', studentData.data.phone)}
-            {renderDetail('Gender', studentData.data.gender)}
-            {renderDetail('Status', studentData.data.status)}
-            {renderDetail('Created At', new Date(studentData.data.createdAt).toLocaleString())}
-            {renderDetail('Updated At', new Date(studentData.data.updatedAt).toLocaleString())}
-          </dl>
+          <>
+            <dl>
+              {renderDetail('Username', studentData.data.username)}
+              {renderDetail('Email', studentData.data.email)}
+              {renderDetail('Phone', studentData.data.phone)}
+              {renderDetail('Gender', studentData.data.gender)}
+              {renderDetail('Status', studentData.data.status)}
+              {renderDetail('Created At', new Date(studentData.data.createdAt).toLocaleString())}
+              {renderDetail('Updated At', new Date(studentData.data.updatedAt).toLocaleString())}
+            </dl>
+            
+            {/* View Schedule Button */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                onClick={handleViewSchedule}
+                className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <Calendar className="w-5 h-5" />
+                <span>View Schedule</span>
+              </button>
+            </div>
+          </>
         ) : (
           <p>Could not load student details.</p>
         )}
       </div>
+      
+      <StudentScheduleModal
+        isOpen={isScheduleModalOpen}
+        onClose={handleCloseSchedule}
+        studentName={studentData?.data.username || student?.username || 'Student'}
+        schedule={scheduleData?.schedule || null}
+        isLoading={isScheduleLoading}
+      />
     </Modal>
   );
 };
