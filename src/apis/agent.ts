@@ -69,7 +69,7 @@ export const streamAgentChat = async (
   }
 
   const baseURL = axiosInstance.defaults.baseURL || 'http://localhost:3334/api';
-  
+
   const params = new URLSearchParams();
   params.append('message', request.message);
   if (request.context) {
@@ -79,9 +79,9 @@ export const streamAgentChat = async (
   const url = `${baseURL}/private/v1/agent/chat/stream?${params.toString()}`;
   console.log('🔗 Request URL:', url);
   console.log('🔑 Token:', token.substring(0, 20) + '...');
-  
+
   const controller = new AbortController();
-  
+
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -113,10 +113,10 @@ export const streamAgentChat = async (
       try {
         let buffer = '';
         let chunkCount = 0;
-        
+
         while (true) {
           const { done, value } = await reader.read();
-          
+
           if (done) {
             console.log('✅ Stream completed:', chunkCount, 'chunks received');
             if (onComplete) onComplete();
@@ -126,33 +126,33 @@ export const streamAgentChat = async (
           const text = decoder.decode(value, { stream: true });
           console.log('📦 Raw chunk received:', text);
           buffer += text;
-          
+
           // Split by double newline (SSE format)
           const messages = buffer.split('\n\n');
           buffer = messages.pop() || ''; // Keep incomplete message in buffer
-          
+
           for (const message of messages) {
             const lines = message.split('\n');
             for (const line of lines) {
               const trimmed = line.trim();
               console.log('🔍 Processing line:', trimmed);
-              
+
               if (trimmed.startsWith('data: ')) {
                 const data = trimmed.substring(6);
                 console.log('📨 Data extracted:', data);
-                
+
                 if (data === '[DONE]') {
                   console.log('🏁 Received [DONE] signal');
                   if (onComplete) onComplete();
                   return;
                 }
-                
+
                 try {
                   const chunk = JSON.parse(data);
                   chunkCount++;
                   console.log(`✨ Parsed chunk #${chunkCount}:`, chunk);
                   onChunk(chunk);
-                  
+
                   if (chunk.type === 'complete' || chunk.type === 'error') {
                     console.log('🏁 Received completion/error chunk');
                     if (onComplete) onComplete();

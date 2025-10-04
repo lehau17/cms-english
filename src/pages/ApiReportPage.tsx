@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { agentChat, getAgentRecommendations, uploadDocument, streamAgentChat } from '../apis/agent';
+import { agentChat, getAgentRecommendations, streamAgentChat, uploadDocument } from '../apis/agent';
 
 interface ChatMessage {
   id: string;
@@ -161,7 +161,7 @@ const ApiReportPage: React.FC = () => {
     }
 
     const messageToSend = message.trim();
-    
+
     // Immediately show user message and AI placeholder
     setPendingMessage(messageToSend);
     setMessage(''); // Clear input immediately
@@ -174,7 +174,7 @@ const ApiReportPage: React.FC = () => {
     }
 
     const startTime = Date.now();
-    
+
     // Use ref to track accumulated response
     const accumulatedResponse = { current: '' };
     const metadata = {
@@ -210,7 +210,7 @@ const ApiReportPage: React.FC = () => {
           },
           (chunk) => {
             console.log('🔥 Chunk received in component:', chunk);
-            
+
             if (chunk.type === 'metadata' && chunk.data?.conversationId) {
               console.log('📊 Setting conversation ID:', chunk.data.conversationId);
               setCurrentConversationId(chunk.data.conversationId);
@@ -236,20 +236,20 @@ const ApiReportPage: React.FC = () => {
           (error) => {
             console.error('💥 Streaming error:', error);
             toast.error('Failed to communicate with AI');
-            
+
             // Clear streaming timer
             if (streamingTimerRef.current) {
               clearInterval(streamingTimerRef.current);
               streamingTimerRef.current = null;
             }
-            
+
             setPendingMessage(''); // Clear pending on error
             setStreamingResponse('');
             setIsStreaming(false);
           },
           () => {
             console.log('🏁 Stream complete callback, final response:', accumulatedResponse.current);
-            
+
             // Clear streaming timer and flush any remaining buffer
             if (streamingTimerRef.current) {
               clearInterval(streamingTimerRef.current);
@@ -259,7 +259,7 @@ const ApiReportPage: React.FC = () => {
               setStreamingResponse((prev) => prev + streamingBufferRef.current);
               streamingBufferRef.current = '';
             }
-            
+
             // Streaming complete
             const newMessage: ChatMessage = {
               id: Date.now().toString(),
@@ -274,7 +274,7 @@ const ApiReportPage: React.FC = () => {
               suggestions: [],
               executionSteps: [],
             };
-            
+
             console.log('💾 Saving message to history:', newMessage);
             setChatHistory((prev) => [newMessage, ...prev]);
             setPendingMessage(''); // Clear pending message
@@ -479,7 +479,7 @@ const ChatInterface: React.FC<{
                     <p className="text-sm leading-relaxed">{pendingMessage}</p>
                   </div>
                 </div>
-                
+
                 {/* AI Response */}
                 <div className="flex justify-start items-start gap-3 animate-slideInLeft">
                   <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
@@ -511,124 +511,124 @@ const ChatInterface: React.FC<{
             {chatHistory.map((chat) => (
               <div key={chat.id} className="space-y-3 mb-6"
               >
-              {/* User Message */}
-              <div className="flex justify-end">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-md shadow-sm">
-                  <p className="text-sm leading-relaxed">{chat.message}</p>
+                {/* User Message */}
+                <div className="flex justify-end">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-md shadow-sm">
+                    <p className="text-sm leading-relaxed">{chat.message}</p>
+                  </div>
                 </div>
-              </div>
 
-              {/* AI Response */}
-              <div className="flex justify-start items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                  <Bot className="h-5 w-5 text-white" />
-                </div>
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 max-w-2xl shadow-sm">
-                  <div className="text-sm text-gray-800 whitespace-pre-wrap">{chat.response}</div>
+                {/* AI Response */}
+                <div className="flex justify-start items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                    <Bot className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 max-w-2xl shadow-sm">
+                    <div className="text-sm text-gray-800 whitespace-pre-wrap">{chat.response}</div>
 
-                  {/* Tools Used */}
-                  {chat.toolsUsed && chat.toolsUsed.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      {chat.toolsUsed.map((tool, index) => (
-                        <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                          <Zap className="h-3 w-3 mr-1" />
-                          {tool}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Sources */}
-                  {chat.sources && chat.sources.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-500 mb-1">Sources:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {chat.sources.map((source, index) => (
-                          <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-800">
-                            <FileText className="h-3 w-3 mr-1" />
-                            {source}
+                    {/* Tools Used */}
+                    {chat.toolsUsed && chat.toolsUsed.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {chat.toolsUsed.map((tool, index) => (
+                          <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                            <Zap className="h-3 w-3 mr-1" />
+                            {tool}
                           </span>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Metadata */}
-                  <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3" />
-                      {Math.round(chat.confidence * 100)}% confidence
-                    </div>
-                    {chat.processingTime && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {chat.processingTime}ms
+                    {/* Sources */}
+                    {chat.sources && chat.sources.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-500 mb-1">Sources:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {chat.sources.map((source, index) => (
+                            <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                              <FileText className="h-3 w-3 mr-1" />
+                              {source}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    <div>{chat.timestamp.toLocaleTimeString()}</div>
+
+                    {/* Metadata */}
+                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        {Math.round(chat.confidence * 100)}% confidence
+                      </div>
+                      {chat.processingTime && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {chat.processingTime}ms
+                        </div>
+                      )}
+                      <div>{chat.timestamp.toLocaleTimeString()}</div>
+                    </div>
+
+                    {/* Reasoning Steps */}
+                    {chat.reasoning && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                        <div className="flex items-center gap-1 mb-2">
+                          <Lightbulb className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-800">Reasoning</span>
+                        </div>
+                        <div className="text-sm text-blue-700 whitespace-pre-wrap">
+                          {chat.reasoning}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Execution Steps */}
+                    {chat.executionSteps && chat.executionSteps.length > 0 && (
+                      <div className="mt-3 p-3 bg-purple-50 rounded-md">
+                        <div className="flex items-center gap-1 mb-2">
+                          <Code className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium text-purple-800">Execution Steps</span>
+                        </div>
+                        <div className="space-y-2">
+                          {chat.executionSteps.map((step: any, index: number) => (
+                            <div key={index} className="text-sm text-purple-700">
+                              <div className="font-medium">Step {index + 1}: {step.action?.tool || step.tool || 'thinking'}</div>
+                              {step.action?.toolInput && (
+                                <div className="text-xs text-purple-600 mt-1">
+                                  Input: {typeof step.action.toolInput === 'object'
+                                    ? JSON.stringify(step.action.toolInput, null, 2)
+                                    : step.action.toolInput}
+                                </div>
+                              )}
+                              {step.toolInput && !step.action?.toolInput && (
+                                <div className="text-xs text-purple-600 mt-1">
+                                  Input: {typeof step.toolInput === 'object'
+                                    ? JSON.stringify(step.toolInput, null, 2)
+                                    : step.toolInput}
+                                </div>
+                              )}
+                              {step.text && (
+                                <div className="text-xs text-purple-600 mt-1">
+                                  Result: {typeof step.text === 'object'
+                                    ? JSON.stringify(step.text, null, 2)
+                                    : step.text}
+                                </div>
+                              )}
+                              {step.result && (
+                                <div className="text-xs text-purple-600 mt-1">
+                                  Result: {typeof step.result === 'object'
+                                    ? JSON.stringify(step.result, null, 2)
+                                    : step.result}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Reasoning Steps */}
-                  {chat.reasoning && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-md">
-                      <div className="flex items-center gap-1 mb-2">
-                        <Lightbulb className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-blue-800">Reasoning</span>
-                      </div>
-                      <div className="text-sm text-blue-700 whitespace-pre-wrap">
-                        {chat.reasoning}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Execution Steps */}
-                  {chat.executionSteps && chat.executionSteps.length > 0 && (
-                    <div className="mt-3 p-3 bg-purple-50 rounded-md">
-                      <div className="flex items-center gap-1 mb-2">
-                        <Code className="h-4 w-4 text-purple-600" />
-                        <span className="text-sm font-medium text-purple-800">Execution Steps</span>
-                      </div>
-                      <div className="space-y-2">
-                        {chat.executionSteps.map((step: any, index: number) => (
-                          <div key={index} className="text-sm text-purple-700">
-                            <div className="font-medium">Step {index + 1}: {step.action?.tool || step.tool || 'thinking'}</div>
-                            {step.action?.toolInput && (
-                              <div className="text-xs text-purple-600 mt-1">
-                                Input: {typeof step.action.toolInput === 'object'
-                                  ? JSON.stringify(step.action.toolInput, null, 2)
-                                  : step.action.toolInput}
-                              </div>
-                            )}
-                            {step.toolInput && !step.action?.toolInput && (
-                              <div className="text-xs text-purple-600 mt-1">
-                                Input: {typeof step.toolInput === 'object'
-                                  ? JSON.stringify(step.toolInput, null, 2)
-                                  : step.toolInput}
-                              </div>
-                            )}
-                            {step.text && (
-                              <div className="text-xs text-purple-600 mt-1">
-                                Result: {typeof step.text === 'object'
-                                  ? JSON.stringify(step.text, null, 2)
-                                  : step.text}
-                              </div>
-                            )}
-                            {step.result && (
-                              <div className="text-xs text-purple-600 mt-1">
-                                Result: {typeof step.result === 'object'
-                                  ? JSON.stringify(step.result, null, 2)
-                                  : step.result}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
           </>
         )}
       </div>
