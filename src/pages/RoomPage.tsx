@@ -1,3 +1,5 @@
+import { getRooms } from '@/apis/room';
+import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,9 +14,7 @@ import {
   Users,
   Wifi
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
-import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
-import { getRooms } from '@/apis/room';
+import React, { useState } from 'react';
 
 // Mock data interface
 interface Room {
@@ -98,7 +98,7 @@ const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; chi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">

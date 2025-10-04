@@ -242,7 +242,7 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-[80%] h-full max-w-none max-h-none overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
@@ -386,7 +386,7 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
 
       {/* Add Slot Modal */}
       {showAddSlot && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+        <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-60">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">Thêm Khung Giờ Mới</h3>

@@ -2,7 +2,6 @@ import { Assignment, assignmentApi } from '@/apis/assignment';
 import { getClassroomById } from '@/apis/classroom';
 import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
-import { Classroom } from '@/interface/classroom.interface';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -32,7 +31,10 @@ const ClassroomDetailPage: React.FC = () => {
   // Fetch classroom detail (may include course info)
   const { data: classroomDetailData, isLoading: isLoadingDetail } = useQuery({
     queryKey: ['classroom-detail', id],
-    queryFn: () => getClassroomDetail(id as string),
+    queryFn: async () => {
+      const classroomDetail = await getClassroomDetail(id as string);
+      return classroomDetail.data
+    },
     enabled: !!id,
   });
 
@@ -43,14 +45,27 @@ const ClassroomDetailPage: React.FC = () => {
     enabled: !!id,
   });
 
+  // Debug logging
+  console.log('=== ClassroomDetailPage Debug ===');
+  console.log('classroomData:', classroomData);
+  console.log('classroomDetailData:', classroomDetailData);
+  console.log('isLoadingClassroom:', isLoadingClassroom);
+  console.log('isLoadingDetail:', isLoadingDetail);
+
   // Fetch course data if classroom has a courseId
-  const classroom = (classroomData || classroomDetailData?.data) as Classroom | undefined;
+  // classroomDetailData has structure: { statusCode, message, data: Classroom }
+  const classroom = (classroomData || classroomDetailData?.data) as any;
+  console.log('classroom extracted:', classroom);
+
+  const courseFromClassroom = classroom?.course; // Course is already in detail API response
   const courseId = classroom?.courseId;
+  console.log('courseFromClassroom:', courseFromClassroom);
+  console.log('courseId:', courseId);
 
   const { data: courseData, isLoading: isLoadingCourse } = useQuery({
     queryKey: ['course', courseId],
     queryFn: () => getCourseById(courseId as string),
-    enabled: !!courseId,
+    enabled: !!courseId && !courseFromClassroom, // Only fetch if course not already in classroom data
   });
 
   const formatDate = (dateString: string | Date | null | undefined): string => {
@@ -87,7 +102,8 @@ const ClassroomDetailPage: React.FC = () => {
     );
   }
 
-  const course = courseData?.data;
+  // Use course from classroom detail API or fallback to separate course API
+  const course = courseFromClassroom || courseData?.data;
   const assignments: Assignment[] = assignmentsData?.data?.assignments || [];
 
   return (
@@ -180,7 +196,7 @@ const ClassroomDetailPage: React.FC = () => {
                     <div>
                       <h4 className="text-sm font-semibold text-gray-900 mb-3">Course Lessons</h4>
                       <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {course.lessons.map((lesson, index) => (
+                        {course.lessons.map((lesson: any, index: number) => (
                           <div key={lesson.id} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
@@ -314,7 +330,7 @@ const ClassroomDetailPage: React.FC = () => {
               </div>
               {classroom.students && classroom.students.length > 0 ? (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {classroom.students.map((student, index) => (
+                  {classroom.students.map((student: any, index: number) => (
                     <div key={student.id || index} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                       <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mr-3">
                         <span className="text-white font-semibold text-sm">
@@ -343,7 +359,7 @@ const ClassroomDetailPage: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
               <div className="space-y-2">
                 <button
-                  onClick={() => {/* TODO: Add edit functionality */}}
+                  onClick={() => {/* TODO: Add edit functionality */ }}
                   className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
                 >
                   <Edit className="w-4 h-4" />

@@ -19,6 +19,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { agentChat, getAgentRecommendations, streamAgentChat, uploadDocument } from '../apis/agent';
+import { ChartRenderer } from '../components/ChartRenderer';
 
 interface ChatMessage {
   id: string;
@@ -32,6 +33,12 @@ interface ChatMessage {
   sources?: string[];
   suggestions?: string[];
   executionSteps?: any[];
+  chart?: any; // Chart config for visualization
+  file?: {
+    filename: string;
+    downloadUrl: string;
+    recordCount?: number;
+  }; // File download info
 }
 
 interface AgentStats {
@@ -40,6 +47,13 @@ interface AgentStats {
   totalProcessingTime: number;
   toolsUsed: Record<string, number>;
 }
+
+// Helper function to get API base URL
+const getApiBaseUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+  // Remove /api suffix to get base URL
+  return apiUrl.replace(/\/api$/, '');
+};
 
 const ApiReportPage: React.FC = () => {
   const [message, setMessage] = useState('');
@@ -58,6 +72,7 @@ const ApiReportPage: React.FC = () => {
   });
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState('');
+  const [streamingChart, setStreamingChart] = useState<any>(null); // Chart during streaming
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   const [pendingMessage, setPendingMessage] = useState<string>(''); // User message waiting for AI response
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -167,6 +182,7 @@ const ApiReportPage: React.FC = () => {
     setMessage(''); // Clear input immediately
     setIsStreaming(true);
     setStreamingResponse('');
+    setStreamingChart(null); // Clear previous chart
 
     // Close previous connection if exists
     if (streamControllerRef.current) {
@@ -181,6 +197,8 @@ const ApiReportPage: React.FC = () => {
       toolsUsed: [] as string[],
       reasoning: '',
       processingTime: 0,
+      chart: null as any,
+      file: null as any,
     };
 
     console.log('🎬 Starting stream for message:', messageToSend);
@@ -223,6 +241,15 @@ const ApiReportPage: React.FC = () => {
               console.log('🔧 Tool used:', chunk.tool);
               metadata.toolsUsed.push(chunk.tool);
               toast(`Using tool: ${chunk.tool}`);
+            } else if (chunk.type === 'chart' && chunk.chart) {
+              console.log('📊 Chart received:', chunk.chart);
+              metadata.chart = chunk.chart;
+              setStreamingChart(chunk.chart); // Show chart immediately
+              toast.success('📊 Chart generated!');
+            } else if (chunk.type === 'file' && chunk.file) {
+              console.log('📄 File received:', chunk.file);
+              metadata.file = chunk.file;
+              toast.success(`📄 File ready: ${chunk.file.filename}`);
             } else if (chunk.type === 'complete' && chunk.data) {
               console.log('✅ Complete chunk received:', chunk.data);
               metadata.toolsUsed = chunk.data.toolsUsed || [];
@@ -248,7 +275,8 @@ const ApiReportPage: React.FC = () => {
             setIsStreaming(false);
           },
           () => {
-            console.log('🏁 Stream complete callback, final response:', accumulatedResponse.current);
+            console.log('🏁 Stream complete callback');
+            console.log('📊 Accumulated response:', accumulatedResponse.current);
 
             // Clear streaming timer and flush any remaining buffer
             if (streamingTimerRef.current) {
@@ -256,15 +284,21 @@ const ApiReportPage: React.FC = () => {
               streamingTimerRef.current = null;
             }
             if (streamingBufferRef.current) {
-              setStreamingResponse((prev) => prev + streamingBufferRef.current);
+              accumulatedResponse.current += streamingBufferRef.current;
               streamingBufferRef.current = '';
             }
 
-            // Streaming complete
+            // Clear streaming states FIRST to avoid showing duplicate
+            setPendingMessage(''); // Clear pending message
+            setStreamingResponse(''); // Clear streaming response
+            setStreamingChart(null); // Clear streaming chart
+            setIsStreaming(false);
+
+            // Then save to history
             const newMessage: ChatMessage = {
               id: Date.now().toString(),
               message: messageToSend,
-              response: accumulatedResponse.current || streamingResponse,
+              response: accumulatedResponse.current, // Only use accumulated, not streamingResponse
               timestamp: new Date(),
               confidence: 0.9,
               toolsUsed: metadata.toolsUsed,
@@ -273,13 +307,12 @@ const ApiReportPage: React.FC = () => {
               sources: ['Knowledge Base', 'Database', 'API Documentation'],
               suggestions: [],
               executionSteps: [],
+              chart: metadata.chart, // Save chart config
+              file: metadata.file, // Save file info
             };
 
             console.log('💾 Saving message to history:', newMessage);
             setChatHistory((prev) => [newMessage, ...prev]);
-            setPendingMessage(''); // Clear pending message
-            setStreamingResponse('');
-            setIsStreaming(false);
             toast.success('AI response complete!');
           },
         );
@@ -307,91 +340,249 @@ const ApiReportPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Bot className="h-8 w-8 text-blue-600" />
-            AI Agent Dashboard
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Advanced AI assistant with multi-tool capabilities for English learning insights
-          </p>
-        </div>
+    <div className="flex flex-col h-screen bg-white">
+      {/* Header - Similar to ChatGPT */}
+      <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <Bot className="h-5 w-5 text-white" />
+            </div>
+            <span className="font-semibold text-gray-900">AI Assistant</span>
+          </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              {[
-                { id: 'chat', label: 'AI Chat', icon: MessageSquare },
-                { id: 'tools', label: 'Tool Analytics', icon: Settings },
-                { id: 'analytics', label: 'Performance', icon: TrendingUp },
-                { id: 'documents', label: 'Knowledge Base', icon: FileText }
-              ].map((tab) => (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={clearHistory}
+              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              New Chat
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Area - Scrollable */}
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {chatHistory.length === 0 && !pendingMessage ? (
+            // Empty State - ChatGPT Style
+            <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                <Bot className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-3">How can I help you today?</h2>
+              <p className="text-gray-600 mb-8">Ask me about student analytics, database queries, or learning insights</p>
+
+              {/* Example Prompts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                  onClick={() => setMessage("How many students are enrolled this semester?")}
+                  className="p-4 text-left border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  <tab.icon className="h-4 w-4" />
-                  {tab.label}
+                  <div className="flex items-start gap-3">
+                    <Users className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">Student Enrollment</p>
+                      <p className="text-xs text-gray-600 mt-1">Check current semester statistics</p>
+                    </div>
+                  </div>
                 </button>
+                <button
+                  onClick={() => setMessage("Show me course completion rates")}
+                  className="p-4 text-left border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <TrendingUp className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">Course Analytics</p>
+                      <p className="text-xs text-gray-600 mt-1">View completion trends</p>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setMessage("Export top 10 students to Excel")}
+                  className="p-4 text-left border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">Export Data</p>
+                      <p className="text-xs text-gray-600 mt-1">Download reports to Excel</p>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setMessage("What are the graduation requirements?")}
+                  className="p-4 text-left border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">Policy Questions</p>
+                      <p className="text-xs text-gray-600 mt-1">Ask about rules and requirements</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Chat Messages
+            <div className="space-y-8">
+              {[...chatHistory].reverse().map((chat) => (
+                <div key={chat.id} className="space-y-4">
+                  {/* User Message */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">You</span>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-gray-900">{chat.message}</p>
+                    </div>
+                  </div>
+
+                  {/* AI Response */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+                      <Bot className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="text-gray-900 leading-relaxed whitespace-pre-wrap">{chat.response}</div>
+
+                      {/* Chart */}
+                      {chat.chart && (
+                        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <ChartRenderer chart={chat.chart} />
+                        </div>
+                      )}
+
+                      {/* File Download */}
+                      {chat.file && (
+                        <a
+                          href={`${getApiBaseUrl()}${chat.file.downloadUrl}`}
+                          download={chat.file.filename}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors text-sm"
+                        >
+                          <FileText className="h-4 w-4" />
+                          {chat.file.filename}
+                          {chat.file.recordCount && (
+                            <span className="text-xs opacity-75">({chat.file.recordCount} records)</span>
+                          )}
+                        </a>
+                      )}
+
+                      {/* Metadata */}
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        {chat.toolsUsed && chat.toolsUsed.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            {chat.toolsUsed.join(', ')}
+                          </div>
+                        )}
+                        {chat.processingTime && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {chat.processingTime}ms
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </nav>
-          </div>
+
+              {/* Streaming Message */}
+              {pendingMessage && (
+                <div className="space-y-4">
+                  {/* User Message */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">You</span>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-gray-900">{pendingMessage}</p>
+                    </div>
+                  </div>
+
+                  {/* AI Response */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+                      <Bot className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      {!streamingResponse ? (
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="text-gray-900 leading-relaxed whitespace-pre-wrap">
+                            {streamingResponse}
+                            <span className="inline-block w-0.5 h-4 ml-0.5 bg-gray-900 animate-pulse"></span>
+                          </div>
+                          {streamingChart && (
+                            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                              <ChartRenderer chart={streamingChart} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {activeTab === 'chat' && (
-              <ChatInterface
-                chatHistory={chatHistory}
-                message={message}
-                selectedLanguage={selectedLanguage}
-                chatMutation={chatMutation}
-                chatContainerRef={chatContainerRef}
-                setMessage={setMessage}
-                setSelectedLanguage={setSelectedLanguage}
-                handleSendMessage={handleSendMessage}
-                handleKeyPress={handleKeyPress}
-                isStreaming={isStreaming}
-                streamingResponse={streamingResponse}
-                pendingMessage={pendingMessage}
-              />
-            )}
-            {activeTab === 'tools' && <ToolsAnalytics agentStats={agentStats} />}
-            {activeTab === 'analytics' && <PerformanceAnalytics agentStats={agentStats} />}
-            {activeTab === 'documents' && (
-              <DocumentsManager
-                documentTitle={documentTitle}
-                documentContent={documentContent}
-                documentType={documentType}
-                documentSource={documentSource}
-                uploadMutation={uploadMutation}
-                setDocumentTitle={setDocumentTitle}
-                setDocumentContent={setDocumentContent}
-                setDocumentType={setDocumentType}
-                setDocumentSource={setDocumentSource}
-              />
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* <AgentStatus /> */}
-            <QuickStats agentStats={agentStats} selectedLanguage={selectedLanguage} />
-            <QuickActions
-              recommendationsMutation={recommendationsMutation}
-              clearHistory={clearHistory}
+      {/* Input Area - Fixed at Bottom */}
+      <div className="flex-shrink-0 border-t border-gray-200 bg-white">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="relative">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder="Message AI Assistant..."
+              rows={1}
+              className="w-full px-4 py-3 pr-24 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              style={{ minHeight: '52px', maxHeight: '200px' }}
+              disabled={chatMutation.isPending || isStreaming}
             />
-            <RecentActivity chatHistory={chatHistory} />
+            <div className="absolute right-2 bottom-2 flex items-center gap-2">
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="px-2 py-1 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="en">EN</option>
+                <option value="vi">VI</option>
+                <option value="es">ES</option>
+                <option value="fr">FR</option>
+              </select>
+              <button
+                onClick={handleSendMessage}
+                disabled={chatMutation.isPending || !message.trim() || isStreaming}
+                className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
           </div>
+          <p className="text-xs text-gray-500 text-center mt-2">
+            AI can make mistakes. Check important info.
+          </p>
         </div>
       </div>
     </div>
@@ -411,6 +602,7 @@ const ChatInterface: React.FC<{
   handleKeyPress: (e: React.KeyboardEvent) => void;
   isStreaming: boolean;
   streamingResponse: string;
+  streamingChart: any;
   pendingMessage: string;
 }> = ({
   chatHistory,
@@ -424,6 +616,7 @@ const ChatInterface: React.FC<{
   handleKeyPress,
   isStreaming,
   streamingResponse,
+  streamingChart,
   pendingMessage
 }) => (
     <div className="bg-white rounded-lg shadow-sm border">
@@ -470,45 +663,8 @@ const ChatInterface: React.FC<{
           </div>
         ) : (
           <>
-            {/* Pending Message + AI Streaming Response */}
-            {pendingMessage && (
-              <div className="space-y-3 mb-6">
-                {/* User Message */}
-                <div className="flex justify-end animate-slideInRight">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-md shadow-sm">
-                    <p className="text-sm leading-relaxed">{pendingMessage}</p>
-                  </div>
-                </div>
-
-                {/* AI Response */}
-                <div className="flex justify-start items-start gap-3 animate-slideInLeft">
-                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                    <Bot className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 max-w-2xl shadow-sm">
-                    {!streamingResponse ? (
-                      // Loading dots
-                      <div className="flex items-center gap-2 py-2">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                        <span className="text-xs text-gray-400 ml-2">AI is thinking...</span>
-                      </div>
-                    ) : (
-                      // Streaming text
-                      <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                        {streamingResponse}
-                        <span className="inline-block w-0.5 h-4 ml-0.5 bg-blue-600 animate-pulse"></span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {chatHistory.map((chat) => (
+            {/* Chat History - Show old messages first */}
+            {[...chatHistory].reverse().map((chat) => (
               <div key={chat.id} className="space-y-3 mb-6"
               >
                 {/* User Message */}
@@ -525,6 +681,32 @@ const ChatInterface: React.FC<{
                   </div>
                   <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 max-w-2xl shadow-sm">
                     <div className="text-sm text-gray-800 whitespace-pre-wrap">{chat.response}</div>
+
+                    {/* Chart */}
+                    {chat.chart && (
+                      <div className="mt-4">
+                        <ChartRenderer chart={chat.chart} />
+                      </div>
+                    )}
+
+                    {/* File Download */}
+                    {chat.file && (
+                      <div className="mt-4">
+                        <a
+                          href={`${getApiBaseUrl()}${chat.file.downloadUrl}`}
+                          download={chat.file.filename}
+                          className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Download {chat.file.filename}
+                          {chat.file.recordCount && (
+                            <span className="ml-2 text-xs opacity-75">
+                              ({chat.file.recordCount} records)
+                            </span>
+                          )}
+                        </a>
+                      </div>
+                    )}
 
                     {/* Tools Used */}
                     {chat.toolsUsed && chat.toolsUsed.length > 0 && (
@@ -629,6 +811,53 @@ const ChatInterface: React.FC<{
                 </div>
               </div>
             ))}
+
+            {/* Pending Message + AI Streaming Response - Show at the bottom */}
+            {pendingMessage && (
+              <div className="space-y-3 mb-6">
+                {/* User Message */}
+                <div className="flex justify-end animate-slideInRight">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-md shadow-sm">
+                    <p className="text-sm leading-relaxed">{pendingMessage}</p>
+                  </div>
+                </div>
+
+                {/* AI Response */}
+                <div className="flex justify-start items-start gap-3 animate-slideInLeft">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                    <Bot className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 max-w-2xl shadow-sm">
+                    {!streamingResponse ? (
+                      // Loading dots
+                      <div className="flex items-center gap-2 py-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                        <span className="text-xs text-gray-400 ml-2">AI is thinking...</span>
+                      </div>
+                    ) : (
+                      // Streaming text
+                      <>
+                        <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {streamingResponse}
+                          <span className="inline-block w-0.5 h-4 ml-0.5 bg-blue-600 animate-pulse"></span>
+                        </div>
+
+                        {/* Streaming Chart */}
+                        {streamingChart && (
+                          <div className="mt-4 animate-fadeIn">
+                            <ChartRenderer chart={streamingChart} />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

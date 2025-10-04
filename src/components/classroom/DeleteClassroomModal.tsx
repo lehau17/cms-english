@@ -1,9 +1,9 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteClassroom } from '@/apis/classroom';
 import { Classroom } from '@/interface/classroom.interface';
-import Button from '../ui/Button';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Trash2 } from 'lucide-react';
+import Button from '../ui/Button';
 
 interface DeleteClassroomModalProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ const DeleteClassroomModal: React.FC<DeleteClassroomModalProps> = ({ isOpen, onC
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center p-3 z-50 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm flex justify-center items-center p-3 z-50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
         <div className="p-4 text-center">
           <div className="mx-auto flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">

@@ -40,8 +40,10 @@ const TeacherScheduleModal: React.FC<TeacherScheduleModalProps> = ({
     return schedule[dayKey] || [];
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
@@ -104,8 +106,8 @@ const TeacherScheduleModal: React.FC<TeacherScheduleModalProps> = ({
                             <div
                               key={`${slot.classroomId}-${index}`}
                               className={`p-2 rounded text-xs border-l-4 ${slot.status === 'occupied'
-                                  ? 'bg-red-50 border-red-400 text-red-800'
-                                  : 'bg-green-50 border-green-400 text-green-800'
+                                ? 'bg-red-50 border-red-400 text-red-800'
+                                : 'bg-green-50 border-green-400 text-green-800'
                                 }`}
                             >
                               <div className="flex items-center space-x-1 mb-1">

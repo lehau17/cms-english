@@ -38,11 +38,13 @@ export const agentChat = async (request: AgentChatRequest): Promise<ApiResponse<
 export const streamAgentChat = async (
   request: AgentChatRequest,
   onChunk: (chunk: {
-    type: 'token' | 'tool' | 'complete' | 'error' | 'metadata';
+    type: 'token' | 'tool' | 'complete' | 'error' | 'metadata' | 'chart' | 'file';
     content?: string;
     tool?: string;
     toolInput?: any;
     data?: any;
+    chart?: any;
+    file?: any;
   }) => void,
   onError?: (error: Error) => void,
   onComplete?: () => void,

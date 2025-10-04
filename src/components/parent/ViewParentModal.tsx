@@ -16,8 +16,8 @@ const ViewParentModal: React.FC<ViewParentModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">
@@ -69,8 +69,8 @@ const ViewParentModal: React.FC<ViewParentModalProps> = ({
                 <div>
                   <p className="text-sm font-medium text-gray-900">Trạng thái</p>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${parent.isActive
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
                     }`}>
                     {parent.isActive ? 'Hoạt động' : 'Không hoạt động'}
                   </span>
@@ -102,12 +102,12 @@ const ViewParentModal: React.FC<ViewParentModalProps> = ({
                     >
                       <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                         <span className="text-sm font-medium text-blue-600">
-                          {child.username[0]?.toUpperCase()}
+                          {child.name[0]?.toUpperCase()}
                         </span>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {child.username}
+                          {child.name}
                         </p>
                         <p className="text-xs text-gray-500">{child.email}</p>
                       </div>
