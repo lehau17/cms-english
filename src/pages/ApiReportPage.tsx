@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { agentChat, getAgentRecommendations, uploadDocument } from '../apis/agent';
+import { agentChat, getAgentRecommendations, uploadDocument, streamAgentChat } from '../apis/agent';
 
 interface ChatMessage {
   id: string;
@@ -56,14 +56,33 @@ const ApiReportPage: React.FC = () => {
     totalProcessingTime: 0,
     toolsUsed: {}
   });
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingResponse, setStreamingResponse] = useState('');
+  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
+  const [pendingMessage, setPendingMessage] = useState<string>(''); // User message waiting for AI response
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const streamControllerRef = useRef<{ abort: () => void } | null>(null);
+  const streamingBufferRef = useRef<string>('');
+  const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto scroll to bottom when new messages arrive
+  // Auto scroll to bottom when new messages arrive or streaming updates
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [chatHistory]);
+  }, [chatHistory, streamingResponse]);
+
+  // Cleanup streaming timer on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingTimerRef.current) {
+        clearInterval(streamingTimerRef.current);
+      }
+      if (streamControllerRef.current) {
+        streamControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Update stats when chat history changes
   useEffect(() => {
@@ -140,10 +159,139 @@ const ApiReportPage: React.FC = () => {
       toast.error('Please enter a message');
       return;
     }
-    chatMutation.mutate({
-      message: message.trim(),
-      language: selectedLanguage,
-    });
+
+    const messageToSend = message.trim();
+    
+    // Immediately show user message and AI placeholder
+    setPendingMessage(messageToSend);
+    setMessage(''); // Clear input immediately
+    setIsStreaming(true);
+    setStreamingResponse('');
+
+    // Close previous connection if exists
+    if (streamControllerRef.current) {
+      streamControllerRef.current.abort();
+    }
+
+    const startTime = Date.now();
+    
+    // Use ref to track accumulated response
+    const accumulatedResponse = { current: '' };
+    const metadata = {
+      toolsUsed: [] as string[],
+      reasoning: '',
+      processingTime: 0,
+    };
+
+    console.log('🎬 Starting stream for message:', messageToSend);
+
+    // Clear any existing streaming timer
+    if (streamingTimerRef.current) {
+      clearInterval(streamingTimerRef.current);
+      streamingTimerRef.current = null;
+    }
+    streamingBufferRef.current = '';
+
+    // Batch update streaming response every 50ms for smooth rendering
+    streamingTimerRef.current = setInterval(() => {
+      if (streamingBufferRef.current) {
+        setStreamingResponse((prev) => prev + streamingBufferRef.current);
+        streamingBufferRef.current = '';
+      }
+    }, 50); // Update UI every 50ms
+
+    (async () => {
+      try {
+        const controller = await streamAgentChat(
+          {
+            message: messageToSend,
+            context: currentConversationId,
+            language: selectedLanguage,
+          },
+          (chunk) => {
+            console.log('🔥 Chunk received in component:', chunk);
+            
+            if (chunk.type === 'metadata' && chunk.data?.conversationId) {
+              console.log('📊 Setting conversation ID:', chunk.data.conversationId);
+              setCurrentConversationId(chunk.data.conversationId);
+            } else if (chunk.type === 'token' && chunk.content) {
+              console.log('💬 Token content:', chunk.content);
+              accumulatedResponse.current += chunk.content;
+              // Buffer tokens for batched rendering
+              streamingBufferRef.current += chunk.content;
+            } else if (chunk.type === 'tool' && chunk.tool) {
+              console.log('🔧 Tool used:', chunk.tool);
+              metadata.toolsUsed.push(chunk.tool);
+              toast(`Using tool: ${chunk.tool}`);
+            } else if (chunk.type === 'complete' && chunk.data) {
+              console.log('✅ Complete chunk received:', chunk.data);
+              metadata.toolsUsed = chunk.data.toolsUsed || [];
+              metadata.reasoning = chunk.data.reasoning || '';
+              metadata.processingTime = chunk.data.processingTime || Date.now() - startTime;
+            } else if (chunk.type === 'error') {
+              console.error('❌ Error chunk:', chunk.content);
+              toast.error(chunk.content || 'Error occurred');
+            }
+          },
+          (error) => {
+            console.error('💥 Streaming error:', error);
+            toast.error('Failed to communicate with AI');
+            
+            // Clear streaming timer
+            if (streamingTimerRef.current) {
+              clearInterval(streamingTimerRef.current);
+              streamingTimerRef.current = null;
+            }
+            
+            setPendingMessage(''); // Clear pending on error
+            setStreamingResponse('');
+            setIsStreaming(false);
+          },
+          () => {
+            console.log('🏁 Stream complete callback, final response:', accumulatedResponse.current);
+            
+            // Clear streaming timer and flush any remaining buffer
+            if (streamingTimerRef.current) {
+              clearInterval(streamingTimerRef.current);
+              streamingTimerRef.current = null;
+            }
+            if (streamingBufferRef.current) {
+              setStreamingResponse((prev) => prev + streamingBufferRef.current);
+              streamingBufferRef.current = '';
+            }
+            
+            // Streaming complete
+            const newMessage: ChatMessage = {
+              id: Date.now().toString(),
+              message: messageToSend,
+              response: accumulatedResponse.current || streamingResponse,
+              timestamp: new Date(),
+              confidence: 0.9,
+              toolsUsed: metadata.toolsUsed,
+              reasoning: metadata.reasoning,
+              processingTime: metadata.processingTime,
+              sources: ['Knowledge Base', 'Database', 'API Documentation'],
+              suggestions: [],
+              executionSteps: [],
+            };
+            
+            console.log('💾 Saving message to history:', newMessage);
+            setChatHistory((prev) => [newMessage, ...prev]);
+            setPendingMessage(''); // Clear pending message
+            setStreamingResponse('');
+            setIsStreaming(false);
+            toast.success('AI response complete!');
+          },
+        );
+
+        streamControllerRef.current = controller;
+      } catch (err) {
+        console.error('💥 Failed to start streaming:', err);
+        toast.error('Failed to start chat');
+        setStreamingResponse('');
+        setIsStreaming(false);
+      }
+    })();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -212,6 +360,9 @@ const ApiReportPage: React.FC = () => {
                 setSelectedLanguage={setSelectedLanguage}
                 handleSendMessage={handleSendMessage}
                 handleKeyPress={handleKeyPress}
+                isStreaming={isStreaming}
+                streamingResponse={streamingResponse}
+                pendingMessage={pendingMessage}
               />
             )}
             {activeTab === 'tools' && <ToolsAnalytics agentStats={agentStats} />}
@@ -258,6 +409,9 @@ const ChatInterface: React.FC<{
   setSelectedLanguage: (language: string) => void;
   handleSendMessage: () => void;
   handleKeyPress: (e: React.KeyboardEvent) => void;
+  isStreaming: boolean;
+  streamingResponse: string;
+  pendingMessage: string;
 }> = ({
   chatHistory,
   message,
@@ -267,7 +421,10 @@ const ChatInterface: React.FC<{
   setMessage,
   setSelectedLanguage,
   handleSendMessage,
-  handleKeyPress
+  handleKeyPress,
+  isStreaming,
+  streamingResponse,
+  pendingMessage
 }) => (
     <div className="bg-white rounded-lg shadow-sm border">
       <div className="p-6 border-b">
@@ -281,7 +438,7 @@ const ChatInterface: React.FC<{
       </div>
 
       {/* Chat History */}
-      <div ref={chatContainerRef} className="h-96 overflow-y-auto p-4 space-y-4">
+      <div ref={chatContainerRef} className="h-96 overflow-y-auto p-4 space-y-4 smooth-scroll">
         {chatHistory.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -312,18 +469,61 @@ const ChatInterface: React.FC<{
             </div>
           </div>
         ) : (
-          chatHistory.map((chat) => (
-            <div key={chat.id} className="space-y-3">
+          <>
+            {/* Pending Message + AI Streaming Response */}
+            {pendingMessage && (
+              <div className="space-y-3 mb-6">
+                {/* User Message */}
+                <div className="flex justify-end animate-slideInRight">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-md shadow-sm">
+                    <p className="text-sm leading-relaxed">{pendingMessage}</p>
+                  </div>
+                </div>
+                
+                {/* AI Response */}
+                <div className="flex justify-start items-start gap-3 animate-slideInLeft">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                    <Bot className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 max-w-2xl shadow-sm">
+                    {!streamingResponse ? (
+                      // Loading dots
+                      <div className="flex items-center gap-2 py-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                        <span className="text-xs text-gray-400 ml-2">AI is thinking...</span>
+                      </div>
+                    ) : (
+                      // Streaming text
+                      <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                        {streamingResponse}
+                        <span className="inline-block w-0.5 h-4 ml-0.5 bg-blue-600 animate-pulse"></span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {chatHistory.map((chat) => (
+              <div key={chat.id} className="space-y-3 mb-6"
+              >
               {/* User Message */}
               <div className="flex justify-end">
-                <div className="bg-blue-600 text-white rounded-lg px-4 py-2 max-w-md">
-                  <p className="text-sm">{chat.message}</p>
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-md shadow-sm">
+                  <p className="text-sm leading-relaxed">{chat.message}</p>
                 </div>
               </div>
 
               {/* AI Response */}
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg px-4 py-3 max-w-2xl">
+              <div className="flex justify-start items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                  <Bot className="h-5 w-5 text-white" />
+                </div>
+                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 max-w-2xl shadow-sm">
                   <div className="text-sm text-gray-800 whitespace-pre-wrap">{chat.response}</div>
 
                   {/* Tools Used */}
@@ -428,7 +628,8 @@ const ChatInterface: React.FC<{
                 </div>
               </div>
             </div>
-          ))
+          ))}
+          </>
         )}
       </div>
 
