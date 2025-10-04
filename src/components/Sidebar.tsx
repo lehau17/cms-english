@@ -17,21 +17,24 @@ import {
 } from "@mui/material";
 import * as React from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { UserRole } from "@/interface/enum.interface";
 
-type NavItem = { to: string; label: string; icon: React.ReactNode };
+type NavItem = { to: string; label: string; icon: React.ReactNode; roles?: UserRole[] };
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: <HomeOutlinedIcon /> },
   { to: "/settings", label: "Settings", icon: <SettingsOutlinedIcon /> },
-  { to: "/students", label: "Student", icon: <Person /> },
-  { to: "/teachers", label: "Teacher", icon: <Person /> },
-  { to: "/parents", label: "Parents", icon: <FamilyRestroom /> },
-  { to: "/classrooms", label: "Class", icon: <Class /> },
-  { to: "/courses", label: "Course", icon: <School /> },
-  { to: "/assignments", label: "Assignments", icon: <AssignmentOutlinedIcon /> },
-  { to: "/schedule", label: "Schedule", icon: <CalendarMonth /> },
-  { to: "/rooms", label: "Room", icon: <RoomOutlined /> },
-  { to: "/api-report", label: "API Report", icon: <AssessmentOutlinedIcon /> },
+  { to: "/students", label: "Student", icon: <Person />, roles: [UserRole.ADMIN] },
+  { to: "/teachers", label: "Teacher", icon: <Person />, roles: [UserRole.ADMIN] },
+  { to: "/parents", label: "Parents", icon: <FamilyRestroom />, roles: [UserRole.ADMIN] },
+  { to: "/classrooms", label: "Class", icon: <Class />, roles: [UserRole.ADMIN] },
+  { to: "/courses", label: "Course", icon: <School />, roles: [UserRole.ADMIN] },
+  { to: "/assignments", label: "Assignments", icon: <AssignmentOutlinedIcon />, roles: [UserRole.ADMIN] },
+  { to: "/schedule", label: "Schedule", icon: <CalendarMonth />, roles: [UserRole.ADMIN] },
+  { to: "/teacher-schedule", label: "My Schedule", icon: <CalendarMonth />, roles: [UserRole.TEACHER] },
+  { to: "/rooms", label: "Room", icon: <RoomOutlined />, roles: [UserRole.ADMIN] },
+  { to: "/api-report", label: "API Report", icon: <AssessmentOutlinedIcon />, roles: [UserRole.ADMIN] },
 ];
 
 const DRAWER_WIDTH = 240;
@@ -39,6 +42,7 @@ const DRAWER_WIDTH_COLLAPSED = 78;
 
 export function Sidebar() {
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = React.useState<boolean>(() => {
     return localStorage.getItem("cms_sidebar") === "collapsed";
   });
@@ -110,6 +114,11 @@ export function Sidebar() {
 
       <List sx={{ py: 1 }}>
         {NAV.map((item) => {
+          // Filter navigation items based on user role
+          if (item.roles && user?.role && !item.roles.includes(user.role)) {
+            return null;
+          }
+          
           const active = pathname === item.to || pathname.startsWith(item.to + "/");
           return (
             <ListItemButton
