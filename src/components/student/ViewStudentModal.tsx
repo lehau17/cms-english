@@ -1,10 +1,8 @@
 import { useStudent } from '@/hooks/useStudent';
-import { useStudentSchedule } from '@/hooks/useStudentSchedule';
 import { Student } from '@/interface/student.interface';
 import { Calendar, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
-import StudentScheduleModal from './StudentScheduleModal';
 
 interface ViewStudentModalProps {
   isOpen: boolean;
@@ -14,19 +12,13 @@ interface ViewStudentModalProps {
 
 const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, student }) => {
   const { data: studentData, isLoading } = useStudent(student?.id || '');
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  
-  const {
-    data: scheduleData,
-    isLoading: isScheduleLoading,
-  } = useStudentSchedule(student?.id || null, undefined, undefined, isScheduleModalOpen);
+  const navigate = useNavigate();
 
   const handleViewSchedule = () => {
-    setIsScheduleModalOpen(true);
-  };
-
-  const handleCloseSchedule = () => {
-    setIsScheduleModalOpen(false);
+    if (student?.id) {
+      navigate(`/students/${student.id}/schedule`);
+      onClose(); // Close modal before navigating
+    }
   };
 
   const renderDetail = (label: string, value: any) => (
@@ -51,6 +43,20 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
           </div>
         ) : studentData ? (
           <>
+            {/* Avatar Display */}
+            {studentData.data.avatarUrl && (
+              <div className="flex justify-center mb-4">
+                <img
+                  src={studentData.data.avatarUrl}
+                  alt={studentData.data.username}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-blue-100 shadow-lg"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(studentData.data.username) + '&background=3b82f6&color=fff';
+                  }}
+                />
+              </div>
+            )}
+
             <dl>
               {renderDetail('Username', studentData.data.username)}
               {renderDetail('Email', studentData.data.email)}
@@ -60,7 +66,7 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
               {renderDetail('Created At', new Date(studentData.data.createdAt).toLocaleString())}
               {renderDetail('Updated At', new Date(studentData.data.updatedAt).toLocaleString())}
             </dl>
-            
+
             {/* View Schedule Button */}
             <div className="mt-4 pt-4 border-t border-gray-200">
               <button
@@ -76,14 +82,6 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
           <p>Could not load student details.</p>
         )}
       </div>
-      
-      <StudentScheduleModal
-        isOpen={isScheduleModalOpen}
-        onClose={handleCloseSchedule}
-        studentName={studentData?.data.username || student?.username || 'Student'}
-        schedule={scheduleData?.schedule || null}
-        isLoading={isScheduleLoading}
-      />
     </Modal>
   );
 };

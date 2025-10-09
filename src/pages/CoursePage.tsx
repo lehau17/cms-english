@@ -1,11 +1,12 @@
 import { getCourses } from '@/apis/course';
 import DeleteCourseModal from '@/components/course/DeleteCourseModal';
-import ViewCourseModal from '@/components/course/ViewCourseModal';
 import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
 import { Course } from '@/interface/course.interface';
 import {
+  BookOpen,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Edit,
   Eye,
   Plus,
@@ -31,12 +32,10 @@ const CoursePage: React.FC = () => {
   });
 
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const navigate = useNavigate()
   const handleView = (course: Course) => {
-    setSelectedCourse(course);
-    setIsViewModalOpen(true);
+    navigate(`/courses/${course.id}`);
   };
 
   const handleEdit = (course: Course) => {
@@ -53,7 +52,6 @@ const CoursePage: React.FC = () => {
   };
 
   const handleCloseModals = () => {
-    setIsViewModalOpen(false);
     setIsDeleteModalOpen(false);
     setSelectedCourse(null);
   };
@@ -131,96 +129,118 @@ const CoursePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          {isLoading && (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            </div>
-          )}
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        )}
 
-          {!isLoading && (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Course</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Instructor</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Difficulty</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created At</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {courses.map((course) => (
-                    <tr key={course.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900">{course.title}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <span>{course.instructor?.firstName} {course.instructor?.lastName}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium`}>
-                          {course.difficulty}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <span>{course.price}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{formatDate(course.createdAt)}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-1">
-                          <button
-                            onClick={() => handleView(course)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors tooltip"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(course)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors tooltip"
-                            title="Edit Course"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(course)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors tooltip"
-                            title="Delete Course"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        {!isLoading && courses.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No Courses Found</h3>
+            <p className="text-gray-600 mb-4">Create a new course to get started.</p>
+            <button
+              onClick={handleCreate}
+              className="inline-flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Your First Course</span>
+            </button>
+          </div>
+        )}
 
-          {!isLoading && courses.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">No Courses Found</h3>
-              <p className="text-gray-600 mb-4">Create a new course to get started.</p>
-              <button
-                onClick={handleCreate}
-                className="inline-flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+        {!isLoading && courses.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {courses.map((course) => (
+              <div
+                key={course.id}
+                className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-indigo-200 transform hover:-translate-y-1"
               >
-                <Plus className="w-4 h-4" />
-                <span>Create Your First Course</span>
-              </button>
-            </div>
-          )}
-        </div>
+                {/* Course Image/Background */}
+                <div className="relative h-36 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
+                  {course.imageUrl ? (
+                    <img
+                      src={course.imageUrl}
+                      alt={course.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400">
+                      <BookOpen className="w-12 h-12 text-white opacity-50" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+                  {/* Difficulty Badge */}
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${course.difficulty === 'beginner' ? 'bg-green-500/90 text-white' :
+                        course.difficulty === 'intermediate' ? 'bg-yellow-500/90 text-white' :
+                          course.difficulty === 'advanced' ? 'bg-red-500/90 text-white' :
+                            'bg-gray-500/90 text-white'
+                      }`}>
+                      {course.difficulty?.toUpperCase() || 'N/A'}
+                    </span>
+                  </div>
+
+                  {/* Price Badge */}
+                  <div className="absolute bottom-2 left-2">
+                    <div className="bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg">
+                      <span className="text-sm font-bold text-indigo-600">
+                        {course.price === 0 || !course.price ? 'FREE' : `$${course.price}`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Course Content */}
+                <div className="p-4">
+                  <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors min-h-[40px]">
+                    {course.title}
+                  </h3>
+
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
+                    <User className="w-3.5 h-3.5" />
+                    <span className="truncate">
+                      {course.instructor?.firstName} {course.instructor?.lastName || 'Unknown'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{formatDate(course.createdAt)}</span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-1.5 pt-3 border-t border-gray-100">
+                    <button
+                      onClick={() => handleView(course)}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-medium transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View</span>
+                    </button>
+                    <button
+                      onClick={() => handleEdit(course)}
+                      className="flex items-center justify-center px-2 py-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                      title="Edit Course"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(course)}
+                      className="flex items-center justify-center px-2 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                      title="Delete Course"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {!isLoading && pagination && pagination.totalPages > 1 && (
           <div className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
@@ -268,13 +288,6 @@ const CoursePage: React.FC = () => {
         onClose={handleCloseModals}
         course={selectedCourse}
       />
-
-      <ViewCourseModal
-        isOpen={isViewModalOpen}
-        onClose={handleCloseModals}
-        course={selectedCourse}
-      />
-
     </div>
   );
 };

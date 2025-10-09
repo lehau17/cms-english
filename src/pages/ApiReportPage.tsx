@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Bot,
@@ -7,6 +7,7 @@ import {
   Code,
   FileText,
   Lightbulb,
+  Menu,
   MessageSquare,
   RotateCcw,
   Send,
@@ -18,8 +19,18 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { agentChat, getAgentRecommendations, streamAgentChat, uploadDocument } from '../apis/agent';
+import {
+  agentChat,
+  getAgentRecommendations,
+  streamAgentChat,
+  uploadDocument,
+  getConversations,
+  getConversation,
+  deleteConversation,
+  type AgentConversation
+} from '../apis/agent';
 import { ChartRenderer } from '../components/ChartRenderer';
+import { ConversationSidebar } from '../components/ConversationSidebar';
 
 interface ChatMessage {
   id: string;
@@ -79,6 +90,25 @@ const ApiReportPage: React.FC = () => {
   const streamControllerRef = useRef<{ abort: () => void } | null>(null);
   const streamingBufferRef = useRef<string>('');
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ✅ Multi-conversation state
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(undefined);
+  const [conversations, setConversations] = useState<AgentConversation[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // ✅ Load conversations from backend
+  const conversationsQuery = useQuery({
+    queryKey: ['agent-conversations'],
+    queryFn: () => getConversations(50, 0),
+    refetchInterval: 30000, // Refresh every 30s
+  });
+
+  // ✅ Update conversations list when data changes
+  useEffect(() => {
+    if (conversationsQuery.data?.conversations) {
+      setConversations(conversationsQuery.data.conversations);
+    }
+  }, [conversationsQuery.data]);
 
   // Auto scroll to bottom when new messages arrive or streaming updates
   useEffect(() => {
@@ -223,7 +253,7 @@ const ApiReportPage: React.FC = () => {
         const controller = await streamAgentChat(
           {
             message: messageToSend,
-            context: currentConversationId,
+            context: activeConversationId, // ✅ Use activeConversationId instead of currentConversationId
             language: selectedLanguage,
           },
           (chunk) => {
@@ -232,6 +262,7 @@ const ApiReportPage: React.FC = () => {
             if (chunk.type === 'metadata' && chunk.data?.conversationId) {
               console.log('📊 Setting conversation ID:', chunk.data.conversationId);
               setCurrentConversationId(chunk.data.conversationId);
+              setActiveConversationId(chunk.data.conversationId); // ✅ Also set active conversation ID
             } else if (chunk.type === 'token' && chunk.content) {
               console.log('💬 Token content:', chunk.content);
               accumulatedResponse.current += chunk.content;
@@ -314,6 +345,9 @@ const ApiReportPage: React.FC = () => {
             console.log('💾 Saving message to history:', newMessage);
             setChatHistory((prev) => [newMessage, ...prev]);
             toast.success('AI response complete!');
+
+            // ✅ Refresh conversations list after successful chat
+            conversationsQuery.refetch();
           },
         );
 
@@ -334,34 +368,125 @@ const ApiReportPage: React.FC = () => {
     }
   };
 
-  const clearHistory = () => {
+  // ✅ Handler: New Chat
+  const handleNewChat = () => {
+    setActiveConversationId(undefined);
+    setCurrentConversationId(undefined);
     setChatHistory([]);
-    toast.success('Chat history cleared');
+    setMessage('');
+    setPendingMessage('');
+    setStreamingResponse('');
+    setStreamingChart(null);
+    toast.success('Started new chat');
+  };
+
+  // ✅ Handler: Select Conversation
+  const handleSelectConversation = async (conversationId: string) => {
+    try {
+      setActiveConversationId(conversationId);
+      setCurrentConversationId(conversationId);
+
+      // Load conversation messages
+      const conversation = await getConversation(conversationId);
+
+      // Convert to ChatMessage format
+      const messages: ChatMessage[] = [];
+      if (conversation.messages) {
+        for (let i = 0; i < conversation.messages.length; i += 2) {
+          const userMsg = conversation.messages[i];
+          const aiMsg = conversation.messages[i + 1];
+
+          if (userMsg && aiMsg) {
+            messages.push({
+              id: userMsg.id,
+              message: userMsg.role === 'user' ? userMsg.content : '',
+              response: aiMsg.role === 'assistant' ? aiMsg.content : '',
+              timestamp: new Date(userMsg.createdAt),
+              confidence: 0.9,
+              toolsUsed: [],
+              sources: [],
+              suggestions: [],
+            });
+          }
+        }
+      }
+
+      setChatHistory(messages);
+      toast.success('Conversation loaded');
+    } catch (error: any) {
+      console.error('Failed to load conversation:', error);
+      toast.error(error.message || 'Failed to load conversation');
+    }
+  };
+
+  // ✅ Handler: Delete Conversation
+  const handleDeleteConversation = async (conversationId: string) => {
+    if (!confirm('Are you sure you want to delete this conversation?')) return;
+
+    try {
+      await deleteConversation(conversationId);
+      toast.success('Conversation deleted');
+
+      // Refresh list
+      conversationsQuery.refetch();
+
+      // If active conversation was deleted, start new chat
+      if (activeConversationId === conversationId) {
+        handleNewChat();
+      }
+    } catch (error: any) {
+      console.error('Failed to delete conversation:', error);
+      toast.error(error.message || 'Failed to delete conversation');
+    }
+  };
+
+  const clearHistory = () => {
+    handleNewChat(); // Use new chat handler instead
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* Header - Similar to ChatGPT */}
-      <div className="flex-shrink-0 border-b border-gray-200 bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Bot className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-semibold text-gray-900">AI Assistant</span>
-          </div>
+    <div className="flex h-screen bg-white overflow-hidden">
+      {/* Conversation Sidebar */}
+      <ConversationSidebar
+        conversations={conversations}
+        activeConversationId={activeConversationId}
+        onSelectConversation={handleSelectConversation}
+        onNewChat={handleNewChat}
+        onDeleteConversation={handleDeleteConversation}
+        isLoading={conversationsQuery.isLoading}
+      />
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={clearHistory}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              New Chat
-            </button>
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header - Similar to ChatGPT */}
+        <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {/* Sidebar Toggle Button */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+                title="Toggle sidebar"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <Bot className="h-5 w-5 text-white" />
+              </div>
+              <span className="font-semibold text-gray-900">AI Assistant</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={clearHistory}
+                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                New Chat
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Chat Area - Scrollable */}
       <div ref={chatContainerRef} className="flex-1 overflow-y-auto">
@@ -584,6 +709,8 @@ const ApiReportPage: React.FC = () => {
             AI can make mistakes. Check important info.
           </p>
         </div>
+      </div>
+      {/* End Main Chat Area */}
       </div>
     </div>
   );

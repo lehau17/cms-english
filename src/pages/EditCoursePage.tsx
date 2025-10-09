@@ -3,7 +3,7 @@ import { useTeachers } from '@/hooks/useTeacher';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, GripVertical, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calendar, CheckCircle, CircleDot, FileEdit, GripVertical, Library, Lock, Plus, RefreshCw, Save, Target, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -14,12 +14,12 @@ import Button from '../components/ui/Button';
 interface LessonFormData {
   id?: string;
   title: string;
-  description: string;
+  description?: string;
   orderNo: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  estimatedTime: number;
+  estimatedTime?: number;
   isLocked: boolean;
-  objectives: string;
+  objectives?: string;
 }
 
 interface EditCourseFormValues {
@@ -55,9 +55,9 @@ const schema = yup.object({
 });
 
 const difficultyOptions = [
-  { value: 'beginner', label: '🟢 Beginner', color: 'text-green-600', bg: 'bg-green-50 border-green-200' },
-  { value: 'intermediate', label: '🟡 Intermediate', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200' },
-  { value: 'advanced', label: '🔴 Advanced', color: 'text-red-600', bg: 'bg-red-50 border-red-200' },
+  { value: 'beginner', label: 'Beginner', color: 'text-green-600', bg: 'bg-green-50 border-green-200', icon: CircleDot },
+  { value: 'intermediate', label: 'Intermediate', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200', icon: CircleDot },
+  { value: 'advanced', label: 'Advanced', color: 'text-red-600', bg: 'bg-red-50 border-red-200', icon: CircleDot },
 ];
 
 const EditCoursePage: React.FC = () => {
@@ -83,7 +83,7 @@ const EditCoursePage: React.FC = () => {
     resolver: yupResolver(schema),
   });
 
-  const { register, handleSubmit, formState: { errors }, reset, control, watch } = methods;
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, control, watch } = methods;
   const { fields: lessonFields, append: addLesson, remove: removeLesson, move: moveLesson, update: updateLesson } = useFieldArray({
     control,
     name: 'lessons',
@@ -114,15 +114,19 @@ const EditCoursePage: React.FC = () => {
   }, [detailCourse, reset]);
 
   const editMutation = useMutation({
-    mutationFn: (data: Partial<Course>) => {
+    mutationFn: (data: EditCourseFormValues) => {
       const courseData = {
         ...data,
         lessons: data.lessons?.map(lesson => ({
           ...lesson,
-          objectives: lesson.objectives ? lesson.objectives.split('\n').filter(obj => obj.trim()) : [],
+          objectives: lesson.objectives
+            ? (typeof lesson.objectives === 'string'
+              ? lesson.objectives.split('\n').filter((obj: string) => obj.trim())
+              : lesson.objectives)
+            : [],
         })),
       };
-      return updateCourse(id as string, courseData);
+      return updateCourse(id as string, courseData as Partial<Course>);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
@@ -200,171 +204,136 @@ const EditCoursePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/courses')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Courses</span>
-            </button>
-            <div className="h-8 w-px bg-gray-300"></div>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Course</h1>
-          </div>
-        </div>
-
-        <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Hero Header */}
-            <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white px-6 py-6 rounded-xl shadow-lg">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <p className="text-sm uppercase tracking-wide opacity-80 mb-1">Editing course</p>
-                  <h2 className="text-2xl font-bold leading-snug">{detailCourse.title}</h2>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2">
-                    <BookOpen className="h-4 w-4" /> ID: <span className="font-mono">{detailCourse.id}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2">
-                    {detailCourse.isPublished ? '✅ Published' : '📝 Draft'}
-                  </span>
-                  {detailCourse.language && (
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2">
-                      🌐 {detailCourse.language.toUpperCase()}
-                    </span>
-                  )}
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50">
+      {/* Compact Header */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Left: Back + Title */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/courses')}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">✏️ {detailCourse?.title}</h1>
+                <p className="text-xs text-gray-500">Edit Course</p>
               </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            {/* Right: Quick Info + Actions */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs">
+                <span className={`px-2 py-1 rounded-full font-medium flex items-center gap-1 ${detailCourse?.isPublished
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                  {detailCourse?.isPublished ? <><CheckCircle className="w-3 h-3" /> Published</> : <><FileEdit className="w-3 h-3" /> Draft</>}
+                </span>
+                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full flex items-center gap-1">
+                  <Library className="w-3 h-3" /> {lessonFields.length} lessons
+                </span>
+                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3" /> {totalEstimatedTime}m
+                </span>
+              </div>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+            {/* Compact Tab Navigation */}
+            <div className="flex bg-white border-b border-gray-200">
               <button
                 type="button"
                 onClick={() => setActiveTab('course')}
-                className={`flex-1 px-6 py-4 text-base font-semibold transition-colors ${activeTab === 'course'
-                  ? 'bg-purple-50 text-purple-700 border-b-4 border-purple-600'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'course'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
                   }`}
               >
-                📚 Course Details
+                <BookOpen className="w-4 h-4 inline mr-1" /> Course Details
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('lessons')}
-                className={`flex-1 px-6 py-4 text-base font-semibold transition-colors relative ${activeTab === 'lessons'
-                  ? 'bg-purple-50 text-purple-700 border-b-4 border-purple-600'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'lessons'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
                   }`}
               >
-                📖 Lessons ({lessonFields.length})
-                {lessonFields.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
-                    {lessonFields.length}
-                  </span>
-                )}
+                <Library className="w-4 h-4 inline mr-1" /> Lessons ({lessonFields.length})
               </button>
             </div>
 
             {/* Course Details Tab */}
             {activeTab === 'course' && (
-              <div className="space-y-6">
-                {/* Course Stats */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">📊 Course Overview</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <div className="font-bold text-purple-600 text-2xl mb-1">{lessonFields.length}</div>
-                      <div className="text-gray-600 text-sm">Lessons</div>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="font-bold text-blue-600 text-2xl mb-1">{totalEstimatedTime}min</div>
-                      <div className="text-gray-600 text-sm">Duration</div>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="font-bold text-green-600 text-2xl mb-1">{detailCourse.isPublished ? '✅' : '❌'}</div>
-                      <div className="text-gray-600 text-sm">Published</div>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <div className="font-bold text-orange-600 text-2xl mb-1">${watch('price') || 0}</div>
-                      <div className="text-gray-600 text-sm">Price</div>
-                    </div>
-                  </div>
-                </div>
-
+              <div className="space-y-4">
                 {/* Basic Information */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">📚 Basic Information</h3>
-                  <div className="space-y-4">
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" /> Basic Information
+                  </h3>
+                  <div className="space-y-3">
                     <FormField name="title" label="Course Title *" placeholder="Enter course title" />
-                    <FormField name="description" label="Description *" placeholder="Enter course description" type="textarea" rows={4} />
+                    <FormField name="description" label="Description *" placeholder="Enter course description" type="textarea" />
                   </div>
                 </div>
 
-                {/* Instructor & Settings */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">👨‍🏫 Instructor & Settings</h3>
-                  <div className="space-y-4">
+                {/* Settings - 2 Column Grid */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">⚙️ Settings</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Instructor *</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Instructor *</label>
                       <select
                         {...register('instructorId')}
-                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none bg-white"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         disabled={isLoadingTeachers}
                       >
-                        <option value="">{isLoadingTeachers ? 'Loading teachers...' : 'Select an instructor'}</option>
+                        <option value="">{isLoadingTeachers ? 'Loading...' : 'Select instructor'}</option>
                         {teachersData?.data.data.map((teacher) => (
                           <option key={teacher.id} value={teacher.id}>
-                            👨‍🏫 {teacher.firstName} {teacher.lastName} - {teacher.email}
+                            {teacher.firstName} {teacher.lastName}
                           </option>
                         ))}
                       </select>
-                      {errors.instructorId && <p className="text-red-500 text-sm mt-1">{errors.instructorId.message}</p>}
+                      {errors.instructorId && <p className="text-red-500 text-xs mt-1">{errors.instructorId.message}</p>}
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField name="price" label="Price ($)" type="number" placeholder="0" />
-                      <FormField name="difficulty" label="Course Difficulty" placeholder="beginner" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField name="language" label="Language" placeholder="en" />
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Publication Status</label>
-                        <div className="flex items-center h-12 bg-gray-50 rounded-lg px-4 border border-gray-200">
-                          <input
-                            type="checkbox"
-                            {...register('isPublished')}
-                            className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                          />
-                          <span className="ml-3 text-base font-medium text-gray-700">✅ Publish course</span>
-                        </div>
-                      </div>
-                    </div>
+                    <FormField name="price" label="Price ($)" type="number" placeholder="0" />
+                    <FormField name="difficulty" label="Difficulty" placeholder="beginner" />
+                    <FormField name="language" label="Language" placeholder="en" />
+                  </div>
+                  <div className="mt-3 flex items-center p-2 bg-gray-50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      {...register('isPublished')}
+                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700">✅ Published</span>
                   </div>
                 </div>
 
-                {/* Course History */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">📅 Course History</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600 font-medium">Created:</span>
-                      <div className="text-gray-900 font-semibold mt-1">
-                        {detailCourse.createdAt ? `${new Date(detailCourse.createdAt).toLocaleDateString('vi-VN')} at ${new Date(detailCourse.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'N/A'}
-                      </div>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600 font-medium">Last Updated:</span>
-                      <div className="text-gray-900 font-semibold mt-1">
-                        {detailCourse.updatedAt ? `${new Date(detailCourse.updatedAt).toLocaleDateString('vi-VN')} at ${new Date(detailCourse.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'N/A'}
-                      </div>
-                    </div>
+                {/* Metadata - Inline */}
+                <div className="bg-gray-50 rounded-lg border border-gray-200 px-4 py-2">
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Created: {detailCourse.createdAt ? new Date(detailCourse.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Updated: {detailCourse.updatedAt ? new Date(detailCourse.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -372,199 +341,149 @@ const EditCoursePage: React.FC = () => {
 
             {/* Lessons Tab */}
             {activeTab === 'lessons' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800">📖 Course Lessons</h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Manage lessons • Total: {lessonFields.length} lessons • Duration: {totalEstimatedTime} minutes
-                      </p>
-                    </div>
+              <div className="space-y-3">
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <Library className="w-4 h-4" /> Lessons ({lessonFields.length})
+                    </h3>
                     <Button
                       type="button"
                       onClick={handleAddLesson}
-                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                      className="bg-green-600 hover:bg-green-700 text-sm px-3 py-1.5"
                     >
-                      <Plus className="w-5 h-5 mr-2" />
-                      Add Lesson
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add
                     </Button>
                   </div>
 
-                  {/* Lessons Summary */}
-                  {lessonFields.length > 0 && (
-                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200 mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3">📊 Lessons Summary</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center">
-                          <span className="text-blue-600 font-bold text-xl block">
-                            {lessonFields.filter((_, index) => watch(`lessons.${index}.difficulty`) === 'beginner').length}
-                          </span>
-                          <span className="text-gray-600 text-sm">🟢 Beginner</span>
-                        </div>
-                        <div className="text-center">
-                          <span className="text-yellow-600 font-bold text-xl block">
-                            {lessonFields.filter((_, index) => watch(`lessons.${index}.difficulty`) === 'intermediate').length}
-                          </span>
-                          <span className="text-gray-600 text-sm">🟡 Intermediate</span>
-                        </div>
-                        <div className="text-center">
-                          <span className="text-red-600 font-bold text-xl block">
-                            {lessonFields.filter((_, index) => watch(`lessons.${index}.difficulty`) === 'advanced').length}
-                          </span>
-                          <span className="text-gray-600 text-sm">🔴 Advanced</span>
-                        </div>
-                        <div className="text-center">
-                          <span className="text-orange-600 font-bold text-xl block">
-                            {lessonFields.filter((_, index) => watch(`lessons.${index}.isLocked`)).length}
-                          </span>
-                          <span className="text-gray-600 text-sm">🔒 Locked</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {lessonFields.length === 0 ? (
-                    <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-                      <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                      <h4 className="text-xl font-semibold text-gray-600 mb-2">No lessons yet</h4>
-                      <p className="text-gray-500 mb-6">Add lessons to make your course more comprehensive</p>
+                    <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                      <BookOpen className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                      <p className="text-gray-500 text-sm mb-3">No lessons yet</p>
                       <Button
                         type="button"
                         onClick={handleAddLesson}
                         variant="secondary"
+                        className="text-sm"
                       >
-                        <Plus className="w-5 h-5 mr-2" />
+                        <Plus className="w-4 h-4 mr-1" />
                         Add First Lesson
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                       {lessonFields.map((field, index) => {
                         const difficultyOption = getDifficultyOption(watch(`lessons.${index}.difficulty`));
                         const isExistingLesson = !!(field as any).id;
 
                         return (
-                          <div key={field.id} className={`border rounded-xl p-5 shadow-sm transition-all ${isExistingLesson
+                          <div key={field.id} className={`border rounded-lg p-3 ${isExistingLesson
                             ? 'bg-white border-gray-200'
-                            : 'bg-green-50 border-green-300 shadow-md'
+                            : 'bg-green-50 border-green-300'
                             }`}>
-                            <div className="flex items-start justify-between mb-5">
-                              <div className="flex items-center space-x-3">
-                                <div className="flex items-center space-x-2">
-                                  <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
-                                  <span className={`text-sm font-bold px-3 py-1 rounded-full ${isExistingLesson
-                                    ? 'bg-purple-100 text-purple-700'
-                                    : 'bg-green-100 text-green-700'
-                                    }`}>
-                                    #{index + 1} {isExistingLesson ? '' : '(New)'}
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2 text-xs">
+                                <GripVertical className="w-4 h-4 text-gray-400" />
+                                <span className={`font-semibold px-2 py-0.5 rounded ${isExistingLesson
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : 'bg-green-100 text-green-700'
+                                  }`}>
+                                  #{index + 1}
+                                </span>
+                                {difficultyOption && (
+                                  <span className={`px-2 py-0.5 rounded font-medium ${difficultyOption.bg} ${difficultyOption.color}`}>
+                                    {difficultyOption.label}
                                   </span>
-                                </div>
-                                <div className={`px-3 py-1 rounded-full text-sm font-medium border ${difficultyOption.bg} ${difficultyOption.color}`}>
-                                  {difficultyOption.label}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  ⏱️ {watch(`lessons.${index}.estimatedTime`) || 0}min
-                                </div>
+                                )}
+                                <span className="text-gray-500">
+                                  ⏱️ {watch(`lessons.${index}.estimatedTime`) || 0}m
+                                </span>
                               </div>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center gap-1">
                                 <button
                                   type="button"
                                   onClick={() => handleMoveLesson(index, 'up')}
                                   disabled={index === 0}
-                                  className="p-2 text-gray-500 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-blue-50"
+                                  className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
                                 >
-                                  <ArrowUp className="w-5 h-5" />
+                                  <ArrowUp className="w-4 h-4" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleMoveLesson(index, 'down')}
                                   disabled={index === lessonFields.length - 1}
-                                  className="p-2 text-gray-500 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-blue-50"
+                                  className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
                                 >
-                                  <ArrowDown className="w-5 h-5" />
+                                  <ArrowDown className="w-4 h-4" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => removeLesson(index)}
-                                  className="p-2 text-red-500 hover:text-red-700 transition-colors rounded-lg hover:bg-red-50"
+                                  className="p-1 text-red-500 hover:text-red-700"
                                 >
-                                  <Trash2 className="w-5 h-5" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                               <FormField
                                 name={`lessons.${index}.title`}
-                                label="Lesson Title *"
-                                placeholder="e.g., Introduction to React"
+                                label="Title *"
+                                placeholder="Lesson title"
                               />
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-                                <select
-                                  {...register(`lessons.${index}.difficulty`)}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none bg-white"
-                                >
-                                  {difficultyOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="mt-4">
                               <FormField
                                 name={`lessons.${index}.description`}
                                 label="Description"
-                                placeholder="Brief lesson description..."
-                                type="textarea"
-                                rows={3}
+                                placeholder="Brief description"
                               />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div className="grid grid-cols-3 gap-2 mt-2">
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Order</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Order</label>
                                 <input
                                   type="number"
                                   {...register(`lessons.${index}.orderNo`)}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                   min="1"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Time (min)</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Time (min)</label>
                                 <input
                                   type="number"
                                   {...register(`lessons.${index}.estimatedTime`)}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                   min="1"
                                   placeholder="30"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Access</label>
-                                <div className="flex items-center h-12">
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Access</label>
+                                <div className="flex items-center pt-1">
                                   <input
                                     type="checkbox"
                                     {...register(`lessons.${index}.isLocked`)}
-                                    className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                                    className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
                                   />
-                                  <span className="ml-3 text-base text-gray-700">🔒 Locked</span>
+                                  <span className="ml-2 text-sm text-gray-700 flex items-center gap-1">
+                                    <Lock className="w-3 h-3" /> Locked
+                                  </span>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="mt-4">
-                              <label className="block text-sm font-medium text-gray-700 mb-2">🎯 Learning Objectives</label>
+                            <div className="mt-2">
+                              <label className="flex items-center gap-1 text-xs font-medium text-gray-600 mb-1">
+                                <Target className="w-3 h-3" /> Objectives
+                              </label>
                               <textarea
                                 {...register(`lessons.${index}.objectives`)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
-                                rows={3}
-                                placeholder="Enter objectives (one per line)..."
+                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                                rows={2}
+                                placeholder="One per line..."
                               />
                             </div>
                           </div>
@@ -576,27 +495,7 @@ const EditCoursePage: React.FC = () => {
               </div>
             )}
 
-            {/* Footer Actions */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky bottom-6">
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  📊 Course with {lessonFields.length} lesson{lessonFields.length !== 1 ? 's' : ''} • {totalEstimatedTime} minutes total
-                </div>
-                <div className="flex space-x-3">
-                  <Button type="button" variant="secondary" onClick={() => navigate('/courses')}>
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    isLoading={editMutation.isPending}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  >
-                    <Save className="w-5 h-5 mr-2" />
-                    Update Course & Lessons
-                  </Button>
-                </div>
-              </div>
-            </div>
+
           </form>
         </FormProvider>
       </div>

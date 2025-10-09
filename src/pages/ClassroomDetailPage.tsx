@@ -1,5 +1,4 @@
-import { Assignment, assignmentApi } from '@/apis/assignment';
-import { getClassroomById } from '@/apis/classroom';
+import { Assignment } from '@/apis/assignment';
 import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
 import { useQuery } from '@tanstack/react-query';
@@ -21,41 +20,24 @@ const ClassroomDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Fetch classroom data
-  const { data: classroomData, isLoading: isLoadingClassroom } = useQuery({
-    queryKey: ['classroom', id],
-    queryFn: () => getClassroomById(id as string),
-    enabled: !!id,
-  });
-
-  // Fetch classroom detail (may include course info)
+  // Fetch classroom detail with full data (students, course, assignments, etc.)
   const { data: classroomDetailData, isLoading: isLoadingDetail } = useQuery({
     queryKey: ['classroom-detail', id],
-    queryFn: async () => {
-      const classroomDetail = await getClassroomDetail(id as string);
-      return classroomDetail.data
-    },
-    enabled: !!id,
-  });
-
-  // Fetch assignments for this classroom
-  const { data: assignmentsData, isLoading: isLoadingAssignments } = useQuery({
-    queryKey: ['classroom-assignments', id],
-    queryFn: () => assignmentApi.getClassroomAssignments(id as string),
+    queryFn: () => getClassroomDetail(id as string),
     enabled: !!id,
   });
 
   // Debug logging
   console.log('=== ClassroomDetailPage Debug ===');
-  console.log('classroomData:', classroomData);
   console.log('classroomDetailData:', classroomDetailData);
-  console.log('isLoadingClassroom:', isLoadingClassroom);
   console.log('isLoadingDetail:', isLoadingDetail);
 
-  // Fetch course data if classroom has a courseId
-  // classroomDetailData has structure: { statusCode, message, data: Classroom }
-  const classroom = (classroomData || classroomDetailData?.data) as any;
+  // Use classroom detail data (has everything we need)
+  const classroom = classroomDetailData as any;
   console.log('classroom extracted:', classroom);
+  console.log('classroom.students:', classroom?.students);
+  console.log('classroom.students type:', typeof classroom?.students);
+  console.log('classroom.students length:', classroom?.students?.length);
 
   const courseFromClassroom = classroom?.course; // Course is already in detail API response
   const courseId = classroom?.courseId;
@@ -77,7 +59,7 @@ const ClassroomDetailPage: React.FC = () => {
     });
   };
 
-  const isLoading = isLoadingClassroom || isLoadingDetail || isLoadingCourse || isLoadingAssignments;
+  const isLoading = isLoadingDetail || isLoadingCourse;
 
   if (isLoading) {
     return (
@@ -102,9 +84,10 @@ const ClassroomDetailPage: React.FC = () => {
     );
   }
 
-  // Use course from classroom detail API or fallback to separate course API
+  // Use course from classroom detail API (already included) or fallback to separate course API
   const course = courseFromClassroom || courseData?.data;
-  const assignments: Assignment[] = assignmentsData?.data?.assignments || [];
+  // Assignments are already included in classroom detail
+  const assignments: Assignment[] = classroom.assignments || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50 p-6">

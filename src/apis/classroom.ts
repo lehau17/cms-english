@@ -9,8 +9,12 @@ export const getClassrooms = async (params: RequestPagingDto): Promise<PageRespo
 };
 
 export const getClassroomById = async (id: string): Promise<Classroom> => {
-  const response = await axiosInstance.get<Classroom>(`/private/v1/classrooms/${id}`);
-  return response.data;
+  const response = await axiosInstance.get<{
+    statusCode: number;
+    message: string;
+    data: Classroom;
+  }>(`/private/v1/classrooms/${id}`);
+  return response.data.data;
 };
 
 export const createClassroom = async (data: any): Promise<Classroom> => {

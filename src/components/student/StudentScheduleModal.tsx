@@ -1,12 +1,12 @@
-import { StudentScheduleSlot } from '@/interface/student-schedule.interface';
-import { Calendar, Clock, User } from 'lucide-react';
+import { StudentWeeklySchedule } from '@/interface/student-schedule.interface';
+import { BookOpen, Calendar, Clock, MapPin, User } from 'lucide-react';
 import React from 'react';
 
 interface StudentScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   studentName: string;
-  schedule: { [dayOfWeek: string]: StudentScheduleSlot[] } | null;
+  schedule: StudentWeeklySchedule | null;
   isLoading: boolean;
 }
 
@@ -19,28 +19,39 @@ const StudentScheduleModal: React.FC<StudentScheduleModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const dayLabels = {
-    mon: 'Monday',
-    tue: 'Tuesday',
-    wed: 'Wednesday',
-    thu: 'Thursday',
-    fri: 'Friday',
-    sat: 'Saturday',
-    sun: 'Sunday',
+  const formatTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
-  const minutesToTimeString = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  const getStateColor = (state: string) => {
+    switch (state) {
+      case 'ongoing':
+        return 'bg-green-50 border-green-400 text-green-800';
+      case 'upcoming':
+        return 'bg-blue-50 border-blue-400 text-blue-800';
+      case 'completed':
+        return 'bg-gray-50 border-gray-400 text-gray-600';
+      case 'cancelled':
+        return 'bg-red-50 border-red-400 text-red-600';
+      default:
+        return 'bg-gray-50 border-gray-300 text-gray-700';
+    }
   };
 
-  const getDaySchedule = (dayKey: string) => {
-    if (!schedule) return [];
-    return schedule[dayKey] || [];
+  const getStateBadge = (state: string) => {
+    const colors = {
+      ongoing: 'bg-green-100 text-green-800',
+      upcoming: 'bg-blue-100 text-blue-800',
+      completed: 'bg-gray-100 text-gray-600',
+      cancelled: 'bg-red-100 text-red-600',
+    };
+    return colors[state as keyof typeof colors] || 'bg-gray-100 text-gray-600';
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm flex items-center justify-center z-50">
@@ -76,102 +87,123 @@ const StudentScheduleModal: React.FC<StudentScheduleModalProps> = ({
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent"></div>
               <span className="ml-3 text-gray-600">Loading schedule...</span>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-              {Object.entries(dayLabels).map(([dayKey, dayLabel]) => {
-                const daySchedule = getDaySchedule(dayKey);
-                const isWeekend = dayKey === 'sat' || dayKey === 'sun';
+          ) : schedule ? (
+            <>
+              {/* Week Range */}
+              <div className="mb-4 text-sm text-gray-600 text-center">
+                Week: {new Date(schedule.weekStart).toLocaleDateString()} - {new Date(schedule.weekEnd).toLocaleDateString()}
+              </div>
 
-                return (
-                  <div
-                    key={dayKey}
-                    className={`border rounded-lg p-3 ${isWeekend ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-300'
-                      }`}
-                  >
-                    <h3 className={`font-semibold text-sm mb-3 ${isWeekend ? 'text-gray-600' : 'text-gray-800'
-                      }`}>
-                      {dayLabel}
-                    </h3>
+              {/* Days Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+                {schedule.days.map((day) => {
+                  const isWeekend = day.dayOfWeek === 'Saturday' || day.dayOfWeek === 'Sunday';
 
-                    <div className="space-y-2">
-                      {daySchedule.length === 0 ? (
-                        <div className="text-xs text-gray-400 italic py-2">
-                          No scheduled classes
-                        </div>
-                      ) : (
-                        daySchedule.map((slot, index) => {
-                          const duration = (slot.endMinuteOfDay - slot.startMinuteOfDay) / 60;
+                  return (
+                    <div
+                      key={day.date}
+                      className={`border rounded-lg p-3 ${isWeekend ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-300'
+                        }`}
+                    >
+                      <h3 className={`font-semibold text-sm mb-3 ${isWeekend ? 'text-gray-600' : 'text-gray-800'
+                        }`}>
+                        {day.label}
+                      </h3>
 
-                          return (
+                      <div className="space-y-2">
+                        {day.sessions.length === 0 ? (
+                          <div className="text-xs text-gray-400 italic py-2">
+                            No scheduled classes
+                          </div>
+                        ) : (
+                          day.sessions.map((session) => (
                             <div
-                              key={`${slot.classroomId}-${index}`}
-                              className={`p-2 rounded text-xs border-l-4 ${slot.status === 'occupied'
-                                ? 'bg-blue-50 border-blue-400 text-blue-800'
-                                : 'bg-green-50 border-green-400 text-green-800'
-                                }`}
+                              key={session.id}
+                              className={`p-2 rounded text-xs border-l-4 ${getStateColor(session.state)}`}
                             >
-                              <div className="flex items-center space-x-1 mb-1">
-                                <Clock className="w-3 h-3" />
-                                <span className="font-medium">
-                                  {minutesToTimeString(slot.startMinuteOfDay)} - {minutesToTimeString(slot.endMinuteOfDay)}
+                              {/* Time */}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center space-x-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span className="font-medium">
+                                    {formatTime(session.startTime)} - {formatTime(session.endTime)}
+                                  </span>
+                                </div>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${getStateBadge(session.state)}`}>
+                                  {session.state}
                                 </span>
                               </div>
 
-                              <div className="text-xs opacity-80">
-                                {slot.classroomName}
+                              {/* Title */}
+                              <div className="font-medium text-xs mb-1">
+                                {session.title}
                               </div>
 
-                              <div className="text-xs opacity-60 mt-1">
-                                {duration.toFixed(1)}h • {slot.type === 'session' ? 'Session' : 'Regular Class'}
+                              {/* Classroom */}
+                              <div className="flex items-center space-x-1 text-xs opacity-80 mb-1">
+                                <MapPin className="w-3 h-3" />
+                                <span>{session.classroomName}</span>
                               </div>
 
-                              {slot.sessionTitle && (
-                                <div className="text-xs font-medium mt-1">
-                                  {slot.sessionTitle}
+                              {/* Instructor */}
+                              {session.instructor && (
+                                <div className="flex items-center space-x-1 text-xs opacity-70">
+                                  <User className="w-3 h-3" />
+                                  <span>{session.instructor.displayName}</span>
+                                </div>
+                              )}
+
+                              {/* Course */}
+                              {session.course && (
+                                <div className="flex items-center space-x-1 text-xs opacity-70 mt-1">
+                                  <BookOpen className="w-3 h-3" />
+                                  <span>{session.course.title}</span>
                                 </div>
                               )}
                             </div>
-                          );
-                        })
+                          ))
+                        )}
+                      </div>
+
+                      {/* Day total */}
+                      {day.sessions.length > 0 && (
+                        <div className="mt-3 pt-2 border-t border-gray-200">
+                          <div className="text-xs text-gray-600">
+                            {day.sessions.length} session{day.sessions.length > 1 ? 's' : ''}
+                          </div>
+                        </div>
                       )}
                     </div>
+                  );
+                })}
+              </div>
 
-                    {/* Show total hours for the day */}
-                    {daySchedule.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-gray-200">
-                        <div className="text-xs text-gray-600">
-                          Total: {daySchedule.reduce((total, slot) =>
-                            total + ((slot.endMinuteOfDay - slot.startMinuteOfDay) / 60), 0
-                          ).toFixed(1)}h
-                        </div>
-                      </div>
-                    )}
+              {/* Summary */}
+              <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <h4 className="font-semibold text-indigo-800 mb-2 flex items-center">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Weekly Summary
+                </h4>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="text-indigo-700">
+                    <span className="font-medium">Total Sessions: </span>
+                    {schedule.summary.totalSessions}
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Summary */}
-          {schedule && !isLoading && (
-            <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-              <h4 className="font-semibold text-indigo-800 mb-2 flex items-center">
-                <Calendar className="w-4 h-4 mr-2" />
-                Weekly Summary
-              </h4>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="text-indigo-700">
-                  <span className="font-medium">Total Classes: </span>
-                  {Object.values(schedule).flat().length}
-                </div>
-                <div className="text-indigo-700">
-                  <span className="font-medium">Total Hours: </span>
-                  {Object.values(schedule).flat().reduce((total, slot) =>
-                    total + ((slot.endMinuteOfDay - slot.startMinuteOfDay) / 60), 0
-                  ).toFixed(1)}h
+                  <div className="text-indigo-700">
+                    <span className="font-medium">By State: </span>
+                    {Object.entries(schedule.summary.byState).map(([state, count]) => (
+                      <span key={state} className="ml-2">
+                        {state}: {count}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
+            </>
+          ) : (
+            <div className="text-center text-gray-500 py-12">
+              No schedule data available
             </div>
           )}
         </div>

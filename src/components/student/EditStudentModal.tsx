@@ -1,13 +1,14 @@
-import { useUpdateStudent, useStudent } from '@/hooks/useStudent';
+import { useStudent, useUpdateStudent } from '@/hooks/useStudent';
 import { Student } from '@/interface/student.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Edit } from 'lucide-react';
 import React, { useEffect } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import * as yup from 'yup';
 import FormField from '../forms/FormField';
+import ImageUpload from '../forms/ImageUpload';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 
@@ -20,20 +21,30 @@ interface EditStudentModalProps {
 interface EditStudentFormValues {
   email?: string;
   phone?: string;
-  username?: string;
-  password?: string;
+  displayName?: string;
   firstName?: string;
   lastName?: string;
+  avatarUrl?: string;
   gender?: 'male' | 'female';
 }
 
 const schema = yup.object({
   email: yup.string().email('Invalid email'),
   phone: yup.string().matches(/^(0|\+84)\d{9}$/, 'Invalid Vietnamese phone number'),
-  username: yup.string(),
-  password: yup.string().min(6, 'Password must be at least 6 characters'),
+  displayName: yup.string(),
   firstName: yup.string(),
   lastName: yup.string(),
+  avatarUrl: yup
+    .string()
+    .test('is-url', 'Invalid URL format', (value) => {
+      if (!value || value === '') return true; // Allow empty
+      try {
+        new URL(value); // Check if valid URL (allows http://localhost)
+        return true;
+      } catch {
+        return false;
+      }
+    }),
   gender: yup.string().oneOf(['male', 'female']),
 });
 
@@ -46,17 +57,36 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ isOpen, onClose, st
     resolver: yupResolver(schema),
   });
 
-  const { register, handleSubmit, formState: { errors }, reset } = methods;
+  const { register, handleSubmit, formState: { errors }, reset, control } = methods;
 
   useEffect(() => {
-    if (studentData) {
-      reset(studentData.data);
+    if (studentData?.data) {
+      // Only populate editable fields
+      const editableData = {
+        email: studentData.data.email,
+        phone: studentData.data.phone,
+        displayName: studentData.data.username, // Map username to displayName
+        firstName: studentData.data.firstName,
+        lastName: studentData.data.lastName,
+        avatarUrl: studentData.data.avatarUrl,
+        gender: studentData.data.gender as 'male' | 'female',
+      };
+      reset(editableData);
     }
   }, [studentData, reset]);
 
   const onSubmit = (data: EditStudentFormValues) => {
     if (student) {
-      updateStudentMutation.mutate({ id: student.id, data }, {
+      // Filter out empty/undefined values
+      const updatePayload: Record<string, any> = {};
+      Object.entries(data).forEach(([key, value]) => {
+        // Only include non-empty values
+        if (value !== undefined && value !== '' && value !== null) {
+          updatePayload[key] = value;
+        }
+      });
+
+      updateStudentMutation.mutate({ id: student.id, data: updatePayload }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['students'] });
           toast.success('Student updated successfully');
@@ -79,13 +109,35 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ isOpen, onClose, st
     >
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} className="p-4 max-h-[calc(90vh-200px)] overflow-y-auto space-y-3">
-          <FormField name="username" label="Username" placeholder="john.doe" />
-          <FormField name="email" label="Email" placeholder="student@example.com" />
-          <FormField name="password" label="New Password (optional)" type="password" placeholder="Enter new password" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <FormField name="firstName" label="First Name" placeholder="John" />
-            <FormField name="lastName" label="Last Name" placeholder="Doe" />
+          {/* Avatar Upload - Centered at top */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+              Avatar
+            </label>
+            <Controller
+              name="avatarUrl"
+              control={control}
+              render={({ field }) => (
+                <ImageUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                  onRemove={() => field.onChange('')}
+                />
+              )}
+            />
+            {errors.avatarUrl && (
+              <p className="mt-1 text-sm text-red-600 text-center">
+                {errors.avatarUrl.message}
+              </p>
+            )}
           </div>
+
+          <FormField name="displayName" label="Display Name" placeholder="John Doe" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField name="firstName" label="First Name" placeholder="Nguyen" />
+            <FormField name="lastName" label="Last Name" placeholder="Van A" />
+          </div>
+          <FormField name="email" label="Email" placeholder="student@example.com" />
           <FormField name="phone" label="Phone" placeholder="+84901234567" />
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Gender</label>

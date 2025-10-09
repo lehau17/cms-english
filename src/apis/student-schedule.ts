@@ -10,12 +10,13 @@ export const getStudentSchedule = async (
   if (weekStart) params.append('weekStart', weekStart);
   if (weekEnd) params.append('weekEnd', weekEnd);
 
+  const queryString = params.toString();
   const response = await axiosInstance.get<{
     statusCode: number;
     message: string;
     data: StudentWeeklySchedule;
   }>(
-    `/private/v1/classrooms/student/${studentId}/schedule?${params.toString()}`
+    `/private/v1/classrooms/students/${studentId}/schedule/weekly${queryString ? '?' + queryString : ''}`
   );
   return response.data.data;
 };

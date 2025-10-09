@@ -1,6 +1,6 @@
-import { ApiResponse, Pagination } from "@/interface/base-response.interface"
-import axiosInstance from "../config/axiosConfig"
-import { Student } from "../interface/student.interface"
+import { ApiResponse, Pagination } from "@/interface/base-response.interface";
+import axiosInstance from "../config/axiosConfig";
+import { Student } from "../interface/student.interface";
 
 import { RequestPagingDto } from "../interface/request-paging.interface";
 
@@ -36,7 +36,7 @@ export const updateStudent = async (
   id: string,
   data: Partial<Student>
 ): Promise<ApiResponse<Student>> => {
-  const response = await axiosInstance.put<ApiResponse<Student>>(
+  const response = await axiosInstance.patch<ApiResponse<Student>>(
     `/private/v1/students/${id}`,
     data
   )

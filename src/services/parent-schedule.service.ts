@@ -1,13 +1,13 @@
-import axiosInstance from "../config/axiosConfig";
-import { TeacherWeeklySchedule } from "../interface/teacher-schedule.interface";
+import axiosInstance from '@/config/axiosConfig';
+import { ParentChildrenSchedule } from '@/interface/parent-schedule.interface';
 
-export const getTeacherSchedule = async (
-  teacherId: string,
+export const getParentChildrenSchedule = async (
+  parentId: string,
   weekStart?: string,
   weekEnd?: string,
   timezone: string = 'Asia_Ho_Chi_Minh',
   days: number = 7
-): Promise<TeacherWeeklySchedule> => {
+): Promise<ParentChildrenSchedule> => {
   const params = new URLSearchParams();
   if (weekStart) params.append('weekStart', weekStart);
   if (weekEnd) params.append('weekEnd', weekEnd);
@@ -17,9 +17,9 @@ export const getTeacherSchedule = async (
   const response = await axiosInstance.get<{
     statusCode: number;
     message: string;
-    data: TeacherWeeklySchedule;
+    data: ParentChildrenSchedule;
   }>(
-    `/private/v1/classrooms/teacher/${teacherId}/schedule?${params.toString()}`
+    `/private/v1/classrooms/parents/${parentId}/children-schedule/weekly?${params.toString()}`
   );
   return response.data.data;
 };

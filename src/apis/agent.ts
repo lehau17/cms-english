@@ -238,3 +238,53 @@ export const getAgentRecommendations = async (): Promise<ApiResponse<AgentRecomm
     ]
   };
 };
+
+// ===================== CONVERSATION MANAGEMENT =====================
+
+export interface AgentConversation {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages?: AgentMessage[];
+}
+
+export interface AgentMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+}
+
+export interface ConversationsResponse {
+  conversations: AgentConversation[];
+  total: number;
+  hasMore: boolean;
+}
+
+export const getConversations = async (limit = 50, offset = 0): Promise<ConversationsResponse> => {
+  const response = await axiosInstance.get<ApiResponse<AgentConversation[]>>(
+    `/private/v1/agent/conversations?limit=${limit}&offset=${offset}`
+  );
+  // Backend returns array directly in response.data.data
+  const conversations = response.data.data || [];
+  return {
+    conversations,
+    total: conversations.length,
+    hasMore: conversations.length >= limit,
+  };
+};
+
+export const getConversation = async (conversationId: string): Promise<AgentConversation> => {
+  const response = await axiosInstance.get<ApiResponse<AgentConversation>>(
+    `/private/v1/agent/conversations/${conversationId}?id=${conversationId}`
+  );
+  return response.data.data;
+};
+
+export const deleteConversation = async (conversationId: string): Promise<{ success: boolean; message: string }> => {
+  const response = await axiosInstance.post<ApiResponse<{ success: boolean; message: string }>>(
+    `/private/v1/agent/conversations/${conversationId}/delete?id=${conversationId}`
+  );
+  return response.data.data;
+};

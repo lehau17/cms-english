@@ -1,6 +1,7 @@
 import { Parent } from '@/interface/parent.interface';
-import { Calendar, Mail, Phone, Shield, User, X } from 'lucide-react';
+import { Calendar, CalendarDays, Mail, Phone, Shield, User, X } from 'lucide-react';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ViewParentModalProps {
   isOpen: boolean;
@@ -13,6 +14,15 @@ const ViewParentModal: React.FC<ViewParentModalProps> = ({
   onClose,
   parent,
 }) => {
+  const navigate = useNavigate();
+
+  const handleViewSchedule = () => {
+    if (parent?.id) {
+      navigate(`/parents/${parent.id}/schedule`);
+      onClose();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -122,7 +132,14 @@ const ViewParentModal: React.FC<ViewParentModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end px-6 py-4 border-t bg-gray-50">
+        <div className="flex justify-between px-6 py-4 border-t bg-gray-50">
+          <button
+            onClick={handleViewSchedule}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <CalendarDays className="h-4 w-4" />
+            Xem lịch các con
+          </button>
           <button
             onClick={onClose}
             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
