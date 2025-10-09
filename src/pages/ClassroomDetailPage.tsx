@@ -1,7 +1,9 @@
 import { Assignment } from '@/apis/assignment';
 import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
-import { useQuery } from '@tanstack/react-query';
+import AddStudentToClassModal from '@/components/classroom/AddStudentToClassModal';
+import CreateAssignmentModal from '@/components/classroom/CreateAssignmentModal';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   BookOpen,
@@ -11,7 +13,9 @@ import {
   Edit,
   FileText,
   LayoutDashboard,
+  Plus,
   User,
+  UserPlus,
   Users
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -22,7 +26,10 @@ type TabType = 'overview' | 'assignments' | 'students' | 'schedule';
 const ClassroomDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
 
   // Fetch classroom detail with full data (students, course, assignments, etc.)
   const { data: classroomDetailData, isLoading: isLoadingDetail } = useQuery({
@@ -415,7 +422,16 @@ const ClassroomDetailPage: React.FC = () => {
         {/* Assignments Tab */}
         {activeTab === 'assignments' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Quản Lý Bài Tập</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Quản Lý Bài Tập</h2>
+              <button
+                onClick={() => setIsCreateAssignmentModalOpen(true)}
+                className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Tạo Bài Tập</span>
+              </button>
+            </div>
             {assignments.length > 0 ? (
               <div className="space-y-4">
                 {assignments.map((assignment) => (
@@ -465,10 +481,19 @@ const ClassroomDetailPage: React.FC = () => {
         {activeTab === 'students' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Danh Sách Học Sinh</h2>
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold">{classroom.students?.length || 0}</span> / {classroom.maxStudents} học sinh
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Danh Sách Học Sinh</h2>
+                <div className="text-sm text-gray-600 mt-1">
+                  <span className="font-semibold">{classroom.students?.length || 0}</span> / {classroom.maxStudents} học sinh
+                </div>
               </div>
+              <button
+                onClick={() => setIsAddStudentModalOpen(true)}
+                className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                <UserPlus className="w-5 h-5" />
+                <span>Thêm Học Viên</span>
+              </button>
             </div>
             {classroom.students && classroom.students.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -553,6 +578,25 @@ const ClassroomDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Add Student Modal */}
+      <AddStudentToClassModal
+        isOpen={isAddStudentModalOpen}
+        onClose={() => setIsAddStudentModalOpen(false)}
+        classroom={classroom || null}
+      />
+
+      {/* Create Assignment Modal */}
+      <CreateAssignmentModal
+        open={isCreateAssignmentModalOpen}
+        onClose={() => setIsCreateAssignmentModalOpen(false)}
+        classroomId={id || ''}
+        onSuccess={(assignmentId) => {
+          // Refresh assignments list after creation
+          queryClient.invalidateQueries({ queryKey: ['classroom-detail', id] });
+          setIsCreateAssignmentModalOpen(false);
+        }}
+      />
     </div>
   );
 };

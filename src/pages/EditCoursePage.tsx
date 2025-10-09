@@ -1,15 +1,32 @@
 import { getCourseById, updateCourse } from '@/apis/course';
+import LessonActivities from '@/components/course/LessonActivities';
 import { useTeachers } from '@/hooks/useTeacher';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calendar, CheckCircle, CircleDot, FileEdit, GripVertical, Library, Lock, Plus, RefreshCw, Save, Target, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calendar, CheckCircle, ChevronDown, ChevronRight, CircleDot, FileEdit, GripVertical, Library, Lock, Plus, RefreshCw, Save, Target, Trash2, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import * as yup from 'yup';
 import FormField from '../components/forms/FormField';
 import Button from '../components/ui/Button';
+
+interface ActivityFormData {
+  id?: string;
+  type: string;
+  orderNo: number;
+  title: string;
+  content?: any;
+  timeLimit?: number;
+  maxAttempts?: number;
+  passingScore?: number;
+  difficulty?: string;
+  points?: number;
+  instructions?: string;
+  hints?: any;
+  mediaUrls?: any;
+}
 
 interface LessonFormData {
   id?: string;
@@ -20,6 +37,7 @@ interface LessonFormData {
   estimatedTime?: number;
   isLocked: boolean;
   objectives?: string;
+  activities: ActivityFormData[];
 }
 
 interface EditCourseFormValues {
@@ -33,7 +51,24 @@ interface EditCourseFormValues {
   lessons: LessonFormData[];
 }
 
+const activitySchema = yup.object({
+  id: yup.string().optional(),
+  type: yup.string().required(),
+  orderNo: yup.number().min(1).required(),
+  title: yup.string().required('Activity title is required'),
+  content: yup.mixed().optional(),
+  timeLimit: yup.number().min(0).optional(),
+  maxAttempts: yup.number().min(0).optional(),
+  passingScore: yup.number().min(0).max(100).optional(),
+  difficulty: yup.string().optional(),
+  points: yup.number().min(0).optional(),
+  instructions: yup.string().optional(),
+  hints: yup.mixed().optional(),
+  mediaUrls: yup.mixed().optional(),
+});
+
 const lessonSchema = yup.object({
+  id: yup.string().optional(),
   title: yup.string().required('Lesson title is required'),
   description: yup.string().optional(),
   orderNo: yup.number().min(1).required(),
@@ -41,6 +76,7 @@ const lessonSchema = yup.object({
   estimatedTime: yup.number().min(1).optional(),
   isLocked: yup.boolean().default(true),
   objectives: yup.string().optional(),
+  activities: yup.array().of(activitySchema).default([]),
 });
 
 const schema = yup.object({
@@ -60,12 +96,17 @@ const difficultyOptions = [
   { value: 'advanced', label: 'Advanced', color: 'text-red-600', bg: 'bg-red-50 border-red-200', icon: CircleDot },
 ];
 
+// NOTE: Using LessonActivities component from @/components/course/LessonActivities
+// This component provides rich UI for editing each activity type (Quiz, Reading, Listening, etc.)
+// instead of manual JSON editing
+
 const EditCoursePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: teachersData, isLoading: isLoadingTeachers } = useTeachers({ limit: 1000 });
   const [activeTab, setActiveTab] = useState<'course' | 'lessons'>('course');
+  const [expandedLessons, setExpandedLessons] = useState<Set<number>>(new Set());
 
   const {
     data: courseDetailResponse,
@@ -83,7 +124,7 @@ const EditCoursePage: React.FC = () => {
     resolver: yupResolver(schema),
   });
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, control, watch } = methods;
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, control, watch, setValue } = methods;
   const { fields: lessonFields, append: addLesson, remove: removeLesson, move: moveLesson, update: updateLesson } = useFieldArray({
     control,
     name: 'lessons',
@@ -108,6 +149,21 @@ const EditCoursePage: React.FC = () => {
           estimatedTime: lesson.estimatedTime || 30,
           isLocked: lesson.isLocked,
           objectives: Array.isArray(lesson.objectives) ? lesson.objectives.join('\n') : (lesson.objectives || ''),
+          activities: lesson.activities?.map(activity => ({
+            id: activity.id,
+            type: activity.type,
+            orderNo: activity.orderNo,
+            title: activity.title,
+            content: activity.content,
+            timeLimit: activity.timeLimit,
+            maxAttempts: activity.maxAttempts,
+            passingScore: activity.passingScore,
+            difficulty: activity.difficulty,
+            points: activity.points,
+            instructions: activity.instructions,
+            hints: activity.hints,
+            mediaUrls: activity.mediaUrls,
+          })) || [],
         })) || [],
       });
     }
@@ -151,6 +207,7 @@ const EditCoursePage: React.FC = () => {
       estimatedTime: 30,
       isLocked: true,
       objectives: '',
+      activities: [],
     });
   };
 
@@ -485,6 +542,42 @@ const EditCoursePage: React.FC = () => {
                                 rows={2}
                                 placeholder="One per line..."
                               />
+                            </div>
+
+                            {/* Activities Section */}
+                            <div className="mt-3 border-t border-gray-200 pt-3">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newExpanded = new Set(expandedLessons);
+                                  if (newExpanded.has(index)) {
+                                    newExpanded.delete(index);
+                                  } else {
+                                    newExpanded.add(index);
+                                  }
+                                  setExpandedLessons(newExpanded);
+                                }}
+                                className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
+                              >
+                                {expandedLessons.has(index) ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4" />
+                                )}
+                                <Zap className="w-4 h-4" />
+                                <span>Activities ({watch(`lessons.${index}.activities`)?.length || 0})</span>
+                              </button>
+
+                              {expandedLessons.has(index) && (
+                                <LessonActivities
+                                  lessonIndex={index}
+                                  control={control as any}
+                                  register={register as any}
+                                  errors={errors as any}
+                                  setValue={setValue as any}
+                                  watch={watch as any}
+                                />
+                              )}
                             </div>
                           </div>
                         );
