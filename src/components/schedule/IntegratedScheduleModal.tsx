@@ -1,5 +1,4 @@
 import { Weekday } from '@/interface/enums';
-import { TeacherScheduleSlot } from '@/interface/teacher-schedule.interface';
 import { Calendar, CheckCircle, Clock, Plus, User, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import Button from '../ui/Button';
@@ -10,11 +9,18 @@ interface ClassroomSlot {
   endMinuteOfDay: number;
 }
 
+interface ScheduleSlot {
+  classroomName: string;
+  type: string;
+  startMinuteOfDay: number;
+  endMinuteOfDay: number;
+}
+
 interface IntegratedScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   teacherName: string;
-  schedule: { [dayOfWeek: string]: TeacherScheduleSlot[] } | null;
+  schedule: { [dayOfWeek: string]: ScheduleSlot[] } | null;
   isLoading: boolean;
   onSlotsChange: (slots: ClassroomSlot[]) => void;
   currentSlots: ClassroomSlot[];
@@ -329,15 +335,23 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
                 <div className="flex items-center justify-center space-x-6 text-sm">
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-green-100 border border-green-300 rounded mr-2"></div>
-                    <span>Lịch học bình thường</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded mr-2"></div>
-                    <span>Lịch thi</span>
+                    <span>Lịch mới được chọn (có thể xóa)</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-red-100 border border-red-300 rounded mr-2"></div>
-                    <span>Lịch tạm ngưng</span>
+                    <span>Lịch đã có sẵn của giáo viên</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded mr-2"></div>
+                    <span>Ca sáng (6:00-12:00)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-orange-100 border border-orange-300 rounded mr-2"></div>
+                    <span>Ca chiều (12:00-18:00)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded mr-2"></div>
+                    <span>Ca tối (18:00-22:00)</span>
                   </div>
                 </div>
               </div>

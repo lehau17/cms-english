@@ -1,7 +1,7 @@
 import { createClassroom } from '@/apis/classroom';
 import { useCourses } from '@/hooks/useCourse';
 import { useTeachers } from '@/hooks/useTeacher';
-import { useTeacherSchedule } from '@/hooks/useTeacherSchedule';
+import { useTeacherAvailability } from '@/hooks/useTeacherSchedule';
 import { Classroom } from '@/interface/classroom.interface';
 import { Weekday } from '@/interface/enums';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -96,12 +96,15 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
   const selectedCourseId = watch('courseId');
 
   const weekStartParam = selectedPeriodStart ? new Date(selectedPeriodStart).toISOString() : undefined;
-  const weekEndParam = selectedPeriodEnd ? new Date(selectedPeriodEnd).toISOString() : undefined;
 
+  // Use new availability API - simpler and returns exact Mon-Sun schedule
   const {
-    data: teacherSchedule,
+    data: teacherAvailability,
     isLoading: isTeacherScheduleLoading,
-  } = useTeacherSchedule(selectedTeacherId, weekStartParam, weekEndParam, showScheduleModal);
+  } = useTeacherAvailability(selectedTeacherId, weekStartParam, 'Asia_Ho_Chi_Minh', showScheduleModal);
+
+  // API already returns in correct format: { mon: [], tue: [], ..., sun: [] }
+  const teacherSchedule = teacherAvailability?.schedule ?? null;
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Classroom>) => createClassroom(data),
@@ -134,12 +137,24 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
   };
 
   const onSubmit = (data: CreateClassroomFormValues) => {
+    console.log('🔍 Form data before submit:', data);
+    console.log('🔍 teacherId value:', data.teacherId);
+    console.log('🔍 Form errors:', errors);
+
+    // Validate teacherId explicitly
+    if (!data.teacherId || data.teacherId.trim() === '') {
+      console.error('❌ TeacherId is empty!');
+      alert('Please select a teacher');
+      return;
+    }
+
     // Convert periodStart and periodEnd to Date objects for backend
     const payload = {
       ...data,
       periodStart: new Date(data.periodStart),
       periodEnd: new Date(data.periodEnd),
     };
+    console.log('✅ Submitting payload:', payload);
     createMutation.mutate(payload);
   };
 
@@ -175,7 +190,16 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Course *</label>
             <select
-              {...register('courseId')}
+              {...register('courseId', {
+                onChange: (e) => {
+                  console.log('🔍 Course selected:', e.target.value);
+                  setValue('courseId', e.target.value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true
+                  });
+                }
+              })}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
               disabled={isLoadingCourses}
             >
@@ -217,23 +241,18 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
           )}
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-gray-700">Assigned Teacher *</label>
-              {selectedTeacherValue && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleViewSchedule}
-                  size="sm"
-                  className="text-xs px-2 py-1"
-                >
-                  <Calendar className="w-3 h-3 mr-1" />
-                  Select Schedule
-                </Button>
-              )}
-            </div>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">Assigned Teacher *</label>
             <select
-              {...register('teacherId')}
+              {...register('teacherId', {
+                onChange: (e) => {
+                  console.log('🔍 Teacher selected:', e.target.value);
+                  setValue('teacherId', e.target.value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true
+                  });
+                }
+              })}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
               disabled={isLoadingTeachers}
             >
@@ -245,6 +264,24 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
               ))}
             </select>
             {errors.teacherId && <p className="text-red-500 text-sm mt-1">{errors.teacherId.message}</p>}
+            {/* Debug info */}
+            {selectedTeacherValue && (
+              <p className="text-xs text-green-600 mt-1">✓ Selected: {selectedTeacherValue}</p>
+            )}
+
+            {/* Schedule Button - Only show after teacher is selected */}
+            {selectedTeacherValue && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleViewSchedule}
+                size="sm"
+                className="mt-2 w-full text-sm"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Xem Lịch & Chọn Khung Giờ
+              </Button>
+            )}
           </div>
 
           {/* Selected Slots Preview */}
@@ -320,7 +357,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
           isOpen={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
           teacherName={selectedTeacherName || 'Teacher'}
-          schedule={teacherSchedule?.schedule ?? null}
+          schedule={teacherSchedule ?? null}
           isLoading={isTeacherScheduleLoading}
           onSlotsChange={handleSlotsChange}
           currentSlots={fields}
