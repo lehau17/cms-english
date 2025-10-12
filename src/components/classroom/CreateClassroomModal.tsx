@@ -7,7 +7,7 @@ import { Weekday } from '@/interface/enums';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Plus, Trash2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import FormField from '../forms/FormField';
@@ -35,7 +35,8 @@ interface CreateClassroomFormValues {
   isActive: boolean;
   courseId: string;
   periodStart: string;
-  periodEnd: string;
+  periodEnd?: string;
+  autoCalculateDates: boolean;
   slots: ClassroomSlot[];
 }
 
@@ -47,7 +48,8 @@ const schema = yup.object({
   courseId: yup.string().required('Course is required'),
   isActive: yup.boolean().default(true),
   periodStart: yup.string().required('Start date is required'),
-  periodEnd: yup.string().required('End date is required'),
+  periodEnd: yup.string().notRequired(), // Auto-calculated, not required
+  autoCalculateDates: yup.boolean().default(true), // Always true
   slots: yup.array().of(
     yup.object({
       dayOfWeek: yup.mixed<Weekday>().oneOf(Object.values(Weekday)).required(),
@@ -69,7 +71,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
   const [selectedTeacherName, setSelectedTeacherName] = useState<string>('');
 
   const methods = useForm<CreateClassroomFormValues>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
     defaultValues: {
       name: '',
       description: '',
@@ -79,6 +81,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
       courseId: '',
       periodStart: '',
       periodEnd: '',
+      autoCalculateDates: true, // Always true
       slots: [],
     },
   });
@@ -114,6 +117,27 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
     },
   });
 
+  // 🔄 Auto-calculate end date when course, start date, or slots change
+  useEffect(() => {
+    if (!selectedCourseId || !selectedPeriodStart || fields.length === 0) {
+      return;
+    }
+
+    const selectedCourse = coursesData?.data?.data?.find(c => c.id === selectedCourseId);
+    if (!selectedCourse?.plannedSessions) {
+      return;
+    }
+
+    const startDate = new Date(selectedPeriodStart);
+    const calculatedEndDate = calculateEndDate(selectedCourse.plannedSessions, fields, startDate);
+
+    if (calculatedEndDate) {
+      // Format as YYYY-MM-DD for date input
+      const formattedDate = calculatedEndDate.toISOString().split('T')[0];
+      setValue('periodEnd', formattedDate, { shouldValidate: true });
+    }
+  }, [selectedCourseId, selectedPeriodStart, fields, coursesData, setValue]);
+
   // Utility functions for time conversion
   const minutesToTimeString = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -126,7 +150,51 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
     const hours = parseInt(hoursStr || '0', 10) || 0;
     const minutes = parseInt(minutesStr || '0', 10) || 0;
     return hours * 60 + minutes;
-  }; const weekdayLabels = {
+  };
+
+  // 🔧 Calculate end date based on plannedSessions and slots (mimics backend logic)
+  const calculateEndDate = (
+    plannedSessions: number,
+    slots: ClassroomSlot[],
+    startDate: Date
+  ): Date | null => {
+    if (!plannedSessions || !slots.length || !startDate) return null;
+
+    // Convert Weekday enum to day numbers (0=Sunday, 1=Monday, ..., 6=Saturday)
+    const weekdayToNumber: Record<Weekday, number> = {
+      [Weekday.SUN]: 0,
+      [Weekday.MON]: 1,
+      [Weekday.TUE]: 2,
+      [Weekday.WED]: 3,
+      [Weekday.THU]: 4,
+      [Weekday.FRI]: 5,
+      [Weekday.SAT]: 6,
+    };
+
+    const daysOfWeek = slots.map(slot => weekdayToNumber[slot.dayOfWeek]);
+
+    // Find the last session date
+    let currentDate = new Date(startDate);
+    let sessionCount = 0;
+
+    while (sessionCount < plannedSessions) {
+      const dayOfWeek = currentDate.getDay();
+      if (daysOfWeek.includes(dayOfWeek)) {
+        sessionCount++;
+        if (sessionCount === plannedSessions) {
+          // Return the day after the last session
+          const endDate = new Date(currentDate);
+          endDate.setDate(endDate.getDate() + 1);
+          return endDate;
+        }
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return currentDate;
+  };
+
+  const weekdayLabels = {
     [Weekday.MON]: 'Monday',
     [Weekday.TUE]: 'Tuesday',
     [Weekday.WED]: 'Wednesday',
@@ -148,12 +216,16 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
       return;
     }
 
-    // Convert periodStart and periodEnd to Date objects for backend
-    const payload = {
+    // Always use auto-calculate mode (backend will calculate periodEnd)
+    const payload: any = {
       ...data,
       periodStart: new Date(data.periodStart),
-      periodEnd: new Date(data.periodEnd),
+      autoCalculateDates: true, // Always true
     };
+
+    // Don't send periodEnd - let backend calculate it
+    delete payload.periodEnd;
+
     console.log('✅ Submitting payload:', payload);
     createMutation.mutate(payload);
   };
@@ -337,7 +409,27 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <FormField name="periodStart" label="Start Date *" type="date" />
-            <FormField name="periodEnd" label="End Date *" type="date" />
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                End Date (Auto-calculated)
+              </label>
+              {selectedPeriodEnd ? (
+                <input
+                  type="date"
+                  value={selectedPeriodEnd}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm bg-green-50 border border-green-300 rounded-lg text-green-800 font-medium"
+                  title="Automatically calculated based on course planned sessions and weekly schedule"
+                />
+              ) : (
+                <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg text-gray-400 flex items-center justify-center h-10">
+                  {!selectedCourseId && '← Select course first'}
+                  {selectedCourseId && !selectedPeriodStart && '← Select start date'}
+                  {selectedCourseId && selectedPeriodStart && fields.length === 0 && '← Select schedule slots'}
+                  {selectedCourseId && selectedPeriodStart && fields.length > 0 && 'Calculating...'}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
@@ -357,7 +449,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
           isOpen={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
           teacherName={selectedTeacherName || 'Teacher'}
-          schedule={teacherSchedule ?? null}
+          schedule={teacherSchedule as any ?? null}
           isLoading={isTeacherScheduleLoading}
           onSlotsChange={handleSlotsChange}
           currentSlots={fields}
