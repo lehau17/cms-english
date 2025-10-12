@@ -98,7 +98,8 @@ const CreateCoursePage = () => {
   const uploadMutation = useMutation({
     mutationFn: uploadFile,
     onSuccess: (data: any) => {
-      const imageUrl = data.data.url + '?t=' + Date.now();
+      // Không cần thêm timestamp vì có thể gây lỗi cache
+      const imageUrl = data.data.url;
       setValue('imageUrl', imageUrl);
       toast.success('Upload ảnh thành công!');
     },
@@ -115,10 +116,9 @@ const CreateCoursePage = () => {
 
   const steps = [
     { number: 1, title: 'Course Info', icon: BookOpen, color: 'text-blue-600' },
-    { number: 2, title: 'Add Lessons', icon: BookOpen, color: 'text-green-600' },
-    { number: 3, title: 'Add Activities', icon: Brain, color: 'text-purple-600' },
-    { number: 4, title: 'Session Schedules', icon: Clock, color: 'text-indigo-600' },
-    { number: 5, title: 'Review & Submit', icon: Eye, color: 'text-orange-600' },
+    { number: 2, title: 'Lessons & Activities', icon: Brain, color: 'text-green-600' },
+    { number: 3, title: 'Session Schedules', icon: Clock, color: 'text-indigo-600' },
+    { number: 4, title: 'Review & Submit', icon: Eye, color: 'text-orange-600' },
   ];
 
   // Hàm chuyển đổi tempId thành activityId theo format L1A2
@@ -279,10 +279,10 @@ const CreateCoursePage = () => {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Ảnh khoá học *</label>
             <div
-              className={`group relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer ${isDragOver
+              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer ${isDragOver
                 ? 'border-purple-500 bg-purple-50 scale-105 shadow-lg'
-                : 'border-gray-300 hover:border-purple-400 hover:bg-purple-25 hover:shadow-md'
-                } ${watch('imageUrl') ? 'bg-gray-50' : 'bg-white'}`}
+                : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md'
+                } ${watch('imageUrl') ? 'bg-white' : 'bg-white'}`}
               onClick={() => {
                 if (!uploadMutation.isPending && fileInputRef.current) {
                   fileInputRef.current.click();
@@ -310,25 +310,14 @@ const CreateCoursePage = () => {
             >
               {watch('imageUrl') ? (
                 <div className="space-y-4">
-                  <div className="relative inline-block group">
+                  <div className="relative inline-block">
                     <img
                       src={watch('imageUrl')}
                       alt="Course cover"
                       className="h-32 w-auto max-w-full rounded-lg shadow-md mx-auto hover:shadow-lg transition-shadow duration-300 object-cover"
                       onError={(e) => {
                         console.error('Image failed to load:', watch('imageUrl'));
-                        // Try loading without timestamp if failed
-                        const currentUrl = watch('imageUrl');
-                        if (currentUrl) {
-                          const originalUrl = currentUrl.split('?')[0];
-                          if (originalUrl && e.currentTarget.src !== originalUrl) {
-                            e.currentTarget.src = originalUrl;
-                          } else {
-                            e.currentTarget.style.display = 'none';
-                          }
-                        } else {
-                          e.currentTarget.style.display = 'none';
-                        }
+                        e.currentTarget.style.display = 'none';
                       }}
                       onLoad={() => {
                         console.log('Image loaded successfully:', watch('imageUrl'));
@@ -336,12 +325,14 @@ const CreateCoursePage = () => {
                     />
                     <button
                       type="button"
-                      onClick={() => setValue('imageUrl', '')}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-all duration-200 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 shadow-lg"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setValue('imageUrl', '');
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-all duration-200 shadow-lg"
                     >
                       <X className="w-4 h-4" />
                     </button>
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-300"></div>
                   </div>
                   <p className="text-sm text-gray-600">Click to change image or drag a new one here</p>
                 </div>
@@ -368,10 +359,8 @@ const CreateCoursePage = () => {
                     console.log('Starting upload for course image:', file.name);
                     uploadMutation.mutate(file);
                   }
-                  // Reset input để có thể chọn cùng file lần nữa
-                  e.target.value = '';
                 }}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="hidden"
               />
             </div>
             {uploadMutation.isPending && (
@@ -573,11 +562,9 @@ const CreateCoursePage = () => {
     </div>
   );
 
-  const renderStep3 = () => renderStep2(); // Merged into step 2
-
-  const renderStep4 = () => (
+  const renderStep3 = () => (
     <div className="max-w-4xl mx-auto space-y-8">
-      <h3 className="text-2xl font-bold text-gray-800 mb-2">� Lộ trình buổi học</h3>
+      <h3 className="text-2xl font-bold text-gray-800 mb-2">📅 Lộ trình buổi học</h3>
       <p className="text-gray-600">Sắp xếp hoạt động cho từng buổi học trong khóa học</p>
       <SessionSchedules
         control={control}
@@ -589,7 +576,7 @@ const CreateCoursePage = () => {
     </div>
   );
 
-  const renderStep5 = () => (
+  const renderStep4 = () => (
     <div className="max-w-4xl mx-auto space-y-8">
       <h3 className="text-2xl font-bold text-gray-800 mb-2">🔍 Review & Submit</h3>
       <p className="text-gray-600">Xem lại thông tin khóa học trước khi tạo mới</p>
@@ -673,9 +660,8 @@ const CreateCoursePage = () => {
             <div className="p-8">
               {currentStep === 1 && renderStep1()}
               {currentStep === 2 && renderStep2()}
-              {currentStep === 3 && renderStep2()} {/* Merged step 3 into 2 */}
+              {currentStep === 3 && renderStep3()}
               {currentStep === 4 && renderStep4()}
-              {currentStep === 5 && renderStep5()}
             </div>
 
             <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-2xl">
@@ -697,10 +683,10 @@ const CreateCoursePage = () => {
                   Step {currentStep} of {steps.length}
                 </div>
 
-                {currentStep < 5 ? (
+                {currentStep < 4 ? (
                   <button
                     type="button"
-                    onClick={() => setCurrentStep(Math.min(5, currentStep + 1))}
+                    onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
                     className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white`}
                   >
                     Next
