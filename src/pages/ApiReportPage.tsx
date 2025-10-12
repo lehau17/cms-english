@@ -458,9 +458,9 @@ const ApiReportPage: React.FC = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header - Similar to ChatGPT */}
+        {/* Header - Aligned with Sidebar */}
         <div className="flex-shrink-0 border-b border-gray-200 bg-white">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-4xl mx-auto p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {/* Sidebar Toggle Button */}
               <button
@@ -477,20 +477,20 @@ const ApiReportPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={clearHistory}
-                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <RotateCcw className="h-4 w-4" />
-                New Chat
-              </button>
+              {/* The "New Chat" button was removed from here to avoid duplication.
+                  The primary "New Chat" button is in the ConversationSidebar. */}
             </div>
           </div>
         </div>
 
       {/* Chat Area - Scrollable */}
-      <div ref={chatContainerRef} className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-6">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto relative">
+        {isStreaming && !streamingResponse && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+        <div className="max-w-4xl mx-auto px-4 py-4">
           {chatHistory.length === 0 && !pendingMessage ? (
             // Empty State - ChatGPT Style
             <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center">
@@ -636,27 +636,19 @@ const ApiReportPage: React.FC = () => {
                       <Bot className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      {!streamingResponse ? (
-                        <div className="flex items-center gap-2 text-gray-500">
-                          <div className="flex gap-1">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="text-gray-900 leading-relaxed whitespace-pre-wrap">
-                            {streamingResponse}
+                      <div className="space-y-3">
+                        <div className="text-gray-900 leading-relaxed whitespace-pre-wrap">
+                          {streamingResponse}
+                          {isStreaming && (
                             <span className="inline-block w-0.5 h-4 ml-0.5 bg-gray-900 animate-pulse"></span>
-                          </div>
-                          {streamingChart && (
-                            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                              <ChartRenderer chart={streamingChart} />
-                            </div>
                           )}
                         </div>
-                      )}
+                        {streamingChart && (
+                          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <ChartRenderer chart={streamingChart} />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -700,6 +692,7 @@ const ApiReportPage: React.FC = () => {
                 onClick={handleSendMessage}
                 disabled={chatMutation.isPending || !message.trim() || isStreaming}
                 className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Send Message"
               >
                 <Send className="h-4 w-4" />
               </button>
