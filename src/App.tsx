@@ -14,6 +14,7 @@ import CreateCoursePage from "./pages/CreateCoursePage";
 import DashboardPage from "./pages/DashboardPage";
 import EditCoursePage from "./pages/EditCoursePage";
 import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import ParentLoginPage from "./pages/ParentLoginPage";
 import ParentPage from "./pages/ParentPage";
 import ParentSchedulePage from "./pages/ParentSchedulePage";
@@ -56,12 +57,12 @@ const router = createBrowserRouter([
           { path: "/assignments/create", element: <CreateAssignmentPage /> },
           { path: "/api-report", element: <ApiReportPage /> },
           { path: "/settings", element: <SettingsPage /> },
-          { path: "*", element: <Navigate to="/dashboard" replace /> },
           // { path: "/google-translate-demo", element: <GoogleTranslateDemo /> },
         ],
       },
     ],
   },
+  { path: "*", element: <NotFoundPage /> },
 ]);
 
 export default function App() {
