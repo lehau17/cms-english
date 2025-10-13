@@ -24,6 +24,7 @@ import SettingsPage from "./pages/SettingsPage";
 import StudentPage from "./pages/StudentPage";
 import StudentSchedulePage from "./pages/StudentSchedulePage";
 import TeacherPage from "./pages/TeacherPage";
+import TeacherClassroomDashboardPage from "./pages/TeacherClassroomDashboardPage";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage";
 
 const router = createBrowserRouter([
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
           { path: "/students", element: <StudentPage /> },
           { path: "/students/:studentId/schedule", element: <StudentSchedulePage /> },
           { path: "/teachers", element: <TeacherPage /> },
+          { path: "/teacher/dashboard/:classroomId", element: <TeacherClassroomDashboardPage /> },
           { path: "/teachers/:teacherId/schedule", element: <TeacherSchedulePage /> },
           { path: "/parents", element: <ParentPage /> },
           { path: "/parents/:parentId/schedule", element: <ParentSchedulePage /> },
