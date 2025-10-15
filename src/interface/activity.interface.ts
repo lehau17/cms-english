@@ -6,8 +6,6 @@ export interface Activity {
     orderNo: number;
     title: string;
     content: any;
-    timeLimit?: number;
-    maxAttempts?: number;
     passingScore?: number;
     difficulty?: DifficultyLevel;
     points?: number;
@@ -21,8 +19,6 @@ export interface CreateActivityDto {
     orderNo: number;
     title: string;
     content: any;
-    timeLimit?: number;
-    maxAttempts?: number;
     passingScore?: number;
     difficulty?: DifficultyLevel;
     points?: number;
