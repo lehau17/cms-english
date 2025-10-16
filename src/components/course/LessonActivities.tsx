@@ -78,10 +78,10 @@ function UploadField({
         <div className="space-y-2">
             <label className="block text-xs font-medium text-gray-600">{label}</label>
             <div
-                className={`relative border border-dashed rounded-lg p-4 text-center transition-all duration-200 ${uploadMutation.isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                className={`relative border border-dashed rounded p-4 text-center transition-all duration-200 ${uploadMutation.isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                     } ${isDragOver
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-300 hover:border-purple-400'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:border-gray-400'
                     } ${currentValue ? 'bg-gray-50' : 'bg-white'}`}
                 onClick={() => {
                     if (!currentValue && fileInputRef.current) {
@@ -147,9 +147,9 @@ function UploadField({
                     <div className="space-y-2">
                         <div className="flex items-center justify-center">
                             {type === 'image' ? (
-                                <Image className={`w-6 h-6 ${isDragOver ? 'text-purple-600' : 'text-gray-400'}`} />
+                                <Image className={`w-6 h-6 ${isDragOver ? 'text-blue-600' : 'text-gray-400'}`} />
                             ) : (
-                                <Music className={`w-6 h-6 ${isDragOver ? 'text-purple-600' : 'text-gray-400'}`} />
+                                <Music className={`w-6 h-6 ${isDragOver ? 'text-blue-600' : 'text-gray-400'}`} />
                             )}
                         </div>
                         <p className="text-xs text-gray-500">{placeholder}</p>
@@ -174,8 +174,8 @@ function UploadField({
             </div>
             {uploadMutation.isPending && (
                 <div className="text-center">
-                    <div className="inline-flex items-center text-purple-600 text-xs">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b border-purple-600 mr-1"></div>
+                    <div className="inline-flex items-center text-blue-600 text-xs">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600 mr-1"></div>
                         Uploading...
                     </div>
                 </div>
@@ -256,12 +256,12 @@ function VocabItemsEditor({
                     <div className="grid md:grid-cols-2 gap-3">
                         <input
                             {...register(`${name}.${i}.word` as const)}
-                            className="px-3 py-2 text-sm border rounded-lg"
+                            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Word *"
                         />
                         <input
                             {...register(`${name}.${i}.definition` as const)}
-                            className="px-3 py-2 text-sm border rounded-lg"
+                            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Definition *"
                         />
                     </div>
@@ -305,7 +305,7 @@ function VocabItemsEditor({
             <button
                 type="button"
                 onClick={() => append({ word: "", definition: "", examples: [""], imageUrl: "", audioUrl: "" })}
-                className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs"
+                className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
             >
                 + Add vocab item
             </button>
@@ -332,7 +332,7 @@ function StringArrayField({
                     <input
                         // ⬇️ dùng register được truyền vào, KHÔNG dùng control._options.context
                         {...register(`${name}.${i}` as const)}
-                        className="w-full px-3 py-2 text-sm border rounded-lg"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         placeholder={placeholder}
                     />
                     <button type="button" onClick={() => remove(i)} className="text-red-500">
@@ -343,7 +343,7 @@ function StringArrayField({
             <button
                 type="button"
                 onClick={() => append("")}
-                className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs"
+                className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
             >
                 + Add
             </button>
@@ -374,10 +374,10 @@ function OptionsEditor({
                     <div key={f.id} className="flex items-center gap-2">
                         <input
                             {...register(`${name}.${i}` as const)}
-                            className="w-full px-3 py-2 text-sm border rounded-lg"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder={`Option #${i + 1}`}
                         />
-                        <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border rounded-lg">
+                        <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border border-gray-300 rounded">
                             <input type="radio" value={i} {...register(`${basePath}.correctIndex` as const, { valueAsNumber: true })} />
                             Correct
                         </label>
@@ -391,14 +391,14 @@ function OptionsEditor({
                 <button
                     type="button"
                     onClick={() => append("")}
-                    className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs"
+                    className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
                 >
                     + Add option
                 </button>
                 {showExplanation && (
                     <input
                         {...register(`${basePath}.explanation` as const)}
-                        className="flex-1 px-3 py-2 text-sm border rounded-lg"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         placeholder="Explanation (optional)"
                     />
                 )}
@@ -448,7 +448,7 @@ function ListeningQuestionsEditor({
                     <div className="space-y-3">
                         <input
                             {...register(`${basePath}.${questionIndex}.question` as const)}
-                            className="w-full px-3 py-2 text-sm border rounded-lg"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Enter your question"
                         />
 
@@ -498,10 +498,10 @@ function ListeningQuestionOptionsEditor({
                     <div key={field.id} className="flex items-center gap-2">
                         <input
                             {...register(`${optionsName}.${optionIndex}` as const)}
-                            className="flex-1 px-3 py-2 text-sm border rounded-lg"
+                            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder={`Option ${optionIndex + 1}`}
                         />
-                        <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border rounded-lg whitespace-nowrap">
+                        <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border border-gray-300 rounded whitespace-nowrap">
                             <input
                                 type="radio"
                                 value={optionIndex}
@@ -522,7 +522,7 @@ function ListeningQuestionOptionsEditor({
             <button
                 type="button"
                 onClick={() => append("")}
-                className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs hover:bg-purple-50"
+                className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
             >
                 + Add Option
             </button>
@@ -552,8 +552,8 @@ function FlashcardsEditor({
             <div className="space-y-3">
                 {fields.map((f, i) => (
                     <div key={f.id} className="grid md:grid-cols-3 gap-2">
-                        <input {...register(`${name}.${i}.front` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Front *" />
-                        <input {...register(`${name}.${i}.back` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Back *" />
+                        <input {...register(`${name}.${i}.front` as const)} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Front *" />
+                        <input {...register(`${name}.${i}.back` as const)} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Back *" />
                         <div className="flex items-center gap-2">
                             <div className="flex-1">
                                 <UploadField
@@ -614,8 +614,8 @@ function ActivityContentFields({
     if (!type) return null;
 
     const section = (children: React.ReactNode, title: string) => (
-        <div className="mt-4 p-4 bg-white border border-purple-200 rounded-lg">
-            <div className="font-semibold text-purple-800 mb-3">{title}</div>
+        <div className="mt-4 p-4 bg-white border border-gray-200 rounded">
+            <div className="font-medium text-gray-800 mb-3">{title}</div>
             <div className="space-y-3">{children}</div>
         </div>
     );
@@ -624,7 +624,7 @@ function ActivityContentFields({
         case ActivityType.QUIZ:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Question *" />
                     <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} showExplanation />
                 </>,
                 "Quiz"
@@ -671,7 +671,7 @@ function ActivityContentFields({
         case ActivityType.PRONUNCIATION:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.phrase` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Target phrase *" />
+                    <input {...register(`${basePath}.content.phrase` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Target phrase *" />
                     <div className="grid md:grid-cols-2 gap-3">
                         <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
                         <UploadField
@@ -693,13 +693,13 @@ function ActivityContentFields({
         case ActivityType.SPEAKING:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+                    <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Prompt *" />
                     <div className="grid md:grid-cols-2 gap-3">
                         <input
                             type="number"
                             min={0}
                             {...register(`${basePath}.content.minSeconds` as const, { valueAsNumber: true })}
-                            className="px-3 py-2 text-sm border rounded-lg"
+                            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Min seconds (e.g., 15)"
                         />
                         <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
@@ -712,12 +712,12 @@ function ActivityContentFields({
             return section(
                 <>
                     <div className="grid md:grid-cols-3 gap-3">
-                        <input {...register(`${basePath}.content.target` as const)} className="px-3 py-2 text-sm border rounded-lg" placeholder="Target *" />
+                        <input {...register(`${basePath}.content.target` as const)} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Target *" />
                         <input
                             type="number"
                             min={1}
                             {...register(`${basePath}.content.rounds` as const, { valueAsNumber: true })}
-                            className="px-3 py-2 text-sm border rounded-lg"
+                            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Rounds *"
                         />
                     </div>
@@ -729,8 +729,8 @@ function ActivityContentFields({
         case ActivityType.READING:
             return section(
                 <>
-                    <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={4} placeholder="Passage *" />
-                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+                    <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" rows={4} placeholder="Passage *" />
+                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Question *" />
                     <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
                 </>,
                 "Reading"
@@ -739,13 +739,13 @@ function ActivityContentFields({
         case ActivityType.WRITING:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Prompt *" />
+                    <input {...register(`${basePath}.content.prompt` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Prompt *" />
                     <div className="grid md:grid-cols-2 gap-3">
                         <input
                             type="number"
                             min={0}
                             {...register(`${basePath}.content.minWords` as const, { valueAsNumber: true })}
-                            className="px-3 py-2 text-sm border rounded-lg"
+                            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Min words (e.g., 40)"
                         />
                         <StringArrayField name={`${basePath}.content.rubric`} control={control} label="Rubric" placeholder="Criterion" register={register} />
@@ -757,8 +757,8 @@ function ActivityContentFields({
         case ActivityType.GRAMMAR:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.rule` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Rule *" />
-                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Question *" />
+                    <input {...register(`${basePath}.content.rule` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Rule *" />
+                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Question *" />
                     <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
                 </>,
                 "Grammar"
@@ -770,7 +770,7 @@ function ActivityContentFields({
         case ActivityType.CONVERSATION:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.scenario` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" placeholder="Scenario *" />
+                    <input {...register(`${basePath}.content.scenario` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Scenario *" />
                     {/* initialDialog: array of {role,text} */}
                     <ConversationDialogEditor basePath={`${basePath}.content.initialDialog`} control={control} register={register} />
                     <StringArrayField name={`${basePath}.content.suggestions`} control={control} label="Suggestions" placeholder="Suggestion" register={register} />
@@ -785,7 +785,7 @@ function ActivityContentFields({
                 <>
                     <textarea
                         {...register(`${basePath}.content.passage` as const)}
-                        className="w-full px-3 py-2 text-sm border rounded-lg"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         rows={3}
                         placeholder="Passage with blanks. Use [____] to mark blanks (e.g., The [____] is [____])."
                     />
@@ -838,9 +838,9 @@ function ActivityContentFields({
                             watch={watch}
                             type="audio"
                         />
-                        <input {...register(`${basePath}.content.minWords` as const, { valueAsNumber: true })} className="px-3 py-2 text-sm border rounded-lg" placeholder="Min words (optional)" />
+                        <input {...register(`${basePath}.content.minWords` as const, { valueAsNumber: true })} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Min words (optional)" />
                     </div>
-                    <textarea {...register(`${basePath}.content.transcript` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={2} placeholder="Expected transcript / answer" />
+                    <textarea {...register(`${basePath}.content.transcript` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" rows={2} placeholder="Expected transcript / answer" />
                 </>,
                 "Dictation"
             );
@@ -873,12 +873,12 @@ function ActivityContentFields({
                                     <div key={i} className="grid md:grid-cols-3 gap-2 items-center">
                                         <input
                                             {...register(`${basePath}.content.leftItems.${i}` as const)}
-                                            className="px-3 py-2 text-sm border rounded-lg"
+                                            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                             placeholder={`Left #${i + 1}`}
                                         />
                                         <input
                                             {...register(`${basePath}.content.rightItems.${i}` as const)}
-                                            className="px-3 py-2 text-sm border rounded-lg"
+                                            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                             placeholder={`Right #${i + 1}`}
                                         />
                                         <div className="flex justify-end">
@@ -925,11 +925,11 @@ function ConversationDialogEditor({
             <label className="block text-xs font-medium text-gray-600">Initial Dialog</label>
             {fields.map((f, i) => (
                 <div key={f.id} className="grid md:grid-cols-3 gap-2">
-                    <select {...register(`${basePath}.${i}.role` as const)} className="px-3 py-2 text-sm border rounded-lg">
+                    <select {...register(`${basePath}.${i}.role` as const)} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         <option value="assistant">assistant</option>
                         <option value="user">user</option>
                     </select>
-                    <input {...register(`${basePath}.${i}.text` as const)} className="md:col-span-2 px-3 py-2 text-sm border rounded-lg" placeholder="Text *" />
+                    <input {...register(`${basePath}.${i}.text` as const)} className="md:col-span-2 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Text *" />
                     <div className="md:col-span-3 flex justify-end">
                         <button type="button" onClick={() => remove(i)} className="text-red-500">
                             <Trash2 className="w-4 h-4" />
@@ -966,18 +966,18 @@ const LessonActivities = ({
     });
 
     return (
-        <div className="mt-6 pl-6 border-l-4 border-purple-200">
-            <h4 className="text-lg font-semibold text-gray-700 mb-4">Activities</h4>
+        <div className="mt-6 pl-6 border-l-2 border-gray-200">
+            <h4 className="text-lg font-semibold text-gray-800 mb-4">Activities</h4>
 
             {fields.map((activity, activityIndex) => {
                 const base = `lessons.${lessonIndex}.activities.${activityIndex}` as const;
                 const currentType: ActivityType | undefined = watch(`${base}.type` as const);
 
                 return (
-                    <div key={activity.id} className="bg-purple-50 p-4 rounded-lg mb-4 border border-purple-200">
+                    <div key={activity.id} className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
                         <div className="flex justify-between items-center mb-4">
-                            <h5 className="font-semibold text-purple-800">Activity #{activityIndex + 1}</h5>
-                            <button type="button" onClick={() => remove(activityIndex)} className="text-red-500 hover:text-red-700">
+                            <h5 className="font-semibold text-gray-800">Activity #{activityIndex + 1}</h5>
+                            <button type="button" onClick={() => remove(activityIndex)} className="text-gray-500 hover:text-red-600 transition-colors">
                                 <Trash2 className="w-4 h-4" />
                             </button>
                         </div>
@@ -987,7 +987,7 @@ const LessonActivities = ({
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Activity Title *</label>
                                 <input
                                     {...register(`${base}.title`)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     placeholder="e.g., Grammar Quiz"
                                 />
                                 {errors.lessons?.[lessonIndex]?.activities?.[activityIndex]?.title && (
@@ -999,7 +999,7 @@ const LessonActivities = ({
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Type *</label>
                                 <select
                                     {...register(`${base}.type` as const)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 >
                                     {activityTypes.map((t) => (
                                         <option key={t.value as any} value={t.value as any}>
@@ -1015,7 +1015,7 @@ const LessonActivities = ({
                                     type="number"
                                     min={1}
                                     {...register(`${base}.orderNo` as const, { valueAsNumber: true })}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     placeholder="1"
                                 />
                             </div>
@@ -1025,7 +1025,7 @@ const LessonActivities = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Difficulty</label>
-                                <select {...register(`${base}.difficulty` as const)} className="w-full px-3 py-2 text-sm border rounded-lg">
+                                <select {...register(`${base}.difficulty` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                     {difficultyOptions.map((o) => (
                                         <option key={o.value} value={o.value}>
                                             {o.label}
@@ -1035,14 +1035,14 @@ const LessonActivities = ({
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Passing score (%)</label>
-                                <input type="number" min={0} max={100} {...register(`${base}.passingScore` as const, { valueAsNumber: true })} className="w-full px-3 py-2 text-sm border rounded-lg" />
+                                <input type="number" min={0} max={100} {...register(`${base}.passingScore` as const, { valueAsNumber: true })} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
                             </div>
                         </div>
 
                         {/* Instructions */}
                         <div className="mt-3">
                             <label className="block text-xs font-medium text-gray-600 mb-1">Instructions</label>
-                            <textarea {...register(`${base}.instructions` as const)} className="w-full px-3 py-2 text-sm border rounded-lg" rows={2} placeholder="Short instructions..." />
+                            <textarea {...register(`${base}.instructions` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" rows={2} placeholder="Short instructions..." />
                         </div>
 
                         {/* —— KHU VỰC NỘI DUNG RIÊNG THEO TYPE —— */}
@@ -1070,7 +1070,7 @@ const LessonActivities = ({
                         content: defaultContentByType(ActivityType.QUIZ),
                     } as any)
                 }
-                className="bg-white hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-semibold transition-all flex items-center border border-purple-300 text-sm"
+                className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded font-medium transition-colors flex items-center border border-gray-300 text-sm hover:border-gray-400"
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Activity

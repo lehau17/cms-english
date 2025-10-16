@@ -7,7 +7,7 @@ import { CreateCourseDto } from "@/interface/course.interface";
 import { ActivityType, DifficultyLevel } from "@/interface/enums";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Brain, Check, ChevronLeft, ChevronRight, Clock, Eye, FileSpreadsheet, GripVertical, Plus, Trash2, Upload, X } from 'lucide-react';
+import { BookOpen, Brain, Calendar, Check, ChevronLeft, ChevronRight, Clock, Eye, FileSpreadsheet, GripVertical, Info, List, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -262,15 +262,15 @@ const CreateCoursePage = () => {
 
     const renderStep1 = () => (
         <div className="max-w-4xl mx-auto space-y-6">
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100">
+            <div className="bg-white p-6 rounded border border-gray-200">
                 <h3 className="text-xl font-semibold text-gray-800 mb-6">Basic Information</h3>
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Ảnh khoá học *</label>
                         <div
-                            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer ${isDragOver
-                                ? 'border-purple-500 bg-purple-50 scale-105 shadow-lg'
-                                : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md'
+                            className={`relative border-2 border-dashed rounded p-8 text-center transition-all duration-300 cursor-pointer ${isDragOver
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
                                 } ${watch('imageUrl') ? 'bg-white' : 'bg-white'}`}
                             onClick={() => {
                                 if (!uploadMutation.isPending && fileInputRef.current) {
@@ -303,7 +303,7 @@ const CreateCoursePage = () => {
                                         <img
                                             src={watch('imageUrl')}
                                             alt="Course cover"
-                                            className="h-32 w-auto max-w-full rounded-lg shadow-md mx-auto hover:shadow-lg transition-shadow duration-300 object-cover"
+                                            className="h-32 w-auto max-w-full rounded shadow-md mx-auto hover:shadow-lg transition-shadow duration-300 object-cover"
                                             onError={(e) => {
                                                 console.error('Image failed to load:', watch('imageUrl'));
                                                 e.currentTarget.style.display = 'none';
@@ -318,7 +318,7 @@ const CreateCoursePage = () => {
                                                 e.stopPropagation();
                                                 setValue('imageUrl', '');
                                             }}
-                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-all duration-200 shadow-lg"
+                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors duration-200 shadow-sm"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
@@ -327,8 +327,8 @@ const CreateCoursePage = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                        <Upload className={`w-8 h-8 ${isDragOver ? 'text-purple-600 animate-bounce' : 'text-purple-400 group-hover:text-purple-600'} transition-all duration-300`} />
+                                    <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center transition-colors duration-300">
+                                        <Upload className={`w-8 h-8 ${isDragOver ? 'text-blue-600' : 'text-gray-400'} transition-colors duration-300`} />
                                     </div>
                                     <div>
                                         <p className="text-lg font-medium text-gray-700 mb-1">
@@ -354,12 +354,12 @@ const CreateCoursePage = () => {
                         </div>
                         {uploadMutation.isPending && (
                             <div className="mt-4 text-center">
-                                <div className="inline-flex items-center text-purple-600 bg-purple-50 px-4 py-2 rounded-full">
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600 mr-3"></div>
+                                <div className="inline-flex items-center text-blue-600 bg-blue-50 px-4 py-2 rounded">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
                                     <span className="font-medium">Uploading image...</span>
                                 </div>
-                                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                                    <div className="bg-purple-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                                <div className="mt-2 w-full bg-gray-200 rounded h-2">
+                                    <div className="bg-blue-600 h-2 rounded animate-pulse" style={{ width: '60%' }}></div>
                                 </div>
                             </div>
                         )}
@@ -369,7 +369,7 @@ const CreateCoursePage = () => {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Course Title *</label>
                         <input
                             {...register("title")}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                            className="w-full px-4 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Enter course title"
                         />
                         {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
@@ -387,7 +387,7 @@ const CreateCoursePage = () => {
                 </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+            <div className="bg-white p-6 rounded border border-gray-200">
                 <h3 className="text-xl font-semibold text-gray-800 mb-6">Settings</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -395,7 +395,7 @@ const CreateCoursePage = () => {
                         <input
                             type="number"
                             {...register("price", { valueAsNumber: true })}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                            className="w-full px-4 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="0"
                             min="0"
                         />
@@ -405,7 +405,7 @@ const CreateCoursePage = () => {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Difficulty</label>
                         <select
                             {...register("difficulty")}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                            className="w-full px-4 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         >
                             {difficultyOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -421,7 +421,7 @@ const CreateCoursePage = () => {
                         <input
                             type="checkbox"
                             {...register("isPublished")}
-                            className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className="ml-3 text-sm font-medium text-gray-700">Publish immediately after creation</span>
                     </div>
@@ -434,13 +434,16 @@ const CreateCoursePage = () => {
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h3 className="text-2xl font-bold text-gray-800">📖 Course Lessons</h3>
+                    <div className="flex items-center mb-2">
+                        <BookOpen className="w-6 h-6 text-gray-600 mr-3" />
+                        <h3 className="text-2xl font-bold text-gray-800">Course Lessons</h3>
+                    </div>
                     <p className="text-gray-600">Add and organize lessons for your course</p>
                 </div>
                 <button
                     type="button"
                     onClick={() => appendLesson({ title: '', description: '', orderNo: lessonFields.length + 1, difficulty: DifficultyLevel.BEGINNER, isLocked: true, activities: [] })}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all flex items-center"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-medium transition-colors flex items-center"
                 >
                     <Plus className="w-5 h-5 mr-2" />
                     Add Lesson
@@ -455,7 +458,7 @@ const CreateCoursePage = () => {
                     <button
                         type="button"
                         onClick={() => appendLesson({ title: '', description: '', orderNo: lessonFields.length + 1, difficulty: DifficultyLevel.BEGINNER, isLocked: true, activities: [] })}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-semibold transition-all"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-medium transition-colors"
                     >
                         <Plus className="w-5 h-5 mr-2 inline" />
                         Add First Lesson
@@ -464,18 +467,18 @@ const CreateCoursePage = () => {
             ) : (
                 <div className="space-y-4">
                     {lessonFields.map((lesson, index) => (
-                        <div key={lesson.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                        <div key={lesson.id} className="bg-white border border-gray-200 rounded p-6 shadow-sm">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center space-x-3">
                                     <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
-                                    <span className="bg-purple-100 text-purple-700 text-sm font-semibold px-3 py-1 rounded-full">
+                                    <span className="bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded">
                                         Lesson #{index + 1}
                                     </span>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => removeLesson(index)}
-                                    className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                    className="text-gray-500 hover:text-red-600 transition-colors p-1"
                                 >
                                     <Trash2 className="w-5 h-5" />
                                 </button>
@@ -486,7 +489,7 @@ const CreateCoursePage = () => {
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Lesson Title *</label>
                                     <input
                                         {...register(`lessons.${index}.title`)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                         placeholder="e.g., Introduction to React"
                                     />
                                     {errors.lessons?.[index]?.title && <p className="text-red-500 text-sm mt-1">{errors.lessons[index].title.message}</p>}
@@ -495,7 +498,7 @@ const CreateCoursePage = () => {
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Difficulty</label>
                                     <select
                                         {...register(`lessons.${index}.difficulty`)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     >
                                         {difficultyOptions.map((option) => (
                                             <option key={option.value} value={option.value}>
@@ -510,7 +513,7 @@ const CreateCoursePage = () => {
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                                 <textarea
                                     {...register(`lessons.${index}.description`)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
                                     rows={2}
                                     placeholder="Brief lesson description..."
                                 />
@@ -525,7 +528,10 @@ const CreateCoursePage = () => {
 
     const renderStep3 = () => (
         <div className="max-w-4xl mx-auto space-y-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">📅 Lộ trình buổi học</h3>
+            <div className="flex items-center mb-2">
+                <Calendar className="w-6 h-6 text-gray-600 mr-3" />
+                <h3 className="text-2xl font-bold text-gray-800">Lộ trình buổi học</h3>
+            </div>
             <p className="text-gray-600">Sắp xếp hoạt động cho từng buổi học trong khóa học</p>
             <SessionSchedules
                 control={control}
@@ -539,12 +545,18 @@ const CreateCoursePage = () => {
 
     const renderStep4 = () => (
         <div className="max-w-4xl mx-auto space-y-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">🔍 Review & Submit</h3>
+            <div className="flex items-center mb-2">
+                <Eye className="w-6 h-6 text-gray-600 mr-3" />
+                <h3 className="text-2xl font-bold text-gray-800">Review & Submit</h3>
+            </div>
             <p className="text-gray-600">Xem lại thông tin khóa học trước khi tạo mới</p>
 
             {/* Course Summary */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-semibold text-lg mb-4">Thông tin cơ bản</h4>
+            <div className="bg-white p-6 rounded border border-gray-200 shadow-sm">
+                <div className="flex items-center mb-4">
+                    <Info className="w-5 h-5 text-gray-600 mr-2" />
+                    <h4 className="font-semibold text-lg">Thông tin cơ bản</h4>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <span className="block text-sm font-medium text-gray-500">Tên khóa học</span>
@@ -566,14 +578,17 @@ const CreateCoursePage = () => {
             </div>
 
             {/* Session Schedules Summary */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-semibold text-lg mb-4">Lộ trình buổi học</h4>
+            <div className="bg-white p-6 rounded border border-gray-200 shadow-sm">
+                <div className="flex items-center mb-4">
+                    <List className="w-5 h-5 text-gray-600 mr-2" />
+                    <h4 className="font-semibold text-lg">Lộ trình buổi học</h4>
+                </div>
                 <div className="space-y-4">
                     {watch('sessionSchedules')?.map((session, i) => (
                         <div key={i} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center">
-                                    <span className="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full mr-3">
+                                    <span className="bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded mr-3">
                                         Buổi #{session.sessionNumber}
                                     </span>
                                     <h5 className="font-medium">{session.title}</h5>
@@ -603,10 +618,10 @@ const CreateCoursePage = () => {
                     <div className="mt-6">
                         <button
                             onClick={() => setShowImportModal(true)}
-                            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                            className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded shadow-lg hover:shadow-xl transition-all duration-300"
                         >
                             <FileSpreadsheet className="w-5 h-5 mr-2" />
-                            📚 Import from Excel
+                            Import from Excel
                         </button>
                         <p className="text-sm text-gray-500 mt-2">
                             Quickly create multiple courses with auto-generated audio
@@ -617,7 +632,7 @@ const CreateCoursePage = () => {
                 {renderStepIndicator()}
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 min-h-[600px]">
+                    <div className="bg-white rounded shadow-lg border border-gray-200 min-h-[600px]">
                         <div className="p-8">
                             {currentStep === 1 && renderStep1()}
                             {currentStep === 2 && renderStep2()}
@@ -625,13 +640,13 @@ const CreateCoursePage = () => {
                             {currentStep === 4 && renderStep4()}
                         </div>
 
-                        <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-2xl">
+                        <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b">
                             <div className="flex justify-between items-center">
                                 <button
                                     type="button"
                                     onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
                                     disabled={currentStep === 1}
-                                    className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all ${currentStep === 1
+                                    className={`flex items-center px-6 py-3 rounded font-medium transition-colors ${currentStep === 1
                                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                         : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                         }`}
@@ -648,7 +663,7 @@ const CreateCoursePage = () => {
                                     <button
                                         type="button"
                                         onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
-                                        className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white`}
+                                        className={`flex items-center px-6 py-3 rounded font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white`}
                                     >
                                         Next
                                         <ChevronRight className="w-5 h-5 ml-2" />
@@ -657,7 +672,7 @@ const CreateCoursePage = () => {
                                     <button
                                         type="submit"
                                         disabled={isCreating}
-                                        className={`flex items-center px-8 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white`}
+                                        className={`flex items-center px-8 py-3 rounded font-medium transition-colors bg-green-600 hover:bg-green-700 text-white`}
                                     >
                                         <BookOpen className="w-5 h-5 mr-2" />
                                         {isCreating ? 'Creating...' : 'Create Course'}
