@@ -1,5 +1,12 @@
 import axiosInstance from '../config/axiosConfig';
 
+export enum AssignmentType {
+    HOMEWORK = 'HOMEWORK',
+    QUIZ = 'QUIZ',
+    MIDTERM_EXAM = 'MIDTERM_EXAM',
+    FINAL_EXAM = 'FINAL_EXAM'
+}
+
 export interface Assignment {
     id: string;
     title: string;
@@ -11,6 +18,8 @@ export interface Assignment {
     maxAttempts?: number;
     status: string;
     isPublished: boolean;
+    type?: AssignmentType;
+    weight?: number;
     teacherId: string;
     classroomId: string;
     teacher?: {
