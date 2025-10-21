@@ -1,8 +1,11 @@
 
 export enum DifficultyLevel {
     BEGINNER = "beginner",
+    ELEMENTARY = "elementary",
     INTERMEDIATE = "intermediate",
+    UPPER_INTERMEDIATE = "upper_intermediate",
     ADVANCED = "advanced",
+    EXPERT = "expert",
 }
 
 export enum LanguageCode {

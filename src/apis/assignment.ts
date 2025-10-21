@@ -12,6 +12,7 @@ export interface Assignment {
     title: string;
     description?: string;
     instructions?: string;
+    startTime?: string; // Thời gian bắt đầu làm bài
     dueDate?: string;
     totalPoints?: number;
     timeLimit?: number;

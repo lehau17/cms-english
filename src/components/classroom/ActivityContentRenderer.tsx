@@ -169,38 +169,39 @@ const ActivityContentRenderer: React.FC<ActivityContentRendererProps> = ({ type,
 
     const renderReadingContent = () => (
         <div className="space-y-3">
-            <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Đoạn văn:</p>
-                <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-800 leading-relaxed">
-                    {content.passage}
+            {content.passage && (
+                <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Đoạn văn:</p>
+                    <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-800 leading-relaxed">
+                        {content.passage}
+                    </div>
                 </div>
-            </div>
-            <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Câu hỏi:</p>
-                <p className="text-sm text-gray-900 bg-blue-50 p-3 rounded">{content.question}</p>
-            </div>
-            <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Các lựa chọn:</p>
-                <div className="space-y-2">
-                    {content.options?.map((option: string, idx: number) => (
-                        <div
-                            key={idx}
-                            className={`flex items-center p-2 rounded ${idx === content.correctIndex
-                                ? 'bg-green-50 border border-green-300'
-                                : 'bg-gray-50'
-                                }`}
-                        >
-                            <span className="font-semibold mr-2 text-sm">
-                                {String.fromCharCode(65 + idx)}.
-                            </span>
-                            <span className="text-sm text-gray-700">{option}</span>
-                            {idx === content.correctIndex && (
-                                <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />
-                            )}
-                        </div>
-                    ))}
+            )}
+            {content.questions && content.questions.length > 0 && (
+                <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Câu hỏi:</p>
+                    <div className="space-y-3">
+                        {content.questions.map((q: any, idx: number) => (
+                            <div key={idx} className="border border-gray-200 rounded p-3">
+                                <p className="text-sm font-medium text-gray-900 mb-2">{idx + 1}. {q.question}</p>
+                                <div className="space-y-1 ml-4">
+                                    {q.options?.map((opt: string, optIdx: number) => (
+                                        <div
+                                            key={optIdx}
+                                            className={`text-sm p-2 rounded ${optIdx === q.correctIndex
+                                                ? 'bg-green-50 text-green-800 font-medium'
+                                                : 'text-gray-600'
+                                                }`}
+                                        >
+                                            {String.fromCharCode(65 + optIdx)}. {opt}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 

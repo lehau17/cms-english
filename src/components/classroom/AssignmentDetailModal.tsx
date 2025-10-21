@@ -229,11 +229,19 @@ const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
                             <div className="bg-white rounded p-3 border border-gray-300">
                                 <h3 className="text-sm font-semibold text-gray-900 mb-3">Thông tin bài tập</h3>
                                 <div className="space-y-2 text-xs">
+                                    {assignment.startTime && (
+                                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                                            <span className="text-gray-600">Bắt đầu:</span>
+                                            <span className="font-medium text-gray-900">
+                                                {new Date(assignment.startTime).toLocaleString('vi-VN')}
+                                            </span>
+                                        </div>
+                                    )}
                                     {assignment.dueDate && (
                                         <div className="flex justify-between items-center pb-2 border-b border-gray-200">
                                             <span className="text-gray-600">Hạn nộp:</span>
                                             <span className="font-medium text-gray-900">
-                                                {new Date(assignment.dueDate).toLocaleDateString('vi-VN')}
+                                                {new Date(assignment.dueDate).toLocaleString('vi-VN')}
                                             </span>
                                         </div>
                                     )}

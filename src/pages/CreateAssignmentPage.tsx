@@ -1,302 +1,214 @@
+import { yupResolver } from '@hookform/resolvers/yup';
 import {
-    Add as AddIcon,
-    CheckCircle as CheckCircleIcon,
-    Delete as DeleteIcon,
+    AddCircleOutline,
+    ArrowBack,
+    DeleteOutline,
     Download as DownloadIcon,
-    Error as ErrorIcon,
     FileUpload as FileUploadIcon,
-    Upload as UploadIcon,
-    Warning as WarningIcon,
+    Save,
+    SaveAlt,
 } from '@mui/icons-material';
 import {
     Alert,
     Box,
     Button,
     Card,
-    CardActions,
     CardContent,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
+    Chip,
+    Container,
     Divider,
     FormControl,
     Grid,
     IconButton,
     InputLabel,
-    LinearProgress,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     MenuItem,
     Paper,
     Select,
     TextField,
-    Typography
+    Typography,
 } from '@mui/material';
-import { useCallback, useState } from 'react';
-import AudioGenerationOptions from '../components/AudioGenerationOptions';
-// import { useDropzone } from 'react-dropzone';
+import { useState } from 'react';
+import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { assignmentApi, downloadAssignmentPdf, type CreateAssignmentDto } from '../apis/assignment';
-
-interface Activity {
-    id: string;
-    type: string;
-    title: string;
-    instructions?: string;
-    content: any;
-    points?: number;
-    passingScore?: number;
-    difficulty?: string;
-    hints?: string[];
-}
-
-interface Assignment {
-    title: string;
-    description: string;
-    instructions: string;
-    dueDate: string;
-    totalPoints: number;
-    timeLimit: number;
-    maxAttempts: number;
-    assignedTo: string[];
-    activities: Activity[];
-    isPublished: boolean;
-    customContent?: any;
-}
-
-interface ImportPreviewResult {
-    assignment: Partial<Assignment>;
-    activities: Activity[];
-    errors: string[];
-    warnings: string[];
-}
-
-const ACTIVITY_TYPES = [
-    { value: 'quiz', label: 'Quiz' },
-    { value: 'reading', label: 'Reading Comprehension' },
-    { value: 'listening', label: 'Listening' },
-    { value: 'grammar', label: 'Grammar' },
-    { value: 'vocab', label: 'Vocabulary' },
-    { value: 'flashcard', label: 'Flashcard' },
-];
+import { useNavigate, useParams } from 'react-router-dom';
+import { AssignmentActivityDto, assignmentApi, CreateAssignmentDto, downloadAssignmentPdf } from '../apis/assignment';
+import { ActivityEditor } from '../components/assignment/ActivityEditor';
+import { ImportDialog } from '../components/assignment/ImportDialog';
+import { ACTIVITY_TYPES, AssignmentFormValues, assignmentSchema } from '../schemas/assignment.schema';
 
 const DIFFICULTY_LEVELS = [
-    { value: 'BEGINNER', label: 'Beginner' },
-    { value: 'INTERMEDIATE', label: 'Intermediate' },
-    { value: 'ADVANCED', label: 'Advanced' },
+    { value: 'beginner', label: 'Beginner' },
+    { value: 'elementary', label: 'Elementary' },
+    { value: 'intermediate', label: 'Intermediate' },
+    { value: 'upper_intermediate', label: 'Upper Intermediate' },
+    { value: 'advanced', label: 'Advanced' },
+    { value: 'expert', label: 'Expert' },
 ];
 
 export default function CreateAssignmentPage() {
-    // States for API and PDF
+    const navigate = useNavigate();
+    const { classroomId } = useParams<{ classroomId: string }>();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [createdAssignmentId, setCreatedAssignmentId] = useState<string | null>(null);
     const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-    const [assignment, setAssignment] = useState<Assignment>({
-        title: '',
-        description: '',
-        instructions: '',
-        dueDate: '',
-        totalPoints: 100,
-        timeLimit: 0,
-        maxAttempts: 1,
-        assignedTo: [],
-        isPublished: false,
-        activities: [],
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+    // React Hook Form setup
+    const {
+        control,
+        register,
+        handleSubmit,
+        formState: { errors },
+        watch,
+        setValue,
+        reset,
+    } = useForm<AssignmentFormValues>({
+        resolver: yupResolver(assignmentSchema) as any,
+        defaultValues: {
+            title: '',
+            description: '',
+            instructions: '',
+            dueDate: '',
+            totalPoints: 100,
+            timeLimit: undefined, // Don't default to 0
+            maxAttempts: 1,
+            isPublished: false,
+            activities: [],
+        },
     });
 
-    const [importDialogOpen, setImportDialogOpen] = useState(false);
-    const [importPreview, setImportPreview] = useState<ImportPreviewResult | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
+    // Field array for activities
+    const { fields: activityFields, append, remove } = useFieldArray({
+        control,
+        name: 'activities',
+    });
 
-    const handleInputChange = (field: keyof Assignment, value: any) => {
-        setAssignment(prev => ({ ...prev, [field]: value }));
-    };
-
-    const addActivity = () => {
-        const newActivity: Activity = {
-            id: `activity-${Date.now()}`,
-            type: 'quiz',
-            title: '',
-            content: {
-                question: '',
-                options: ['', '', '', ''],
-                correctIndex: 0,
-            },
+    const addActivityOf = (type: string) => {
+        const base = {
+            type,
+            title: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' '),
             points: 10,
+            content: {},
         };
-        setAssignment(prev => ({
-            ...prev,
-            activities: [...prev.activities, newActivity],
-        }));
-    };
-
-    const updateActivity = (index: number, updatedActivity: Activity) => {
-        setAssignment(prev => ({
-            ...prev,
-            activities: prev.activities.map((activity, i) =>
-                i === index ? updatedActivity : activity
-            ),
-        }));
-    };
-
-    const handleActivityTypeChange = (index: number, newType: string) => {
-        const activity = assignment.activities[index];
-        let newContent: any = {};
-
-        // Initialize content based on activity type
-        switch (newType) {
-            case 'listening':
-                newContent = {
-                    audioUrl: '',
-                    instructions: '',
-                    questions: [] // Start with empty questions array
+        // seed minimal content per type
+        switch (type) {
+            case 'quiz':
+            case 'grammar':
+                (base as any).content = {
+                    question: '',
+                    options: ['', ''],
+                    correctIndex: 0,
                 };
                 break;
-            case 'quiz':
             case 'reading':
-            case 'grammar':
-                newContent = {
-                    question: '',
-                    options: ['', '', '', ''],
-                    correctIndex: 0
+                (base as any).content = {
+                    passage: '',
+                    questions: [
+                        {
+                            question: '',
+                            options: ['', ''],
+                            correctIndex: 0,
+                        },
+                    ],
                 };
+                break;
+            case 'listening':
+                (base as any).content = {
+                    audioUrl: '',
+                    questions: [
+                        {
+                            question: '',
+                            options: ['', ''],
+                            correctIndex: 0,
+                        },
+                    ],
+                };
+                break;
+            case 'vocab':
+                (base as any).content = { items: [{ word: '', definition: '' }] };
                 break;
             case 'pronunciation':
-                newContent = {
-                    text: '', // Text to pronounce
-                    targetWords: [] // Words to focus on
+                (base as any).content = {
+                    phrases: [{ text: '', sampleUrl: '' }],
                 };
                 break;
-            default:
-                newContent = activity?.content || {};
+            case 'speaking':
+                (base as any).content = { prompt: '', minSeconds: 10, tips: [] };
+                break;
+            case 'mini_game':
+                (base as any).content = { target: '', pool: [], rounds: 3 };
+                break;
+            case 'writing':
+                (base as any).content = { prompt: '', minWords: 50, rubric: [] };
+                break;
+            case 'flashcard':
+                (base as any).content = { cards: [{ front: '', back: '' }] };
+                break;
+            case 'conversation':
+                (base as any).content = {
+                    scenario: '',
+                    initialDialog: [{ role: 'assistant', text: '' }],
+                    suggestions: [],
+                };
+                break;
+            case 'fill_blank':
+                (base as any).content = { passage: '', blanks: [''] };
+                break;
+            case 'dictation':
+                (base as any).content = {
+                    audioUrl: '',
+                    transcript: '',
+                    minWords: 0,
+                };
+                break;
+            case 'matching':
+                (base as any).content = { pairs: [{ left: '', right: '' }] };
+                break;
         }
+        append(base as any);
+    };
 
-        updateActivity(index, {
+    const handleAddActivity = () => {
+        addActivityOf('quiz');
+    };
+
+    const handleImportConfirm = (data: any) => {
+        // Merge imported activities with existing ones
+        const currentActivities = watch('activities') || [];
+        const importedActivities = (data.activities || []).map((activity: any) => ({
             ...activity,
-            type: newType,
-            content: newContent
-        } as Activity);
-    };
-
-    const removeActivity = (index: number) => {
-        setAssignment(prev => ({
-            ...prev,
-            activities: prev.activities.filter((_, i) => i !== index),
-        }));
-    };
-
-    const handleDownloadTemplate = async () => {
-        try {
-            const response = await fetch('/api/private/v1/assignments/import/template', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('cms_auth')}`,
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to download template');
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'assignment-import-template.xlsx';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-
-            toast.success('Template downloaded successfully');
-        } catch (error) {
-            console.error('Download template error:', error);
-            toast.error('Failed to download template');
-        }
-    };
-
-    const handleFileUpload = useCallback(async (file: File) => {
-        if (!file.name.match(/\.(xlsx|xls)$/)) {
-            toast.error('Please upload an Excel file (.xlsx or .xls)');
-            return;
-        }
-
-        setIsUploading(true);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch('/api/private/v1/assignments/import/preview', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('cms_auth')}`,
-                },
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to preview import');
-            }
-
-            const result = await response.json();
-            setImportPreview(result);
-
-            if (result.errors.length === 0) {
-                toast.success('File processed successfully');
-            } else {
-                toast.error('File processed with errors');
-            }
-        } catch (error) {
-            console.error('Import preview error:', error);
-            toast.error('Failed to process file');
-        } finally {
-            setIsUploading(false);
-        }
-    }, []);
-
-    const handleImportConfirm = () => {
-        if (!importPreview) return;
-
-        // Merge imported data with current assignment
-        setAssignment(prev => ({
-            ...prev,
-            ...importPreview.assignment,
-            activities: [...prev.activities, ...importPreview.activities],
+            id: `imported-${Date.now()}-${Math.random()}`,
         }));
 
-        setImportDialogOpen(false);
-        setImportPreview(null);
-        toast.success(`Imported ${importPreview.activities.length} activities`);
+        setValue('activities', [...currentActivities, ...importedActivities]);
+
+        // Optionally update assignment info if not set
+        if (!watch('title') && data.assignment?.title) {
+            setValue('title', data.assignment.title);
+        }
+        if (!watch('description') && data.assignment?.description) {
+            setValue('description', data.assignment.description);
+        }
+
+        toast.success(`Imported ${importedActivities.length} activities`);
     };
 
-    const handleSubmit = async () => {
-        if (!assignment.title.trim()) {
-            toast.error('Assignment title is required');
-            return;
-        }
-
-        if (assignment.activities.length === 0) {
-            toast.error('At least one activity is required');
-            return;
-        }
-
+    const onSubmit: SubmitHandler<AssignmentFormValues> = async (data: any) => {
         try {
             setIsSubmitting(true);
 
-            // Map activities to match API format
-            const createAssignmentDto: CreateAssignmentDto = {
-                title: assignment.title,
-                description: assignment.description || undefined,
-                instructions: assignment.instructions || undefined,
-                dueDate: assignment.dueDate || undefined,
-                totalPoints: assignment.totalPoints || undefined,
-                timeLimit: assignment.timeLimit || undefined,
-                maxAttempts: assignment.maxAttempts || undefined,
-                isPublished: assignment.isPublished || false,
-                assignedTo: assignment.assignedTo || [],
-                activities: assignment.activities.map(activity => ({
+            // Map to API format
+            const createDto: CreateAssignmentDto = {
+                title: data.title,
+                description: data.description,
+                instructions: data.instructions,
+                dueDate: data.dueDate || null, // Convert empty string to null
+                totalPoints: data.totalPoints,
+                timeLimit: data.timeLimit && data.timeLimit > 0 ? data.timeLimit : null, // Convert 0 to null
+                maxAttempts: data.maxAttempts,
+                isPublished: data.isPublished,
+                assignedTo: [],
+                activities: (data.activities || []).map((activity: any): AssignmentActivityDto => ({
                     type: activity.type,
                     title: activity.title,
                     instructions: activity.instructions,
@@ -305,14 +217,15 @@ export default function CreateAssignmentPage() {
                     difficulty: activity.difficulty,
                     hints: activity.hints,
                 })),
-                customContent: assignment.customContent,
             };
 
-            // For demo purposes, using a dummy classroom ID
-            // In real implementation, this would come from route params or selection
-            const classroomId = '00000000-0000-0000-0000-000000000000'; // Dummy ID
+            // Get classroomId from URL params
+            if (!classroomId) {
+                toast.error('Classroom ID is required');
+                return;
+            }
 
-            const response = await assignmentApi.createAssignment(classroomId, createAssignmentDto);
+            const response = await assignmentApi.createAssignment(classroomId, createDto);
 
             if (response.data && response.data.id) {
                 setCreatedAssignmentId(response.data.id);
@@ -322,7 +235,17 @@ export default function CreateAssignmentPage() {
             }
         } catch (error: any) {
             console.error('Create assignment error:', error);
-            toast.error(error?.response?.data?.message || 'Failed to create assignment');
+
+            // Handle validation errors
+            if (error?.response?.data?.message && Array.isArray(error.response.data.message)) {
+                const validationErrors = error.response.data.message;
+                const errorMessages = validationErrors.map((err: any) =>
+                    `${err.field}: ${err.errors.join(', ')}`
+                ).join('\n');
+                toast.error(`Validation errors:\n${errorMessages}`);
+            } else {
+                toast.error(error?.response?.data?.message || 'Failed to create assignment');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -336,7 +259,7 @@ export default function CreateAssignmentPage() {
 
         try {
             setIsDownloadingPdf(true);
-            await downloadAssignmentPdf(createdAssignmentId, assignment.title);
+            await downloadAssignmentPdf(createdAssignmentId, watch('title'));
             toast.success('PDF downloaded successfully!');
         } catch (error: any) {
             console.error('Download PDF error:', error);
@@ -346,524 +269,341 @@ export default function CreateAssignmentPage() {
         }
     };
 
+    const handleSaveDraft = () => {
+        toast.success('Save as draft feature coming soon');
+    };
+
     return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h4" gutterBottom>
-                Create Assignment
-            </Typography>
-
-            <Grid container spacing={3}>
-                {/* Assignment Info */}
-                <Grid item xs={12}>
-                    <Paper sx={{ p: 3 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                            <Typography variant="h6">Assignment Information</Typography>
-                            <Button
-                                variant="outlined"
-                                startIcon={<FileUploadIcon />}
-                                onClick={() => setImportDialogOpen(true)}
-                            >
-                                Import from Excel
-                            </Button>
+        <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh', py: 4 }}>
+            <Container maxWidth="lg">
+                {/* Header */}
+                <Box sx={{ mb: 4 }}>
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={() => navigate(`/classrooms/${classroomId}`)}
+                        sx={{ mb: 2 }}
+                    >
+                        Back to Classroom
+                    </Button>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                            <Typography variant="h4" fontWeight={700} gutterBottom>
+                                Create Assignment
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Design engaging assignments with various activity types
+                            </Typography>
                         </Box>
-
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Title"
-                                    value={assignment.title}
-                                    onChange={(e) => handleInputChange('title', e.target.value)}
-                                    required
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Total Points"
-                                    type="number"
-                                    value={assignment.totalPoints || ''}
-                                    onChange={(e) => handleInputChange('totalPoints', parseInt(e.target.value) || 100)}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Description"
-                                    multiline
-                                    rows={3}
-                                    value={assignment.description}
-                                    onChange={(e) => handleInputChange('description', e.target.value)}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Due Date"
-                                    type="datetime-local"
-                                    value={assignment.dueDate || ''}
-                                    onChange={(e) => handleInputChange('dueDate', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Time Limit (minutes)"
-                                    type="number"
-                                    value={assignment.timeLimit || ''}
-                                    onChange={(e) => handleInputChange('timeLimit', parseInt(e.target.value))}
-                                />
-                            </Grid>
-                        </Grid>
-                    </Paper>
-                </Grid>
-
-                {/* Activities */}
-                <Grid item xs={12}>
-                    <Paper sx={{ p: 3 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                            <Typography variant="h6">Activities ({assignment.activities.length})</Typography>
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={addActivity}
-                            >
-                                Add Activity
-                            </Button>
-                        </Box>
-
-                        {assignment.activities.length === 0 ? (
-                            <Alert severity="info">
-                                No activities added yet. Click "Add Activity" or import from Excel to get started.
-                            </Alert>
-                        ) : (
-                            assignment.activities.map((activity, index) => (
-                                <Card key={activity.id} sx={{ mb: 2 }}>
-                                    <CardContent>
-                                        <Grid container spacing={2}>
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Activity Title"
-                                                    value={activity.title}
-                                                    onChange={(e) => updateActivity(index, { ...activity, title: e.target.value })}
-                                                />
-                                            </Grid>
-                                            <Grid item xs={12} md={3}>
-                                                <FormControl fullWidth>
-                                                    <InputLabel>Type</InputLabel>
-                                                    <Select
-                                                        value={activity.type}
-                                                        onChange={(e) => handleActivityTypeChange(index, e.target.value)}
-                                                    >
-                                                        {ACTIVITY_TYPES.map(type => (
-                                                            <MenuItem key={type.value} value={type.value}>
-                                                                {type.label}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </Grid>
-                                            <Grid item xs={12} md={3}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Points"
-                                                    type="number"
-                                                    value={activity.points || ''}
-                                                    onChange={(e) => updateActivity(index, { ...activity, points: parseInt(e.target.value) || 10 })}
-                                                />
-                                            </Grid>
-
-                                            {/* Activity Type Specific Fields */}
-                                            {(activity.type === 'quiz' || activity.type === 'reading' || activity.type === 'grammar') && (
-                                                <>
-                                                    <Grid item xs={12}>
-                                                        <TextField
-                                                            fullWidth
-                                                            label="Question"
-                                                            value={activity.content?.question || ''}
-                                                            onChange={(e) => updateActivity(index, {
-                                                                ...activity,
-                                                                content: { ...activity.content, question: e.target.value }
-                                                            })}
-                                                        />
-                                                    </Grid>
-                                                    {activity.content?.options?.map((option: string, optIndex: number) => (
-                                                        <Grid item xs={12} md={6} key={optIndex}>
-                                                            <TextField
-                                                                fullWidth
-                                                                label={`Option ${optIndex + 1}`}
-                                                                value={option}
-                                                                onChange={(e) => {
-                                                                    const newOptions = [...(activity.content?.options || [])];
-                                                                    newOptions[optIndex] = e.target.value;
-                                                                    updateActivity(index, {
-                                                                        ...activity,
-                                                                        content: { ...activity.content, options: newOptions }
-                                                                    });
-                                                                }}
-                                                            />
-                                                        </Grid>
-                                                    ))}
-                                                    <Grid item xs={12} md={6}>
-                                                        <FormControl fullWidth>
-                                                            <InputLabel>Correct Answer</InputLabel>
-                                                            <Select
-                                                                value={activity.content?.correctIndex || 0}
-                                                                onChange={(e) => updateActivity(index, {
-                                                                    ...activity,
-                                                                    content: { ...activity.content, correctIndex: e.target.value }
-                                                                })}
-                                                            >
-                                                                {activity.content?.options?.map((_: any, optIndex: number) => (
-                                                                    <MenuItem key={optIndex} value={optIndex}>
-                                                                        Option {optIndex + 1}
-                                                                    </MenuItem>
-                                                                ))}
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Grid>
-                                                </>
-                                            )}
-
-                                            {/* Listening Activity Specific Fields */}
-                                            {activity.type === 'listening' && (
-                                                <>
-                                                    <Grid item xs={12}>
-                                                        <AudioGenerationOptions
-                                                            label="Audio Content"
-                                                            value={activity.content?.audioUrl || ''}
-                                                            onChange={(audioUrl) => updateActivity(index, {
-                                                                ...activity,
-                                                                content: { ...activity.content, audioUrl }
-                                                            })}
-                                                            required={true}
-                                                        />
-                                                    </Grid>
-
-                                                    {/* Listening Questions */}
-                                                    <Grid item xs={12}>
-                                                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                                            <Typography variant="h6">Questions ({activity.content?.questions?.length || 0})</Typography>
-                                                            <Button
-                                                                size="small"
-                                                                variant="outlined"
-                                                                startIcon={<AddIcon />}
-                                                                onClick={() => {
-                                                                    const questions = activity.content?.questions || [];
-                                                                    updateActivity(index, {
-                                                                        ...activity,
-                                                                        content: {
-                                                                            ...activity.content,
-                                                                            questions: [
-                                                                                ...questions,
-                                                                                {
-                                                                                    id: Date.now(),
-                                                                                    question: '',
-                                                                                    options: ['', '', '', ''],
-                                                                                    correctIndex: 0
-                                                                                }
-                                                                            ]
-                                                                        }
-                                                                    });
-                                                                }}
-                                                            >
-                                                                Add Question
-                                                            </Button>
-                                                        </Box>
-
-                                                        {activity.content?.questions?.map((question: any, qIndex: number) => (
-                                                            <Card key={question.id} variant="outlined" sx={{ mb: 2 }}>
-                                                                <CardContent>
-                                                                    <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-                                                                        <Typography variant="subtitle1">Question {qIndex + 1}</Typography>
-                                                                        <IconButton
-                                                                            size="small"
-                                                                            color="error"
-                                                                            onClick={() => {
-                                                                                const questions = activity.content?.questions || [];
-                                                                                const updatedQuestions = questions.filter((_: any, i: number) => i !== qIndex);
-                                                                                updateActivity(index, {
-                                                                                    ...activity,
-                                                                                    content: { ...activity.content, questions: updatedQuestions }
-                                                                                });
-                                                                            }}
-                                                                        >
-                                                                            <DeleteIcon />
-                                                                        </IconButton>
-                                                                    </Box>
-
-                                                                    <Grid container spacing={2}>
-                                                                        <Grid item xs={12}>
-                                                                            <TextField
-                                                                                fullWidth
-                                                                                label="Question"
-                                                                                value={question.question}
-                                                                                onChange={(e) => {
-                                                                                    const questions = [...(activity.content?.questions || [])];
-                                                                                    questions[qIndex] = { ...questions[qIndex], question: e.target.value };
-                                                                                    updateActivity(index, {
-                                                                                        ...activity,
-                                                                                        content: { ...activity.content, questions }
-                                                                                    });
-                                                                                }}
-                                                                            />
-                                                                        </Grid>
-
-                                                                        {question.options?.map((option: string, optIndex: number) => (
-                                                                            <Grid item xs={12} md={6} key={optIndex}>
-                                                                                <TextField
-                                                                                    fullWidth
-                                                                                    label={`Option ${optIndex + 1}`}
-                                                                                    value={option}
-                                                                                    onChange={(e) => {
-                                                                                        const questions = [...(activity.content?.questions || [])];
-                                                                                        const newOptions = [...questions[qIndex].options];
-                                                                                        newOptions[optIndex] = e.target.value;
-                                                                                        questions[qIndex] = { ...questions[qIndex], options: newOptions };
-                                                                                        updateActivity(index, {
-                                                                                            ...activity,
-                                                                                            content: { ...activity.content, questions }
-                                                                                        });
-                                                                                    }}
-                                                                                />
-                                                                            </Grid>
-                                                                        ))}
-
-                                                                        <Grid item xs={12} md={6}>
-                                                                            <FormControl fullWidth>
-                                                                                <InputLabel>Correct Answer</InputLabel>
-                                                                                <Select
-                                                                                    value={question.correctIndex || 0}
-                                                                                    onChange={(e) => {
-                                                                                        const questions = [...(activity.content?.questions || [])];
-                                                                                        questions[qIndex] = { ...questions[qIndex], correctIndex: e.target.value };
-                                                                                        updateActivity(index, {
-                                                                                            ...activity,
-                                                                                            content: { ...activity.content, questions }
-                                                                                        });
-                                                                                    }}
-                                                                                >
-                                                                                    {question.options?.map((_: any, optIndex: number) => (
-                                                                                        <MenuItem key={optIndex} value={optIndex}>
-                                                                                            Option {optIndex + 1}
-                                                                                        </MenuItem>
-                                                                                    ))}
-                                                                                </Select>
-                                                                            </FormControl>
-                                                                        </Grid>
-                                                                    </Grid>
-                                                                </CardContent>
-                                                            </Card>
-                                                        ))}
-
-                                                        {(!activity.content?.questions || activity.content.questions.length === 0) && (
-                                                            <Alert severity="info">
-                                                                No questions added yet. Click "Add Question" to create listening comprehension questions.
-                                                            </Alert>
-                                                        )}
-                                                    </Grid>
-                                                </>
-                                            )}
-
-
-                                        </Grid>
-                                    </CardContent>
-                                    <CardActions>
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => removeActivity(index)}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </CardActions>
-                                </Card>
-                            ))
-                        )}
-                    </Paper>
-                </Grid>
-
-                {/* Submit */}
-                <Grid item xs={12}>
-                    <Box display="flex" gap={2} justifyContent="flex-end">
-                        <Button variant="outlined">
-                            Save as Draft
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={handleSubmit}
-                            disabled={!assignment.title || assignment.activities.length === 0 || isSubmitting}
-                        >
-                            {isSubmitting ? 'Creating...' : 'Create Assignment'}
-                        </Button>
-                        {createdAssignmentId && (
-                            <Button
-                                variant="outlined"
-                                startIcon={<DownloadIcon />}
-                                onClick={handleDownloadPdf}
-                                disabled={isDownloadingPdf}
-                            >
-                                {isDownloadingPdf ? 'Downloading...' : 'Download PDF'}
-                            </Button>
-                        )}
-                    </Box>
-                </Grid>
-            </Grid>
-
-            {/* Import Dialog */}
-            <Dialog
-                open={importDialogOpen}
-                onClose={() => setImportDialogOpen(false)}
-                maxWidth="md"
-                fullWidth
-            >
-                <DialogTitle>
-                    Import Assignment from Excel
-                </DialogTitle>
-                <DialogContent>
-                    <Box sx={{ mb: 3 }}>
-                        <Typography variant="subtitle1" gutterBottom>
-                            Step 1: Download Template
-                        </Typography>
                         <Button
                             variant="outlined"
-                            startIcon={<DownloadIcon />}
-                            onClick={handleDownloadTemplate}
-                            sx={{ mb: 2 }}
+                            startIcon={<FileUploadIcon />}
+                            onClick={() => setImportDialogOpen(true)}
                         >
-                            Download Excel Template
+                            Import from Excel
                         </Button>
-                        <Typography variant="body2" color="text.secondary">
-                            Download the template, fill in your assignment data, and upload it below.
-                        </Typography>
                     </Box>
+                </Box>
 
-                    <Divider sx={{ my: 2 }} />
-
-                    <Box sx={{ mb: 3 }}>
-                        <Typography variant="subtitle1" gutterBottom>
-                            Step 2: Upload Completed File
-                        </Typography>
-                        <Paper
-                            sx={{
-                                border: '2px dashed',
-                                borderColor: 'grey.300',
-                                p: 3,
-                                textAlign: 'center',
-                            }}
-                        >
-                            <input
-                                accept=".xlsx,.xls"
-                                style={{ display: 'none' }}
-                                id="file-upload"
-                                type="file"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                        handleFileUpload(file);
-                                    }
-                                }}
-                            />
-                            <label htmlFor="file-upload">
-                                <UploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-                                <Typography variant="h6" gutterBottom>
-                                    Upload Excel File
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <Grid container spacing={3}>
+                        {/* Assignment Information */}
+                        <Grid item xs={12}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" fontWeight={600} gutterBottom>
+                                    Assignment Information
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Click to browse files (.xlsx, .xls)
-                                </Typography>
-                                <Button
-                                    variant="outlined"
-                                    component="span"
-                                    startIcon={<UploadIcon />}
-                                    sx={{ mt: 2 }}
-                                >
-                                    Choose File
-                                </Button>
-                            </label>
-                        </Paper>
-                    </Box>
+                                <Divider sx={{ mb: 3 }} />
 
-                    {isUploading && (
-                        <Box sx={{ mb: 2 }}>
-                            <LinearProgress />
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                Processing file...
-                            </Typography>
-                        </Box>
-                    )}
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} md={8}>
+                                        <TextField
+                                            fullWidth
+                                            label="Title"
+                                            {...register('title')}
+                                            error={!!errors.title}
+                                            helperText={errors.title?.message}
+                                            required
+                                            placeholder="e.g., Grammar Quiz - Present Perfect"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={4}>
+                                        <TextField
+                                            fullWidth
+                                            label="Total Points"
+                                            type="number"
+                                            {...register('totalPoints', { valueAsNumber: true })}
+                                            error={!!errors.totalPoints}
+                                            helperText={errors.totalPoints?.message}
+                                            placeholder="100"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Description"
+                                            multiline
+                                            rows={3}
+                                            {...register('description')}
+                                            placeholder="Provide a brief overview of this assignment"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Instructions"
+                                            multiline
+                                            rows={2}
+                                            {...register('instructions')}
+                                            placeholder="Detailed instructions for students"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Due Date"
+                                            type="datetime-local"
+                                            {...register('dueDate')}
+                                            InputLabelProps={{ shrink: true }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <TextField
+                                            fullWidth
+                                            label="Time Limit (minutes)"
+                                            type="number"
+                                            {...register('timeLimit', { valueAsNumber: true })}
+                                            placeholder="0 = No limit"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <TextField
+                                            fullWidth
+                                            label="Max Attempts"
+                                            type="number"
+                                            {...register('maxAttempts', { valueAsNumber: true })}
+                                            placeholder="1"
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </Paper>
+                        </Grid>
 
-                    {importPreview && (
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant="subtitle1" gutterBottom>
-                                Import Preview
-                            </Typography>
+                        {/* Activities Section */}
+                        <Grid item xs={12}>
+                            <Paper sx={{ p: 3 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                    <Box>
+                                        <Typography variant="h6" fontWeight={600}>
+                                            Activities
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {activityFields.length} {activityFields.length === 1 ? 'activity' : 'activities'}
+                                        </Typography>
+                                    </Box>
+                                </Box>
 
-                            {importPreview.errors.length > 0 && (
-                                <Alert severity="error" sx={{ mb: 2 }}>
-                                    <Typography variant="subtitle2">Errors:</Typography>
-                                    <List dense>
-                                        {importPreview.errors.map((error, index) => (
-                                            <ListItem key={index}>
-                                                <ListItemIcon>
-                                                    <ErrorIcon color="error" />
-                                                </ListItemIcon>
-                                                <ListItemText primary={error} />
-                                            </ListItem>
-                                        ))}
-                                    </List>
-                                </Alert>
-                            )}
+                                {/* Activity Type Buttons */}
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                                    {ACTIVITY_TYPES.map((type) => (
+                                        <Button
+                                            key={type}
+                                            variant="outlined"
+                                            size="small"
+                                            startIcon={<AddCircleOutline />}
+                                            onClick={() => addActivityOf(type)}
+                                            sx={{ textTransform: 'capitalize' }}
+                                        >
+                                            {type.replace('_', ' ')}
+                                        </Button>
+                                    ))}
+                                </Box>
 
-                            {importPreview.warnings.length > 0 && (
-                                <Alert severity="warning" sx={{ mb: 2 }}>
-                                    <Typography variant="subtitle2">Warnings:</Typography>
-                                    <List dense>
-                                        {importPreview.warnings.map((warning, index) => (
-                                            <ListItem key={index}>
-                                                <ListItemIcon>
-                                                    <WarningIcon color="warning" />
-                                                </ListItemIcon>
-                                                <ListItemText primary={warning} />
-                                            </ListItem>
-                                        ))}
-                                    </List>
-                                </Alert>
-                            )}
+                                <Divider sx={{ mb: 3 }} />
 
-                            {importPreview.errors.length === 0 && (
-                                <Alert severity="success" sx={{ mb: 2 }}>
-                                    <Typography variant="subtitle2">Ready to Import:</Typography>
-                                    <List dense>
-                                        <ListItem>
-                                            <ListItemIcon>
-                                                <CheckCircleIcon color="success" />
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary={`Assignment: ${importPreview.assignment.title}`}
-                                                secondary={`${importPreview.activities.length} activities found`}
-                                            />
-                                        </ListItem>
-                                    </List>
-                                </Alert>
-                            )}
-                        </Box>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setImportDialogOpen(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleImportConfirm}
-                        disabled={!importPreview || importPreview.errors.length > 0}
-                    >
-                        Import Assignment
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                                {activityFields.length === 0 ? (
+                                    <Alert severity="info" sx={{ textAlign: 'center' }}>
+                                        <Typography variant="body2">
+                                            No activities added yet. Click <strong>"Add Activity"</strong> or{' '}
+                                            <strong>"Import from Excel"</strong> to get started.
+                                        </Typography>
+                                    </Alert>
+                                ) : (
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                        {activityFields.map((field, index) => {
+                                            const activityType = watch(`activities.${index}.type`);
+                                            return (
+                                                <Card key={field.id} variant="outlined">
+                                                    <CardContent>
+                                                        {/* Activity Header */}
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                <Typography variant="subtitle1" fontWeight={600}>
+                                                                    Activity #{index + 1}
+                                                                </Typography>
+                                                                <Chip
+                                                                    label={activityType}
+                                                                    size="small"
+                                                                    color="primary"
+                                                                    variant="outlined"
+                                                                />
+                                                            </Box>
+                                                            <IconButton
+                                                                color="error"
+                                                                onClick={() => remove(index)}
+                                                                size="small"
+                                                            >
+                                                                <DeleteOutline />
+                                                            </IconButton>
+                                                        </Box>
+
+                                                        {/* Activity Basic Info */}
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={12} md={4}>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    label="Activity Title"
+                                                                    {...register(`activities.${index}.title`)}
+                                                                    error={!!errors.activities?.[index]?.title}
+                                                                    helperText={errors.activities?.[index]?.title?.message}
+                                                                    required
+                                                                    placeholder="e.g., Grammar Exercise 1"
+                                                                    size="small"
+                                                                />
+                                                            </Grid>
+                                                            <Grid item xs={12} md={2}>
+                                                                <FormControl fullWidth size="small">
+                                                                    <InputLabel>Type *</InputLabel>
+                                                                    <Controller
+                                                                        name={`activities.${index}.type`}
+                                                                        control={control}
+                                                                        render={({ field }) => (
+                                                                            <Select {...field} label="Type *">
+                                                                                {ACTIVITY_TYPES.map((type) => (
+                                                                                    <MenuItem key={type} value={type}>
+                                                                                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                                                                                    </MenuItem>
+                                                                                ))}
+                                                                            </Select>
+                                                                        )}
+                                                                    />
+                                                                </FormControl>
+                                                            </Grid>
+                                                            <Grid item xs={12} md={2}>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    label="Points"
+                                                                    type="number"
+                                                                    {...register(`activities.${index}.points`, { valueAsNumber: true })}
+                                                                    size="small"
+                                                                    placeholder="10"
+                                                                />
+                                                            </Grid>
+                                                            <Grid item xs={12} md={2}>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    label="Passing Score"
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={100}
+                                                                    {...register(`activities.${index}.passingScore`, { valueAsNumber: true })}
+                                                                    size="small"
+                                                                    placeholder="70"
+                                                                    helperText="Score to pass (0-100)"
+                                                                />
+                                                            </Grid>
+                                                            <Grid item xs={12} md={2}>
+                                                                <FormControl fullWidth size="small">
+                                                                    <InputLabel>Difficulty</InputLabel>
+                                                                    <Controller
+                                                                        name={`activities.${index}.difficulty`}
+                                                                        control={control}
+                                                                        render={({ field }) => (
+                                                                            <Select {...field} label="Difficulty">
+                                                                                {DIFFICULTY_LEVELS.map((level) => (
+                                                                                    <MenuItem key={level.value} value={level.value}>
+                                                                                        {level.label}
+                                                                                    </MenuItem>
+                                                                                ))}
+                                                                            </Select>
+                                                                        )}
+                                                                    />
+                                                                </FormControl>
+                                                            </Grid>
+                                                            <Grid item xs={12}>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    label="Instructions (Optional)"
+                                                                    multiline
+                                                                    rows={2}
+                                                                    {...register(`activities.${index}.instructions`)}
+                                                                    placeholder="Specific instructions for this activity"
+                                                                    size="small"
+                                                                />
+                                                            </Grid>
+                                                        </Grid>
+
+                                                        {/* Activity Type Specific Editor */}
+                                                        {activityType && (
+                                                            <ActivityEditor
+                                                                activityIndex={index}
+                                                                activityType={activityType}
+                                                                control={control}
+                                                                register={register}
+                                                                watch={watch}
+                                                                setValue={setValue}
+                                                            />
+                                                        )}
+                                                    </CardContent>
+                                                </Card>
+                                            );
+                                        })}
+                                    </Box>
+                                )}
+                            </Paper>
+                        </Grid>
+
+                        {/* Action Buttons */}
+                        <Grid item xs={12}>
+                            <Paper sx={{ p: 3 }}>
+                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<SaveAlt />}
+                                        onClick={handleSaveDraft}
+                                    >
+                                        Save as Draft
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        type="submit"
+                                        startIcon={<Save />}
+                                        disabled={isSubmitting || activityFields.length === 0}
+                                    >
+                                        {isSubmitting ? 'Creating...' : 'Create Assignment'}
+                                    </Button>
+                                    {createdAssignmentId && (
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={handleDownloadPdf}
+                                            disabled={isDownloadingPdf}
+                                        >
+                                            {isDownloadingPdf ? 'Downloading...' : 'Download PDF'}
+                                        </Button>
+                                    )}
+                                </Box>
+                            </Paper>
+                        </Grid>
+                    </Grid>
+                </form>
+
+                {/* Import Dialog */}
+                <ImportDialog
+                    open={importDialogOpen}
+                    onClose={() => setImportDialogOpen(false)}
+                    onImportConfirm={handleImportConfirm}
+                />
+            </Container>
         </Box>
     );
 }

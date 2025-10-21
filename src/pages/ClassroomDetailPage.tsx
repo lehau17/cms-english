@@ -3,7 +3,6 @@ import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
 import AddStudentToClassModal from '@/components/classroom/AddStudentToClassModal';
 import AssignmentDetailModal from '@/components/classroom/AssignmentDetailModal';
-import CreateAssignmentModal from '@/components/classroom/CreateAssignmentModal';
 import ViewStudentModal from '@/components/student/ViewStudentModal';
 import { Student } from '@/interface/student.interface';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -35,7 +34,6 @@ const ClassroomDetailPage: React.FC = () => {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
-    const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
     const [isAssignmentDetailModalOpen, setIsAssignmentDetailModalOpen] = useState(false);
     const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
     const [isLoadingAssignment, setIsLoadingAssignment] = useState(false);
@@ -545,7 +543,7 @@ const ClassroomDetailPage: React.FC = () => {
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-2xl font-bold text-gray-900">Quản Lý Bài Tập</h2>
                             <button
-                                onClick={() => setIsCreateAssignmentModalOpen(true)}
+                                onClick={() => navigate(`/classrooms/${id}/create-assignment`)}
                                 className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
                             >
                                 <Plus className="w-5 h-5" />
@@ -594,6 +592,12 @@ const ClassroomDetailPage: React.FC = () => {
                                                         </div>
 
                                                         <div className="flex flex-wrap gap-2 mb-4">
+                                                            {assignment.startTime && (
+                                                                <span className="inline-flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                                                    <Clock className="w-3 h-3 mr-1" />
+                                                                    Bắt đầu: {new Date(assignment.startTime).toLocaleString('vi-VN')}
+                                                                </span>
+                                                            )}
                                                             {assignment.dueDate && (
                                                                 <span className="inline-flex items-center text-xs text-gray-600 bg-white px-2 py-1 rounded-full">
                                                                     <Clock className="w-3 h-3 mr-1" />
@@ -762,17 +766,6 @@ const ClassroomDetailPage: React.FC = () => {
                 classroom={classroom || null}
             />
 
-            {/* Create Assignment Modal */}
-            <CreateAssignmentModal
-                open={isCreateAssignmentModalOpen}
-                onClose={() => setIsCreateAssignmentModalOpen(false)}
-                classroomId={id || ''}
-                onSuccess={(assignmentId) => {
-                    // Refresh assignments list after creation
-                    queryClient.invalidateQueries({ queryKey: ['classroom-detail', id] });
-                    setIsCreateAssignmentModalOpen(false);
-                }}
-            />
 
             {/* Assignment Detail Modal */}
             <AssignmentDetailModal
