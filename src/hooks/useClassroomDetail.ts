@@ -1,14 +1,23 @@
+import { transferStudent, TransferStudentPayload, TransferStudentResponse } from '@/apis/classroom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-// import { useQuery } from "@tanstack/react-query"
+/**
+ * Hook để chuyển học sinh từ lớp này sang lớp khác
+ */
+export const useTransferStudent = () => {
+    const queryClient = useQueryClient();
 
-// export function useClassroomDetail(classroomId?: string) {
-//   return useQuery({
-//     queryKey: ["classroom-detail", classroomId],
-//     queryFn: () => {
-//       if (!classroomId) throw new Error("Missing classroomId")
-//       return getClassroomDetail(classroomId)
-//     },
-//     enabled: !!classroomId,
-//     staleTime: 1000 * 60 * 5, // 5 phút
-//   })
-// }
+    return useMutation<TransferStudentResponse, Error, TransferStudentPayload>({
+        mutationFn: (payload: TransferStudentPayload) => transferStudent(payload),
+        onSuccess: (_, variables) => {
+            // Invalidate cả 2 classroom (current và new) để refresh danh sách học sinh
+            queryClient.invalidateQueries({
+                queryKey: ['classroom-detail', variables.currentClassroomId],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ['classroom-detail', variables.newClassroomId],
+            });
+            queryClient.invalidateQueries({ queryKey: ['classrooms'] });
+        },
+    });
+};

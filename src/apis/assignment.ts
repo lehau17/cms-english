@@ -217,4 +217,72 @@ export const downloadAssignmentPdf = async (assignmentId: string, assignmentTitl
     }
 };
 
+// ==================== SUBMISSION GRADING ====================
+
+export interface SubmissionDetail {
+    id: string;
+    assignmentId: string;
+    studentId: string;
+    submittedAt: string;
+    score: number | null;
+    feedback: string | null;
+    gradedAt: string | null;
+    gradedById: string | null;
+    answers: any; // JSON containing student's answers
+    timeSpent: number | null;
+    attemptCount: number;
+    isLate: boolean;
+    status: string;
+    student: {
+        id: string;
+        email: string | null;
+        displayName: string | null;
+        firstName: string | null;
+        lastName: string | null;
+    };
+    assignment: {
+        id: string;
+        title: string;
+        description: string | null;
+        totalPoints: number;
+        classroom: {
+            id: string;
+            name: string;
+            teacherId: string;
+        };
+    };
+    gradedBy?: {
+        id: string;
+        displayName: string | null;
+        firstName: string | null;
+        lastName: string | null;
+    } | null;
+}
+
+export const getSubmissionDetails = async (submissionId: string): Promise<SubmissionDetail> => {
+    const response = await axiosInstance.get<{
+        statusCode: number;
+        message: string;
+        data: SubmissionDetail;
+    }>(`/private/v1/assignments/assignment-submissions/${submissionId}`);
+    return response.data.data;
+};
+
+export interface GradeSubmissionPayload {
+    grade: number;
+    feedback?: string;
+}
+
+export const gradeSubmission = async (
+    submissionId: string,
+    payload: GradeSubmissionPayload
+): Promise<SubmissionDetail> => {
+    const response = await axiosInstance.patch<{
+        statusCode: number;
+        message: string;
+        data: SubmissionDetail;
+    }>(`/private/v1/assignments/assignment-submissions/${submissionId}/grade`, payload);
+    return response.data.data;
+};
+
 export default assignmentApi;

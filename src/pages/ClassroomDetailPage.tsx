@@ -3,15 +3,22 @@ import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
 import AddStudentToClassModal from '@/components/classroom/AddStudentToClassModal';
 import AssignmentDetailModal from '@/components/classroom/AssignmentDetailModal';
+import SendAnnouncementModal from '@/components/classroom/SendAnnouncementModal';
+import TransferStudentModal from '@/components/classroom/TransferStudentModal';
 import ViewStudentModal from '@/components/student/ViewStudentModal';
+import { useUpdateClassroomStatus } from '@/hooks/useClassroom';
+import { ClassroomStatus } from '@/interface/classroom.interface';
 import { Student } from '@/interface/student.interface';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     AlertCircle,
     ArrowLeft,
+    ArrowRightLeft,
+    Bell,
     BookOpen,
     Calendar,
     CheckCircle,
+    ChevronDown,
     Clock,
     Edit,
     Eye,
@@ -24,6 +31,7 @@ import {
     Users
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 
 type TabType = 'overview' | 'assignments' | 'students' | 'schedule';
@@ -39,6 +47,12 @@ const ClassroomDetailPage: React.FC = () => {
     const [isLoadingAssignment, setIsLoadingAssignment] = useState(false);
     const [isViewStudentModalOpen, setIsViewStudentModalOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+    const [isSendAnnouncementModalOpen, setIsSendAnnouncementModalOpen] = useState(false);
+    const [isTransferStudentModalOpen, setIsTransferStudentModalOpen] = useState(false);
+    const [studentToTransfer, setStudentToTransfer] = useState<Student | null>(null);
+
+    const updateStatusMutation = useUpdateClassroomStatus();
 
     // Fetch classroom detail with full data (students, course, assignments, etc.)
     const { data: classroomDetailData, isLoading: isLoadingDetail } = useQuery({
@@ -186,6 +200,33 @@ const ClassroomDetailPage: React.FC = () => {
         setIsViewStudentModalOpen(true);
     };
 
+    const handleTransferStudent = (student: any) => {
+        setStudentToTransfer(student);
+        setIsTransferStudentModalOpen(true);
+    };
+
+    const getStatusBadge = (status: ClassroomStatus) => {
+        const statusConfig = {
+            [ClassroomStatus.upcoming]: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Upcoming' },
+            [ClassroomStatus.ongoing]: { bg: 'bg-green-100', text: 'text-green-800', label: 'Ongoing' },
+            [ClassroomStatus.completed]: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Completed' },
+            [ClassroomStatus.cancelled]: { bg: 'bg-red-100', text: 'text-red-800', label: 'Cancelled' },
+        };
+        const config = statusConfig[status] || statusConfig[ClassroomStatus.upcoming];
+        return { config, label: config.label };
+    };
+
+    const handleStatusChange = async (newStatus: ClassroomStatus) => {
+        if (!id) return;
+        try {
+            await updateStatusMutation.mutateAsync({ classroomId: id, status: newStatus });
+            toast.success('Classroom status updated successfully!');
+            setIsStatusDropdownOpen(false);
+        } catch (error: any) {
+            toast.error(`Failed to update status: ${error?.response?.data?.message || error.message}`);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50 p-6">
             <div className="max-w-7xl mx-auto">
@@ -200,20 +241,52 @@ const ClassroomDetailPage: React.FC = () => {
                     </button>
 
                     <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
-                        <h1 className="text-3xl font-bold mb-2">{classroom.name}</h1>
-                        <p className="text-indigo-100 mb-4">{classroom.description}</p>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h1 className="text-3xl font-bold mb-2">{classroom.name}</h1>
+                                <p className="text-indigo-100">{classroom.description}</p>
+                            </div>
+                            <button
+                                onClick={() => setIsSendAnnouncementModalOpen(true)}
+                                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors backdrop-blur-sm"
+                            >
+                                <Bell className="w-4 h-4" />
+                                Gửi thông báo
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-3 items-center">
                             <div className="inline-flex items-center bg-white/20 px-3 py-1.5 rounded-full text-sm font-medium">
                                 <Calendar className="w-4 h-4 mr-2" />
                                 Code: {classroom.classCode}
                             </div>
-                            <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${classroom.isActive
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                                }`}>
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                {classroom.isActive ? 'Active' : 'Inactive'}
-                            </span>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getStatusBadge(classroom.status).config.bg} ${getStatusBadge(classroom.status).config.text} hover:opacity-90 transition-opacity`}
+                                >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    {getStatusBadge(classroom.status).label}
+                                    <ChevronDown className="w-4 h-4 ml-2" />
+                                </button>
+
+                                {isStatusDropdownOpen && (
+                                    <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                                        <div className="py-1" role="menu">
+                                            <div className="px-4 py-2 text-xs text-gray-500 font-semibold">Change Status</div>
+                                            {Object.values(ClassroomStatus).map((status) => (
+                                                <button
+                                                    key={status}
+                                                    onClick={() => handleStatusChange(status)}
+                                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                                    disabled={updateStatusMutation.isPending}
+                                                >
+                                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -673,10 +746,9 @@ const ClassroomDetailPage: React.FC = () => {
                         {classroom.students && classroom.students.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {classroom.students.map((student: any, index: number) => (
-                                    <button
+                                    <div
                                         key={student.id || index}
-                                        onClick={() => handleViewStudent(student)}
-                                        className="flex items-center p-4 bg-white rounded-lg hover:bg-gray-50 transition-all border border-gray-200 hover:border-indigo-300 hover:shadow-md text-left w-full"
+                                        className="flex items-center p-4 bg-white rounded-lg transition-all border border-gray-200 hover:border-indigo-300 hover:shadow-md"
                                     >
                                         <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                             <span className="text-white font-bold text-lg">
@@ -689,8 +761,23 @@ const ClassroomDetailPage: React.FC = () => {
                                             </p>
                                             <p className="text-xs text-gray-600 truncate">{student.email}</p>
                                         </div>
-                                        <Eye className="w-5 h-5 text-gray-400 ml-2 flex-shrink-0" />
-                                    </button>
+                                        <div className="flex gap-2 ml-2 flex-shrink-0">
+                                            <button
+                                                onClick={() => handleViewStudent(student)}
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Xem chi tiết"
+                                            >
+                                                <Eye className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleTransferStudent(student)}
+                                                className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                title="Chuyển lớp"
+                                            >
+                                                <ArrowRightLeft className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         ) : (
@@ -785,6 +872,26 @@ const ClassroomDetailPage: React.FC = () => {
                     setSelectedStudent(null);
                 }}
                 student={selectedStudent}
+            />
+
+            {/* Send Announcement Modal */}
+            <SendAnnouncementModal
+                isOpen={isSendAnnouncementModalOpen}
+                onClose={() => setIsSendAnnouncementModalOpen(false)}
+                classroomId={id!}
+                classroomName={classroom?.name}
+            />
+
+            {/* Transfer Student Modal */}
+            <TransferStudentModal
+                isOpen={isTransferStudentModalOpen}
+                onClose={() => {
+                    setIsTransferStudentModalOpen(false);
+                    setStudentToTransfer(null);
+                }}
+                currentClassroomId={id!}
+                currentClassroomName={classroom?.name || ''}
+                student={studentToTransfer}
             />
         </div>
     );

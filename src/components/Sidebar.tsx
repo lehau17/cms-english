@@ -23,12 +23,13 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 type NavItem = { to: string; label: string; icon: React.ReactNode; roles?: UserRole[] };
 
 const NAV: NavItem[] = [
-    { to: "/dashboard", label: "Dashboard", icon: <HomeOutlinedIcon /> },
+    { to: "/dashboard", label: "Dashboard", icon: <HomeOutlinedIcon />, roles: [UserRole.ADMIN] },
+    { to: "/teacher-dashboard", label: "Dashboard", icon: <HomeOutlinedIcon />, roles: [UserRole.TEACHER] },
     { to: "/settings", label: "Settings", icon: <SettingsOutlinedIcon /> },
     { to: "/students", label: "Student", icon: <Person />, roles: [UserRole.ADMIN] },
     { to: "/teachers", label: "Teacher", icon: <Person />, roles: [UserRole.ADMIN] },
     { to: "/parents", label: "Parents", icon: <FamilyRestroom />, roles: [UserRole.ADMIN] },
-    { to: "/classrooms", label: "Class", icon: <Class />, roles: [UserRole.ADMIN] },
+    { to: "/classrooms", label: "Class", icon: <Class /> },
     { to: "/courses", label: "Course", icon: <School />, roles: [UserRole.ADMIN] },
     { to: "/assignments", label: "Assignments", icon: <AssignmentOutlinedIcon />, roles: [UserRole.ADMIN] },
     { to: "/certificates", label: "Certificates", icon: <CardMembership />, roles: [UserRole.ADMIN] },

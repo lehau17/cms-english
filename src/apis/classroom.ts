@@ -1,5 +1,5 @@
 import axiosInstance from "../config/axiosConfig";
-import { Classroom } from "../interface/classroom.interface";
+import { Classroom, ClassroomStatus } from "../interface/classroom.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
 import { RequestPagingDto } from "../interface/request-paging.interface";
 
@@ -164,5 +164,38 @@ export const getSystemSchedule = async (params: SystemScheduleParams): Promise<S
         message: string;
         data: SystemScheduleResponse;
     }>('/private/v1/classrooms/system-schedule', { params });
+    return response.data.data;
+};
+
+// ==================== STATUS MANAGEMENT ====================
+
+export const updateClassroomStatus = async (classroomId: string, status: ClassroomStatus): Promise<Classroom> => {
+    const response = await axiosInstance.patch<{
+        statusCode: number;
+        message: string;
+        data: Classroom;
+    }>(`/private/v1/classrooms/${classroomId}/status`, { status });
+    return response.data.data;
+};
+
+// ==================== TRANSFER STUDENT ====================
+
+export interface TransferStudentPayload {
+    studentId: string;
+    currentClassroomId: string;
+    newClassroomId: string;
+}
+
+export interface TransferStudentResponse {
+    success: boolean;
+    message: string;
+}
+
+export const transferStudent = async (payload: TransferStudentPayload): Promise<TransferStudentResponse> => {
+    const response = await axiosInstance.post<{
+        statusCode: number;
+        message: string;
+        data: TransferStudentResponse;
+    }>('/private/v1/classrooms/transfer-student', payload);
     return response.data.data;
 };

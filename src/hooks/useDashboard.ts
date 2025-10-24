@@ -1,87 +1,89 @@
-import { getDashboardData } from "@/apis/dashboard";
-import { ApiResponse } from "@/interface/base-response.interface";
-import { Dashboard } from "@/interface/dashboard.interface";
+import { getTeacherDashboardData, TeacherDashboardData } from "@/apis/dashboard";
 import { useQuery } from "@tanstack/react-query";
 
-// Main query that fetches all data and is shared across smaller hooks
-const useSharedDashboardQuery = () => {
-    return useQuery<ApiResponse<Dashboard>, Error>({
-        queryKey: ["dashboard"],
-        queryFn: getDashboardData,
-        // Keep data fresh for 5 minutes
-        staleTime: 1000 * 60 * 5,
-        // Share data across components
-        refetchOnWindowFocus: false,
+/**
+ * Hook để lấy dữ liệu dashboard của giáo viên
+ */
+export const useGetTeacherDashboardData = () => {
+    return useQuery<TeacherDashboardData, Error>({
+        queryKey: ['teacher-dashboard'],
+        queryFn: getTeacherDashboardData,
+        staleTime: 1000 * 60 * 5, // 5 phút
+        refetchOnWindowFocus: true,
     });
 };
 
-// Hook for Stats Cards data
-export const useDashboardStats = () => {
-    const { data, isLoading, isError, error } = useSharedDashboardQuery();
-    return {
-        data: data?.data ? {
-            totalStudents: data.data.totalStudents,
-            totalCourses: data.data.totalCourses,
-            totalLessons: data.data.totalLessons,
-            totalActivities: data.data.totalActivities,
-        } : undefined,
-        isLoading,
-        isError,
-        error,
-    };
-};
+// ==================== ADMIN DASHBOARD HOOKS (TODO: Implement with real API) ====================
+// NOTE: Các hooks dưới đây đang trả về dữ liệu mock/empty
+// Cần implement API endpoints thực tế cho Admin Dashboard
 
-// Hook for Registration Trend chart
-export const useRegistrationTrend = () => {
-    const { data, isLoading, isError, error } = useSharedDashboardQuery();
-    return {
-        data: data?.data?.registrationTrend,
-        isLoading,
-        isError,
-        error,
-    };
-};
-
-// Hook for Course Distribution chart
+/**
+ * Hook để lấy phân bố khóa học (Admin Dashboard)
+ */
 export const useCourseDistribution = () => {
-    const { data, isLoading, isError, error } = useSharedDashboardQuery();
-    return {
-        data: data?.data?.courseDistribution,
-        isLoading,
-        isError,
-        error,
-    };
+    return useQuery({
+        queryKey: ['course-distribution'],
+        queryFn: async () => [],
+        staleTime: 1000 * 60 * 5,
+    });
 };
 
-// Hook for Upcoming Classes table
-export const useUpcomingClasses = () => {
-    const { data, isLoading, isError, error } = useSharedDashboardQuery();
-    return {
-        data: data?.data?.upcomingClasses,
-        isLoading,
-        isError,
-        error,
-    };
-};
-
-// Hook for Notifications list
+/**
+ * Hook để lấy thông báo (Admin Dashboard)
+ */
 export const useNotifications = () => {
-    const { data, isLoading, isError, error } = useSharedDashboardQuery();
-    return {
-        data: data?.data?.notifications,
-        isLoading,
-        isError,
-        error,
-    };
+    return useQuery({
+        queryKey: ['admin-notifications'],
+        queryFn: async () => [],
+        staleTime: 1000 * 60 * 5,
+    });
 };
 
-// Hook for Recent Students list
+/**
+ * Hook để lấy lớp học sắp tới (Admin Dashboard)
+ */
+export const useUpcomingClasses = () => {
+    return useQuery({
+        queryKey: ['upcoming-classes'],
+        queryFn: async () => [],
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
+/**
+ * Hook để lấy thống kê dashboard (Admin Dashboard)
+ */
+export const useDashboardStats = () => {
+    return useQuery({
+        queryKey: ['dashboard-stats'],
+        queryFn: async () => ({
+            totalStudents: 0,
+            totalTeachers: 0,
+            totalCourses: 0,
+            totalRevenue: 0,
+        }),
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
+/**
+ * Hook để lấy xu hướng đăng ký (Admin Dashboard)
+ */
+export const useRegistrationTrend = () => {
+    return useQuery({
+        queryKey: ['registration-trend'],
+        queryFn: async () => [],
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
+/**
+ * Hook để lấy học sinh mới (Admin Dashboard)
+ */
 export const useRecentStudents = () => {
-    const { data, isLoading, isError, error } = useSharedDashboardQuery();
-    return {
-        data: data?.data?.recentStudents,
-        isLoading,
-        isError,
-        error,
-    };
+    return useQuery({
+        queryKey: ['recent-students'],
+        queryFn: async () => [],
+        staleTime: 1000 * 60 * 5,
+    });
 };

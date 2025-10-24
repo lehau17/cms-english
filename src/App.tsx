@@ -1,8 +1,9 @@
 // src/App.tsx
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 // import GoogleTranslateDemo from "./components/GoogleTranslateDemo";
+import RoleBasedDashboard from "./components/RoleBasedDashboard";
 import ApiReportPage from "./pages/ApiReportPage";
 import AssignmentPage from "./pages/AssignmentPage";
 import CertificatesPage from "./pages/CertificatesPage";
@@ -17,6 +18,7 @@ import CreateCertificateTemplatePage from "./pages/CreateCertificateTemplatePage
 import CreateCoursePage from "./pages/CreateCoursePage";
 import DashboardPage from "./pages/DashboardPage";
 import EditCoursePage from "./pages/EditCoursePage";
+import LinkRequestsPage from "./pages/LinkRequestsPage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ParentLoginPage from "./pages/ParentLoginPage";
@@ -28,6 +30,7 @@ import SettingsPage from "./pages/SettingsPage";
 import StudentPage from "./pages/StudentPage";
 import StudentSchedulePage from "./pages/StudentSchedulePage";
 import TeacherClassroomDashboardPage from "./pages/TeacherClassroomDashboardPage";
+import TeacherDashboardPage from "./pages/TeacherDashboardPage";
 import TeacherPage from "./pages/TeacherPage";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage";
 
@@ -40,8 +43,9 @@ const router = createBrowserRouter([
             {
                 element: <DashboardLayout />,
                 children: [
-                    { path: "/", element: <Navigate to="/dashboard" replace /> },
+                    { path: "/", element: <RoleBasedDashboard /> },
                     { path: "/dashboard", element: <DashboardPage /> },
+                    { path: "/teacher-dashboard", element: <TeacherDashboardPage /> },
                     { path: "/students", element: <StudentPage /> },
                     { path: "/students/:studentId/schedule", element: <StudentSchedulePage /> },
                     { path: "/teachers", element: <TeacherPage /> },
@@ -49,6 +53,7 @@ const router = createBrowserRouter([
                     { path: "/teachers/:teacherId/schedule", element: <TeacherSchedulePage /> },
                     { path: "/parents", element: <ParentPage /> },
                     { path: "/parents/:parentId/schedule", element: <ParentSchedulePage /> },
+                    { path: "/link-requests", element: <LinkRequestsPage /> },
                     { path: "/classrooms", element: <ClassroomPage /> },
                     { path: "/classrooms/:id", element: <ClassroomDetailPage /> },
                     { path: "/schedule", element: <SchedulePage /> },

@@ -1,7 +1,14 @@
 import { UserResponse } from "./user.interface";
 
+export enum ClassroomStatus {
+    upcoming = "upcoming",
+    ongoing = "ongoing",
+    completed = "completed",
+    cancelled = "cancelled"
+}
+
 export interface Classroom {
-   name: string;
+    name: string;
     description: string;
     createdAt: Date;
     teacherId: string;
@@ -13,9 +20,10 @@ export interface Classroom {
     settings: any;
     schedule: any | null;
     updatedAt: Date;
-  expiresAt: Date | null;
-  teacher?: UserResponse
-  students : UserResponse[]
+    expiresAt: Date | null;
+    status: ClassroomStatus;
+    teacher?: UserResponse
+    students: UserResponse[]
 }
 
 

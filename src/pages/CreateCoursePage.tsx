@@ -19,6 +19,43 @@ const difficultyOptions = Object.values(DifficultyLevel).map(level => ({
     label: level.charAt(0).toUpperCase() + level.slice(1),
 }));
 
+// Custom validation cho activity content dựa trên type
+const activityContentSchema = z.any().superRefine((data, ctx) => {
+    // Chỉ validate khi có type trong activity parent
+    const type = (ctx as any).path?.[0];
+
+    // Nếu là writing activity, validate rubric
+    if (data?.prompt !== undefined || data?.minWords !== undefined || data?.rubric !== undefined) {
+        // Có thể là writing activity
+        if (data.rubric !== undefined) {
+            if (!Array.isArray(data.rubric)) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Rubric must be an array",
+                    path: ['rubric']
+                });
+            } else if (data.rubric.length === 0) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Writing activity must have at least 1 rubric criterion",
+                    path: ['rubric']
+                });
+            } else {
+                // Validate từng criterion không được rỗng
+                data.rubric.forEach((item: any, index: number) => {
+                    if (typeof item === 'string' && item.trim() === '') {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: `Rubric criterion #${index + 1} cannot be empty`,
+                            path: ['rubric', index]
+                        });
+                    }
+                });
+            }
+        }
+    }
+});
+
 const courseSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
@@ -38,7 +75,7 @@ const courseSchema = z.object({
             type: z.nativeEnum(ActivityType),
             orderNo: z.number(),
             title: z.string().min(1, "Activity title is required"),
-            content: z.any(),
+            content: activityContentSchema,
             passingScore: z.number().min(0).max(100).optional(),
             difficulty: z.nativeEnum(DifficultyLevel).optional(),
             points: z.number().min(0).optional(),

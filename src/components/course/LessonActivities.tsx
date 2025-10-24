@@ -315,31 +315,78 @@ function VocabItemsEditor({
 
 
 function StringArrayField({
-    name, control, label, placeholder = "Value", register
+    name, control, label, placeholder = "Value", register, errors
 }: {
     name: string;
     control: Control<CreateCourseDto>;
     label: string;
     placeholder?: string;
     register: UseFormRegister<any>;
+    errors?: any;
 }) {
     const { fields, append, remove } = useFieldArray({ control, name: name as any });
+
+    // Parse error path để lấy error message
+    const getFieldError = (index: number) => {
+        const parts = name.split('.');
+        let errorObj = errors;
+        for (const part of parts) {
+            if (errorObj?.[part]) {
+                errorObj = errorObj[part];
+            } else {
+                return null;
+            }
+        }
+        return errorObj?.[index]?.message;
+    };
+
+    // Lấy error chung cho toàn bộ array
+    const getArrayError = () => {
+        const parts = name.split('.');
+        let errorObj = errors;
+        for (const part of parts) {
+            if (errorObj?.[part]) {
+                errorObj = errorObj[part];
+            } else {
+                return null;
+            }
+        }
+        return errorObj?.message || (Array.isArray(errorObj) ? null : errorObj?.message);
+    };
+
+    const arrayError = getArrayError();
+
     return (
         <div className="space-y-2">
             <label className="block text-xs font-medium text-gray-600">{label}</label>
-            {fields.map((f, i) => (
-                <div key={f.id} className="flex items-center gap-2">
-                    <input
-                        // ⬇️ dùng register được truyền vào, KHÔNG dùng control._options.context
-                        {...register(`${name}.${i}` as const)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder={placeholder}
-                    />
-                    <button type="button" onClick={() => remove(i)} className="text-red-500">
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </div>
-            ))}
+            {fields.map((f, i) => {
+                const fieldError = getFieldError(i);
+                return (
+                    <div key={f.id} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <input
+                                {...register(`${name}.${i}` as const)}
+                                className={`w-full px-3 py-2 text-sm border rounded focus:ring-1 transition-colors ${fieldError
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                    }`}
+                                placeholder={placeholder}
+                            />
+                            <button type="button" onClick={() => remove(i)} className="text-red-500 hover:text-red-700">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                        {fieldError && (
+                            <p className="text-xs text-red-600">{fieldError}</p>
+                        )}
+                    </div>
+                );
+            })}
+            {arrayError && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                    {arrayError}
+                </p>
+            )}
             <button
                 type="button"
                 onClick={() => append("")}
@@ -590,6 +637,7 @@ function ActivityContentFields({
     register,
     watch,
     setValue,
+    errors,
 }: {
     lessonIndex: number;
     activityIndex: number;
@@ -597,6 +645,7 @@ function ActivityContentFields({
     register: UseFormRegister<any>;
     watch: UseFormWatch<any>;
     setValue: UseFormSetValue<any>;
+    errors?: any;
 }) {
     const basePath = `lessons.${lessonIndex}.activities.${activityIndex}`;
     const type: ActivityType | undefined = watch(`${basePath}.type` as const);
@@ -748,7 +797,14 @@ function ActivityContentFields({
                             className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             placeholder="Min words (e.g., 40)"
                         />
-                        <StringArrayField name={`${basePath}.content.rubric`} control={control} label="Rubric" placeholder="Criterion" register={register} />
+                        <StringArrayField
+                            name={`${basePath}.content.rubric`}
+                            control={control}
+                            label="Rubric *"
+                            placeholder="Criterion (e.g., Grammar - 25%)"
+                            register={register}
+                            errors={errors}
+                        />
                     </div>
                 </>,
                 "Writing"
@@ -1053,6 +1109,7 @@ const LessonActivities = ({
                             register={register}
                             watch={watch}
                             setValue={setValue}
+                            errors={errors}
                         />
                     </div>
                 );
