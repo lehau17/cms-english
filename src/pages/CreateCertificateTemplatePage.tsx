@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Award, Eye, Save } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { certificateTemplateApi } from '../apis/certificate.api';
 import { getCourses } from '../apis/course';
@@ -40,24 +40,28 @@ const CreateCertificateTemplatePage: React.FC = () => {
         queryKey: ['certificate-template', id],
         queryFn: () => certificateTemplateApi.getById(id!),
         enabled: isEdit && !!id,
-        onSuccess: (data) => {
+    });
+
+    // Populate form data when template is loaded
+    useEffect(() => {
+        if (existingTemplate) {
             setFormData({
-                courseId: data.courseId,
-                title: data.title,
-                description: data.description || '',
-                issuerName: data.issuerName,
-                issuerTitle: data.issuerTitle || '',
-                issuerSignature: data.issuerSignature || '',
-                logoUrl: data.logoUrl || '',
-                requirementType: data.requirementType,
-                minScore: data.minScore || 0,
-                minProgress: data.minProgress,
-                isActive: data.isActive,
+                courseId: existingTemplate.courseId,
+                title: existingTemplate.title,
+                description: existingTemplate.description || '',
+                issuerName: existingTemplate.issuerName,
+                issuerTitle: existingTemplate.issuerTitle || '',
+                issuerSignature: existingTemplate.issuerSignature || '',
+                logoUrl: existingTemplate.logoUrl || '',
+                requirementType: existingTemplate.requirementType,
+                minScore: existingTemplate.minScore || 0,
+                minProgress: existingTemplate.minProgress,
+                isActive: existingTemplate.isActive,
             });
             // Load layout config
-            setLayout(data.layout);
-        },
-    });
+            setLayout(existingTemplate.layout);
+        }
+    }, [existingTemplate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

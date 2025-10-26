@@ -88,9 +88,9 @@ const SendAnnouncementModal: React.FC<SendAnnouncementModalProps> = ({
                 <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
                     <div className="flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm text-blue-800">
+                        <div className="text-sm text-blue-800 flex-1 min-w-0">
                             <p className="font-medium mb-1">Lưu ý:</p>
-                            <ul className="list-disc list-inside space-y-1 text-blue-700">
+                            <ul className="list-disc list-inside space-y-1 text-blue-700 break-words">
                                 <li>Thông báo sẽ được gửi đến <strong>tất cả học sinh</strong> đang hoạt động trong lớp</li>
                                 <li>Học sinh sẽ nhận thông báo qua in-app notification</li>
                                 <li>Thông báo cũng có thể được gửi qua email nếu được cấu hình</li>

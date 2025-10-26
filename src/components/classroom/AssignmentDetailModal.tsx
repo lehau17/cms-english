@@ -79,10 +79,10 @@ const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
             {/* Modal Content */}
             <div className="relative z-10 w-full max-w-5xl max-h-[90vh] m-4 bg-white rounded-lg shadow-2xl overflow-hidden">
                 {/* Header */}
-                <div className="sticky top-0 bg-gray-800 text-white px-6 py-4 flex items-center justify-between z-20">
-                    <div className="flex-1">
-                        <h2 className="text-2xl font-bold">{assignment.title}</h2>
-                        <div className="flex items-center space-x-2 mt-2">
+                <div className="sticky top-0 bg-gray-800 text-white px-6 py-4 flex items-center justify-between gap-3 z-20">
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-2xl font-bold break-words">{assignment.title}</h2>
+                        <div className="flex items-center flex-wrap gap-2 mt-2">
                             <span className={`flex items-center space-x-1 px-2.5 py-1 rounded text-xs font-medium ${typeInfo.color}`}>
                                 <TypeIcon className="w-3 h-3" />
                                 <span>{typeInfo.label}</span>
@@ -102,7 +102,7 @@ const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-700 rounded transition-colors"
+                        className="flex-shrink-0 p-2 hover:bg-gray-700 rounded transition-colors"
                     >
                         <X className="w-6 h-6" />
                     </button>

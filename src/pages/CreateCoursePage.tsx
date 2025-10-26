@@ -124,14 +124,27 @@ const CreateCoursePage = () => {
     const uploadMutation = useMutation({
         mutationFn: uploadFile,
         onSuccess: (data: any) => {
-            // Không cần thêm timestamp vì có thể gây lỗi cache
             const imageUrl = data.data.url;
-            setValue('imageUrl', imageUrl);
+            // Add cache busting timestamp to ensure fresh image load
+            const urlWithTimestamp = imageUrl.includes('?')
+                ? `${imageUrl}&t=${Date.now()}`
+                : `${imageUrl}?t=${Date.now()}`;
+            setValue('imageUrl', urlWithTimestamp);
             toast.success('Upload ảnh thành công!');
+
+            // Reset file input để có thể chọn lại file
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         },
         onError: (error: any) => {
             console.error('Upload error for course image:', error);
             toast.error('Upload ảnh thất bại!');
+
+            // Reset file input khi có lỗi
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     });
 
@@ -340,13 +353,21 @@ const CreateCoursePage = () => {
                                         <img
                                             src={watch('imageUrl')}
                                             alt="Course cover"
-                                            className="h-32 w-auto max-w-full rounded shadow-md mx-auto hover:shadow-lg transition-shadow duration-300 object-cover"
+                                            className="h-32 w-auto max-w-full rounded shadow-md mx-auto hover:shadow-lg transition-shadow duration-300 object-cover bg-white"
+                                            style={{ minWidth: '128px', opacity: '1' }}
                                             onError={(e) => {
                                                 console.error('Image failed to load:', watch('imageUrl'));
-                                                e.currentTarget.style.display = 'none';
+                                                const target = e.currentTarget;
+                                                target.style.display = 'none';
+                                                // Show error message
+                                                const errorDiv = document.createElement('div');
+                                                errorDiv.className = 'text-red-500 text-sm';
+                                                errorDiv.textContent = 'Failed to load image';
+                                                target.parentElement?.appendChild(errorDiv);
                                             }}
-                                            onLoad={() => {
+                                            onLoad={(e) => {
                                                 console.log('Image loaded successfully:', watch('imageUrl'));
+                                                e.currentTarget.style.opacity = '1';
                                             }}
                                         />
                                         <button
@@ -354,6 +375,9 @@ const CreateCoursePage = () => {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setValue('imageUrl', '');
+                                                if (fileInputRef.current) {
+                                                    fileInputRef.current.value = '';
+                                                }
                                             }}
                                             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors duration-200 shadow-sm"
                                         >

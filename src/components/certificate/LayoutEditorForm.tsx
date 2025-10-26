@@ -70,10 +70,11 @@ const LayoutEditorForm: React.FC<LayoutEditorFormProps> = ({ layout, onChange })
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
+                        type="button"
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id
-                                ? 'bg-white text-indigo-600 border-b-2 border-indigo-600'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                            ? 'bg-white text-indigo-600 border-b-2 border-indigo-600'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                             }`}
                     >
                         <span className="mr-2">{tab.icon}</span>

@@ -21,8 +21,6 @@ const EditParentModal: React.FC<EditParentModalProps> = ({
         firstName: parent.firstName,
         lastName: parent.lastName,
         phoneNumber: parent.phoneNumber || '',
-        experience: parent.experience,
-        highlights: parent.highlights || [],
         isActive: parent.isActive,
     });
     const [loading, setLoading] = useState(false);
@@ -49,20 +47,10 @@ const EditParentModal: React.FC<EditParentModalProps> = ({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
-        if (name === 'experience') {
-            setFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : undefined }));
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: type === 'checkbox' ? checked : value
-            }));
-        }
-    };
-
-    const handleHighlightsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const value = e.target.value;
-        const highlights = value.split('\n').filter(item => item.trim() !== '');
-        setFormData(prev => ({ ...prev, highlights }));
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
     };
 
     if (!isOpen) return null;
@@ -152,41 +140,6 @@ const EditParentModal: React.FC<EditParentModalProps> = ({
                                 placeholder="0123456789"
                             />
                         </div>
-                    </div>
-
-                    {/* Experience */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Kinh nghiệm (năm)
-                        </label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                            <input
-                                type="number"
-                                name="experience"
-                                value={formData.experience || ''}
-                                onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Nhập số năm kinh nghiệm"
-                                min="0"
-                                max="50"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Highlights */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Điểm nổi bật
-                        </label>
-                        <textarea
-                            value={formData.highlights?.join('\n') || ''}
-                            onChange={handleHighlightsChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Nhập các điểm nổi bật, mỗi điểm một dòng&#10;Ví dụ:&#10;IELTS 8.0&#10;TOEIC 950&#10;Business English"
-                            rows={4}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Mỗi điểm nổi bật trên một dòng</p>
                     </div>
 
                     {/* Status */}

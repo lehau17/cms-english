@@ -439,11 +439,11 @@ export default function CreateAssignmentModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                    <h3 className="text-xl font-semibold flex-1 min-w-0 break-words">
                         {mode === 'edit' ? 'Chỉnh sửa bài tập' : 'Tạo bài tập'}
                     </h3>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                         {mode === 'create' && (
                             <button
                                 type="button"
@@ -657,11 +657,11 @@ export default function CreateAssignmentModal({
             {showImportDialog && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
                     <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-                        <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-lg font-semibold">
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                            <h4 className="text-lg font-semibold flex-1 min-w-0 break-words">
                                 Import Assignment from Excel
                             </h4>
-                            <button
+                            <button className="flex-shrink-0"
                                 onClick={() => {
                                     setShowImportDialog(false)
                                     setImportPreview(null)

@@ -51,24 +51,26 @@ const Modal: React.FC<ModalProps> = ({
                 aria-describedby="modal-desc"
                 className={containerClasses}
             >
-                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-                    <div className="flex items-center gap-2">
-                        {icon && <div className="p-2 bg-white rounded-lg shadow-sm">{icon}</div>}
-                        <div>
-                            <h3 id="modal-title" className="text-lg font-semibold text-gray-800">{title}</h3>
-                            <p id="modal-desc" className="text-xs text-gray-600">{description}</p>
+                <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {icon && <div className="p-2 bg-white rounded-lg shadow-sm flex-shrink-0">{icon}</div>}
+                        <div className="flex-1 min-w-0">
+                            <h3 id="modal-title" className="text-lg font-semibold text-gray-800 break-words">{title}</h3>
+                            <p id="modal-desc" className="text-xs text-gray-600 break-words">{description}</p>
                         </div>
                     </div>
                     <button
                         type="button"
                         aria-label="Close"
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-gray-500 hover:bg-white hover:text-gray-800 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-500 hover:bg-white hover:text-gray-800 transition-colors flex-shrink-0"
                     >
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-                {children}
+                <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
+                    {children}
+                </div>
             </div>
         </div>
     );

@@ -135,16 +135,16 @@ const TransferStudentModal: React.FC<TransferStudentModalProps> = ({
                 {/* Student Info */}
                 <div className="rounded-lg bg-gray-50 border border-gray-200 p-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
                             <User className="h-5 w-5 text-blue-600" />
                         </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-700">Học sinh</p>
-                            <p className="text-base font-semibold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 mb-1">Học sinh</p>
+                            <p className="text-base font-semibold text-gray-900 break-words">
                                 {getStudentName()}
                             </p>
                             {student?.email && (
-                                <p className="text-xs text-gray-500">{student.email}</p>
+                                <p className="text-xs text-gray-500 break-all mt-1">{student.email}</p>
                             )}
                         </div>
                     </div>
@@ -154,9 +154,9 @@ const TransferStudentModal: React.FC<TransferStudentModalProps> = ({
                 <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
                     <div className="flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm text-yellow-800">
+                        <div className="text-sm text-yellow-800 flex-1 min-w-0">
                             <p className="font-medium mb-1">Lưu ý:</p>
-                            <ul className="list-disc list-inside space-y-1">
+                            <ul className="list-disc list-inside space-y-1 break-words">
                                 <li>Học sinh sẽ được <strong>xóa khỏi lớp cũ</strong> và thêm vào lớp mới</li>
                                 <li>Dữ liệu học tập (progress) sẽ được <strong>giữ nguyên</strong></li>
                                 <li>Kiểm tra kỹ trước khi xác nhận</li>
@@ -207,16 +207,16 @@ const TransferStudentModal: React.FC<TransferStudentModalProps> = ({
                                         : 'border-gray-200 hover:bg-gray-50'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-3 flex-1">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
                                         <input
                                             type="radio"
                                             value={classroom.id}
                                             {...register('newClassroomId')}
-                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                            className="h-4 w-4 flex-shrink-0 text-indigo-600 focus:ring-indigo-500"
                                         />
-                                        <div className="flex-1">
-                                            <p className="font-medium text-gray-900">{classroom.name}</p>
-                                            <p className="text-xs text-gray-500">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-gray-900 break-words">{classroom.name}</p>
+                                            <p className="text-xs text-gray-500 break-words">
                                                 Mã: {classroom.classCode} |
                                                 Học sinh: {classroom.students?.length || 0}/{classroom.maxStudents || '∞'}
                                             </p>
@@ -239,9 +239,9 @@ const TransferStudentModal: React.FC<TransferStudentModalProps> = ({
                 {selectedClassroom && (
                     <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-4">
                         <p className="text-sm font-medium text-indigo-900 mb-2">Lớp học được chọn:</p>
-                        <p className="text-base font-semibold text-indigo-900">{selectedClassroom.name}</p>
-                        <div className="flex gap-4 mt-2 text-xs text-indigo-700">
-                            <span>Mã: {selectedClassroom.classCode}</span>
+                        <p className="text-base font-semibold text-indigo-900 break-words">{selectedClassroom.name}</p>
+                        <div className="flex flex-wrap gap-4 mt-2 text-xs text-indigo-700">
+                            <span className="break-all">Mã: {selectedClassroom.classCode}</span>
                             <span>Sĩ số: {selectedClassroom.students?.length || 0}/{selectedClassroom.maxStudents || '∞'}</span>
                         </div>
                     </div>
