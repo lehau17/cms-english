@@ -42,7 +42,12 @@ const NAV: NavItem[] = [
 const DRAWER_WIDTH = 240;
 const DRAWER_WIDTH_COLLAPSED = 78;
 
-export function Sidebar() {
+interface SidebarProps {
+    mobileOpen?: boolean;
+    onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     const { pathname } = useLocation();
     const { user } = useAuth();
     const [collapsed, setCollapsed] = React.useState<boolean>(() => {
@@ -59,30 +64,12 @@ export function Sidebar() {
         });
     };
 
-    return (
-        // Sidebar (light)
-        <Drawer
-            variant="permanent"
-            PaperProps={{
-                sx: {
-                    width: collapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH,
-                    overflowX: "hidden",
-                    transition: (t) => t.transitions.create("width", { duration: t.transitions.duration.shorter }),
-                    bgcolor: "background.paper",           // ⬅️ light
-                    color: "text.primary",                 // ⬅️ light
-                    borderRight: (t) => `1px solid ${t.palette.divider}`, // ⬅️ light
-                },
-            }}
-            sx={{
-                width: collapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH,
-                flexShrink: 0,
-                "& .MuiDrawer-paper": { boxSizing: "border-box" },
-            }}
-        >
+    const drawerContent = (
+        <>
             <Toolbar
                 sx={{
                     px: 1.5,
-                    minHeight: 56,
+                    minHeight: { xs: 56, sm: 64 },
                     display: "flex",
                     alignItems: "center",
                     justifyContent: collapsed ? "center" : "space-between",
@@ -104,7 +91,7 @@ export function Sidebar() {
                     <IconButton
                         size="small"
                         onClick={toggle}
-                        sx={{ color: "text.secondary" }}
+                        sx={{ color: "text.secondary", display: { xs: "none", md: "flex" } }}
                         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
                         {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
@@ -127,6 +114,7 @@ export function Sidebar() {
                             key={item.to}
                             component={RouterLink}
                             to={item.to}
+                            onClick={onMobileClose}
                             sx={{
                                 mx: 1,
                                 mb: 0.5,
@@ -146,7 +134,7 @@ export function Sidebar() {
                             {!collapsed && (
                                 <ListItemText
                                     primary={item.label}
-                                    primaryTypographyProps={{ fontWeight: 600 }}
+                                    primaryTypographyProps={{ fontWeight: 600, fontSize: { xs: "0.875rem", sm: "1rem" } }}
                                 />
                             )}
                         </ListItemButton>
@@ -158,7 +146,53 @@ export function Sidebar() {
             <Box sx={{ p: 1.5, opacity: 0.7, display: "grid", placeItems: collapsed ? "center" : "start" }}>
                 {!collapsed && <Typography variant="caption" color="text.secondary">v1.0.0</Typography>}
             </Box>
-        </Drawer>
+        </>
+    );
 
+    return (
+        <Box component="nav">
+            {/* Mobile drawer */}
+            <Drawer
+                variant="temporary"
+                open={mobileOpen}
+                onClose={onMobileClose}
+                ModalProps={{
+                    keepMounted: true, // Better open performance on mobile.
+                }}
+                sx={{
+                    display: { xs: 'block', md: 'none' },
+                    '& .MuiDrawer-paper': {
+                        boxSizing: 'border-box',
+                        width: DRAWER_WIDTH,
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        borderRight: (t) => `1px solid ${t.palette.divider}`,
+                    },
+                }}
+            >
+                {drawerContent}
+            </Drawer>
+
+            {/* Desktop drawer */}
+            <Drawer
+                variant="permanent"
+                sx={{
+                    display: { xs: 'none', md: 'block' },
+                    width: collapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH,
+                    flexShrink: 0,
+                    '& .MuiDrawer-paper': {
+                        boxSizing: 'border-box',
+                        width: collapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH,
+                        overflowX: "hidden",
+                        transition: (t) => t.transitions.create("width", { duration: t.transitions.duration.shorter }),
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        borderRight: (t) => `1px solid ${t.palette.divider}`,
+                    },
+                }}
+            >
+                {drawerContent}
+            </Drawer>
+        </Box>
     );
 }

@@ -5,72 +5,81 @@ import * as React from "react";
 
 /* ====================== Types ====================== */
 type StatCardData = {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  color: string;
+    title: string;
+    value: string | number;
+    icon: React.ElementType;
+    color: string;
 };
 
 /* ====================== Component ====================== */
 const StatCard: React.FC<{ card: StatCardData }> = ({ card }) => (
-  <Card sx={{ height: "100%" }}>
-    <CardContent>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box>
-          <Typography color="textSecondary" gutterBottom variant="subtitle2">
-            {card.title}
-          </Typography>
-          <Typography variant="h4" component="div" sx={{ mb: 1 }}>
-            {card.value}
-          </Typography>
-        </Box>
-        <Avatar sx={{ bgcolor: card.color, width: 56, height: 56 }}>
-          <card.icon />
-        </Avatar>
-      </Box>
-    </CardContent>
-  </Card>
+    <Card sx={{ height: "100%" }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography
+                        color="textSecondary"
+                        gutterBottom
+                        variant="subtitle2"
+                        sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+                    >
+                        {card.title}
+                    </Typography>
+                    <Typography
+                        variant="h4"
+                        component="div"
+                        sx={{ mb: 1, fontSize: { xs: "1.5rem", sm: "2.125rem" } }}
+                    >
+                        {card.value}
+                    </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: card.color, width: { xs: 40, sm: 56 }, height: { xs: 40, sm: 56 }, flexShrink: 0 }}>
+                    <card.icon sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }} />
+                </Avatar>
+            </Box>
+        </CardContent>
+    </Card>
 );
 
 const StatsCardsWidget: React.FC = () => {
-  const { data, isLoading, isError, error } = useDashboardStats();
+    const { data, isLoading, isError, error } = useDashboardStats();
 
-  if (isError) {
-    return <Alert severity="error">Không thể tải dữ liệu thống kê. {error?.message}</Alert>;
-  }
+    if (isError) {
+        return <Alert severity="error">Không thể tải dữ liệu thống kê. {error?.message}</Alert>;
+    }
 
-  const statCards: StatCardData[] = [
-    { title: "Tổng học viên", value: data?.totalStudents ?? 0, icon: People, color: "primary.main" },
-    { title: "Tổng khóa học", value: data?.totalCourses ?? 0, icon: School, color: "secondary.main" },
-    { title: "Tổng bài học", value: data?.totalLessons ?? 0, icon: Book, color: "success.main" },
-    { title: "Tổng hoạt động", value: data?.totalActivities ?? 0, icon: LocalActivity, color: "warning.main" },
-  ];
+    const statCards: StatCardData[] = [
+        { title: "Tổng học viên", value: data?.totalStudents ?? 0, icon: People, color: "primary.main" },
+        { title: "Tổng khóa học", value: data?.totalCourses ?? 0, icon: School, color: "secondary.main" },
+        { title: "Tổng bài học", value: data?.totalLessons ?? 0, icon: Book, color: "success.main" },
+        { title: "Tổng hoạt động", value: data?.totalActivities ?? 0, icon: LocalActivity, color: "warning.main" },
+    ];
 
-  return (
-    <Grid container spacing={3}>
-      {isLoading
-        ? Array.from(new Array(4)).map((_, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card sx={{ height: "100%" }}>
-                <CardContent>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <Box>
-                      <Skeleton variant="text" width={100} height={20} />
-                      <Skeleton variant="text" width={80} height={48} />
-                    </Box>
-                    <Skeleton variant="circular" width={56} height={56} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))
-        : statCards.map((card) => (
-            <Grid item xs={12} sm={6} md={3} key={card.title}>
-              <StatCard card={card} />
-            </Grid>
-          ))}
-    </Grid>
-  );
+    return (
+        <Grid container spacing={3}>
+            {isLoading
+                ? Array.from(new Array(4)).map((_, index) => (
+                    <Grid item xs={12} sm={6} md={3} key={index}>
+                        <Card sx={{ height: "100%" }}>
+                            <CardContent>
+                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                    <Box>
+                                        <Skeleton variant="text" width={100} height={20} />
+                                        <Skeleton variant="text" width={80} height={48} />
+                                    </Box>
+                                    <Skeleton variant="circular" width={56} height={56} />
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))
+                : statCards.map((card) => (
+                    <Grid item xs={12} sm={6} md={3} key={card.title}>
+                        <StatCard card={card} />
+                    </Grid>
+                ))}
+        </Grid>
+    );
 };
 
 export default StatsCardsWidget;
