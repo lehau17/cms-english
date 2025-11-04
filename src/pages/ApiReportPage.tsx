@@ -5,6 +5,8 @@ import {
     CheckCircle,
     Clock,
     Code,
+    Download,
+    FileSpreadsheet,
     FileText,
     Lightbulb,
     Menu,
@@ -45,11 +47,11 @@ interface ChatMessage {
     suggestions?: string[];
     executionSteps?: any[];
     chart?: any; // Chart config for visualization
-    file?: {
+    files?: Array<{
         filename: string;
         downloadUrl: string;
         recordCount?: number;
-    }; // File download info
+    }>; // File downloads info (supports multiple files)
 }
 
 interface AgentStats {
@@ -228,7 +230,7 @@ const ApiReportPage: React.FC = () => {
             reasoning: '',
             processingTime: 0,
             chart: null as any,
-            file: null as any,
+            files: [] as any[],
         };
 
         console.log('🎬 Starting stream for message:', messageToSend);
@@ -279,7 +281,7 @@ const ApiReportPage: React.FC = () => {
                             toast.success('📊 Chart generated!');
                         } else if (chunk.type === 'file' && chunk.file) {
                             console.log('📄 File received:', chunk.file);
-                            metadata.file = chunk.file;
+                            metadata.files.push(chunk.file);
                             toast.success(`📄 File ready: ${chunk.file.filename}`);
                         } else if (chunk.type === 'complete' && chunk.data) {
                             console.log('✅ Complete chunk received:', chunk.data);
@@ -339,7 +341,7 @@ const ApiReportPage: React.FC = () => {
                             suggestions: [],
                             executionSteps: [],
                             chart: metadata.chart, // Save chart config
-                            file: metadata.file, // Save file info
+                            files: metadata.files.length > 0 ? metadata.files : undefined, // Save files info
                         };
 
                         console.log('💾 Saving message to history:', newMessage);
@@ -577,19 +579,39 @@ const ApiReportPage: React.FC = () => {
                                                     </div>
                                                 )}
 
-                                                {/* File Download */}
-                                                {chat.file && (
-                                                    <a
-                                                        href={`${getApiBaseUrl()}${chat.file.downloadUrl}`}
-                                                        download={chat.file.filename}
-                                                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors text-sm"
-                                                    >
-                                                        <FileText className="h-4 w-4" />
-                                                        {chat.file.filename}
-                                                        {chat.file.recordCount && (
-                                                            <span className="text-xs opacity-75">({chat.file.recordCount} records)</span>
-                                                        )}
-                                                    </a>
+                                                {/* File Downloads */}
+                                                {chat.files && chat.files.length > 0 && (
+                                                    <div className="space-y-2">
+                                                        {chat.files.map((file, idx) => {
+                                                            const isExcel = file.filename.endsWith('.xlsx');
+                                                            const isPdf = file.filename.endsWith('.pdf');
+                                                            const isWord = file.filename.endsWith('.docx');
+
+                                                            return (
+                                                                <a
+                                                                    key={idx}
+                                                                    href={`${getApiBaseUrl()}${file.downloadUrl}`}
+                                                                    download={file.filename}
+                                                                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all text-sm font-medium shadow-sm hover:shadow-md ${isExcel ? 'bg-green-600 hover:bg-green-700 text-white' :
+                                                                            isPdf ? 'bg-red-600 hover:bg-red-700 text-white' :
+                                                                                isWord ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                                                                                    'bg-gray-900 hover:bg-gray-800 text-white'
+                                                                        }`}
+                                                                >
+                                                                    {isExcel ? <FileSpreadsheet className="h-4 w-4" /> :
+                                                                        isPdf ? <FileText className="h-4 w-4" /> :
+                                                                            isWord ? <FileText className="h-4 w-4" /> :
+                                                                                <Download className="h-4 w-4" />}
+                                                                    <span className="truncate max-w-xs">{file.filename}</span>
+                                                                    {file.recordCount && (
+                                                                        <span className="text-xs opacity-90 bg-white/20 px-2 py-0.5 rounded">
+                                                                            {file.recordCount} rows
+                                                                        </span>
+                                                                    )}
+                                                                </a>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 )}
 
                                                 {/* Metadata */}
@@ -816,22 +838,38 @@ const ChatInterface: React.FC<{
                                             </div>
                                         )}
 
-                                        {/* File Download */}
-                                        {chat.file && (
-                                            <div className="mt-4">
-                                                <a
-                                                    href={`${getApiBaseUrl()}${chat.file.downloadUrl}`}
-                                                    download={chat.file.filename}
-                                                    className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                                                >
-                                                    <FileText className="h-4 w-4 mr-2" />
-                                                    Download {chat.file.filename}
-                                                    {chat.file.recordCount && (
-                                                        <span className="ml-2 text-xs opacity-75">
-                                                            ({chat.file.recordCount} records)
-                                                        </span>
-                                                    )}
-                                                </a>
+                                        {/* File Downloads */}
+                                        {chat.files && chat.files.length > 0 && (
+                                            <div className="mt-4 space-y-2">
+                                                {chat.files.map((file, idx) => {
+                                                    const isExcel = file.filename.endsWith('.xlsx');
+                                                    const isPdf = file.filename.endsWith('.pdf');
+                                                    const isWord = file.filename.endsWith('.docx');
+
+                                                    return (
+                                                        <a
+                                                            key={idx}
+                                                            href={`${getApiBaseUrl()}${file.downloadUrl}`}
+                                                            download={file.filename}
+                                                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${isExcel ? 'bg-green-600 hover:bg-green-700 text-white' :
+                                                                    isPdf ? 'bg-red-600 hover:bg-red-700 text-white' :
+                                                                        isWord ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                                                                            'bg-gray-600 hover:bg-gray-700 text-white'
+                                                                }`}
+                                                        >
+                                                            {isExcel ? <FileSpreadsheet className="h-4 w-4" /> :
+                                                                isPdf ? <FileText className="h-4 w-4" /> :
+                                                                    isWord ? <FileText className="h-4 w-4" /> :
+                                                                        <Download className="h-4 w-4" />}
+                                                            <span>Download {file.filename}</span>
+                                                            {file.recordCount && (
+                                                                <span className="text-xs opacity-75">
+                                                                    ({file.recordCount} records)
+                                                                </span>
+                                                            )}
+                                                        </a>
+                                                    );
+                                                })}
                                             </div>
                                         )}
 
