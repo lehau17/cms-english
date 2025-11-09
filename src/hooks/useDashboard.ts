@@ -1,89 +1,102 @@
-import { getTeacherDashboardData, TeacherDashboardData } from "@/apis/dashboard";
-import { useQuery } from "@tanstack/react-query";
+import {
+    AdminDashboardData,
+    CourseDistributionItem,
+    DashboardNotificationItem,
+    getAdminDashboardData,
+    getTeacherDashboardData,
+    RegistrationTrendPoint,
+    TeacherDashboardData,
+    UpcomingClassItem,
+} from "@/apis/dashboard";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
+
+type DashboardStats = Pick<AdminDashboardData, "totalStudents" | "totalCourses" | "totalLessons" | "totalActivities">;
+
+type RecentStudentForUI = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    displayName?: string;
+};
+
+const ADMIN_DASHBOARD_QUERY_KEY = ["admin-dashboard"] as const;
+
+const useAdminDashboardQuery = <TSelected = AdminDashboardData>(
+    select?: (data: AdminDashboardData) => TSelected
+): UseQueryResult<TSelected, Error> => {
+    return useQuery<AdminDashboardData, Error, TSelected>({
+        queryKey: ADMIN_DASHBOARD_QUERY_KEY,
+        queryFn: getAdminDashboardData,
+        staleTime: 1000 * 60 * 5, // 5 phút
+        refetchOnWindowFocus: true,
+        select,
+    });
+};
 
 /**
  * Hook để lấy dữ liệu dashboard của giáo viên
  */
 export const useGetTeacherDashboardData = () => {
     return useQuery<TeacherDashboardData, Error>({
-        queryKey: ['teacher-dashboard'],
+        queryKey: ["teacher-dashboard"],
         queryFn: getTeacherDashboardData,
         staleTime: 1000 * 60 * 5, // 5 phút
         refetchOnWindowFocus: true,
     });
 };
 
-// ==================== ADMIN DASHBOARD HOOKS (TODO: Implement with real API) ====================
-// NOTE: Các hooks dưới đây đang trả về dữ liệu mock/empty
-// Cần implement API endpoints thực tế cho Admin Dashboard
+/**
+ * Hook để lấy thống kê dashboard (Admin Dashboard)
+ */
+export const useDashboardStats = () =>
+    useAdminDashboardQuery<DashboardStats>((data) => ({
+        totalStudents: data.totalStudents,
+        totalCourses: data.totalCourses,
+        totalLessons: data.totalLessons,
+        totalActivities: data.totalActivities,
+    }));
 
 /**
  * Hook để lấy phân bố khóa học (Admin Dashboard)
  */
-export const useCourseDistribution = () => {
-    return useQuery({
-        queryKey: ['course-distribution'],
-        queryFn: async () => [],
-        staleTime: 1000 * 60 * 5,
-    });
-};
+export const useCourseDistribution = () =>
+    useAdminDashboardQuery<CourseDistributionItem[]>((data) => data.courseDistribution ?? []);
 
 /**
  * Hook để lấy thông báo (Admin Dashboard)
  */
-export const useNotifications = () => {
-    return useQuery({
-        queryKey: ['admin-notifications'],
-        queryFn: async () => [],
-        staleTime: 1000 * 60 * 5,
-    });
-};
+export const useNotifications = () =>
+    useAdminDashboardQuery<DashboardNotificationItem[]>((data) => data.notifications ?? []);
 
 /**
  * Hook để lấy lớp học sắp tới (Admin Dashboard)
  */
-export const useUpcomingClasses = () => {
-    return useQuery({
-        queryKey: ['upcoming-classes'],
-        queryFn: async () => [],
-        staleTime: 1000 * 60 * 5,
-    });
-};
-
-/**
- * Hook để lấy thống kê dashboard (Admin Dashboard)
- */
-export const useDashboardStats = () => {
-    return useQuery({
-        queryKey: ['dashboard-stats'],
-        queryFn: async () => ({
-            totalStudents: 0,
-            totalTeachers: 0,
-            totalCourses: 0,
-            totalRevenue: 0,
-        }),
-        staleTime: 1000 * 60 * 5,
-    });
-};
+export const useUpcomingClasses = () =>
+    useAdminDashboardQuery<UpcomingClassItem[]>((data) => data.upcomingClasses ?? []);
 
 /**
  * Hook để lấy xu hướng đăng ký (Admin Dashboard)
  */
-export const useRegistrationTrend = () => {
-    return useQuery({
-        queryKey: ['registration-trend'],
-        queryFn: async () => [],
-        staleTime: 1000 * 60 * 5,
-    });
-};
+export const useRegistrationTrend = () =>
+    useAdminDashboardQuery<RegistrationTrendPoint[]>((data) => data.registrationTrend ?? []);
 
 /**
  * Hook để lấy học sinh mới (Admin Dashboard)
  */
-export const useRecentStudents = () => {
-    return useQuery({
-        queryKey: ['recent-students'],
-        queryFn: async () => [],
-        staleTime: 1000 * 60 * 5,
-    });
-};
+export const useRecentStudents = () =>
+    useAdminDashboardQuery<RecentStudentForUI[]>((data) =>
+        (data.recentStudents ?? []).map((student, index) => {
+            const fallbackName = student.displayName ?? student.email ?? "Học viên";
+            const firstName = student.firstName && student.firstName.trim().length > 0 ? student.firstName : fallbackName;
+            const lastName = student.lastName ?? "";
+
+            return {
+                id: student.id ?? student.email ?? student.displayName ?? `unknown-${index}`,
+                firstName,
+                lastName,
+                email: student.email ?? "",
+                displayName: student.displayName,
+            };
+        })
+    );

@@ -1,5 +1,7 @@
 # Repository Guidelines
 
+> Last updated: 2025-11-05 — Tóm tắt: Hướng dẫn repository cho `cms-english` (MUI + Vite): cấu trúc, lệnh, style và security.
+
 ## Overview & Architecture
 - Vite + React (TypeScript) with MUI and Tailwind v4.
 - Server data via Axios (`src/config/axiosConfig.ts`) and TanStack Query.

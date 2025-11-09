@@ -1,5 +1,67 @@
 import axiosInstance from "../config/axiosConfig";
 
+// ==================== ADMIN DASHBOARD ====================
+
+export interface RegistrationTrendPoint {
+    date: string;
+    count: number;
+}
+
+export interface CourseDistributionItem {
+    label: string;
+    value: number;
+}
+
+export interface UpcomingClassItem {
+    id: string;
+    classroomName: string;
+    courseTitle?: string;
+    teacherName: string;
+    startTime: string;
+    endTime: string;
+    roomName?: string | null;
+    activeStudents: number;
+    maxStudents?: number | null;
+}
+
+export interface RecentStudentItem {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    displayName?: string;
+}
+
+export interface DashboardNotificationItem {
+    id: string;
+    title: string;
+    message?: string | null;
+    type: "success" | "warning" | "error" | "info";
+    createdAt: string;
+}
+
+export interface AdminDashboardData {
+    totalStudents: number;
+    totalCourses: number;
+    totalLessons: number;
+    totalActivities: number;
+    recentStudents: RecentStudentItem[];
+    registrationTrend: RegistrationTrendPoint[];
+    courseDistribution: CourseDistributionItem[];
+    upcomingClasses: UpcomingClassItem[];
+    notifications: DashboardNotificationItem[];
+}
+
+export const getAdminDashboardData = async (): Promise<AdminDashboardData> => {
+    const response = await axiosInstance.get<{
+        statusCode: number;
+        message: string;
+        data: AdminDashboardData;
+    }>("/private/v1/dashboard");
+
+    return response.data.data;
+};
+
 // ==================== TEACHER DASHBOARD ====================
 
 export interface TeacherClassroomItem {
@@ -34,14 +96,6 @@ export interface TeacherPendingSubmissionItem {
     classroomName: string;
 }
 
-export interface DashboardNotificationItem {
-    id: string;
-    title: string;
-    message?: string | null;
-    type: 'success' | 'warning' | 'error' | 'info';
-    createdAt: string;
-}
-
 export interface TeacherDashboardData {
     totalActiveClassrooms: number;
     totalStudents: number;
@@ -58,6 +112,7 @@ export const getTeacherDashboardData = async (): Promise<TeacherDashboardData> =
         statusCode: number;
         message: string;
         data: TeacherDashboardData;
-    }>('/private/v1/dashboard/teacher');
+    }>("/private/v1/dashboard/teacher");
+
     return response.data.data;
 };
