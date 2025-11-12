@@ -33,6 +33,8 @@ import TeacherClassroomDashboardPage from "./pages/TeacherClassroomDashboardPage
 import TeacherDashboardPage from "./pages/TeacherDashboardPage";
 import TeacherPage from "./pages/TeacherPage";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage";
+import VocabularyDetailPage from "./pages/VocabularyDetailPage";
+import VocabularyListPage from "./pages/VocabularyListPage";
 
 const router = createBrowserRouter([
     { path: "/login", element: <LoginPage /> },
@@ -59,6 +61,8 @@ const router = createBrowserRouter([
                     { path: "/schedule", element: <SchedulePage /> },
                     { path: "/teacher-schedule", element: <TeacherSchedulePage /> },
                     { path: "/rooms", element: <RoomPage /> },
+                    { path: "/vocabulary", element: <VocabularyListPage /> },
+                    { path: "/vocabulary/:listId", element: <VocabularyDetailPage /> },
                     { path: "/courses", element: <CoursePage /> },
                     { path: "/courses/:id", element: <CourseDetailPage /> },
                     { path: "/create-course", element: <CreateCoursePage /> },

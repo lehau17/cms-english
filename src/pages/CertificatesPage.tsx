@@ -10,6 +10,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { certificateApi } from '../apis/certificate.api';
 
@@ -43,6 +44,24 @@ const CertificatesPage: React.FC = () => {
             month: 'short',
             day: 'numeric',
         });
+    };
+
+    const handleDownloadCertificate = async (certificateId: string, certificateNumber: string) => {
+        try {
+            const blob = await certificateApi.downloadCertificate(certificateId);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `certificate-${certificateNumber}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success('Certificate downloaded successfully');
+        } catch (error: any) {
+            console.error('Download certificate error:', error);
+            toast.error(error?.response?.data?.message || 'Failed to download certificate');
+        }
     };
 
     return (
@@ -276,10 +295,7 @@ const CertificatesPage: React.FC = () => {
                                                             <Eye className="w-5 h-5" />
                                                         </button>
                                                         <button
-                                                            onClick={() => {
-                                                                // TODO: Implement download
-                                                                console.log('Download:', certificate.id);
-                                                            }}
+                                                            onClick={() => handleDownloadCertificate(certificate.id, certificate.certificateNumber)}
                                                             className="text-gray-600 hover:text-gray-900"
                                                             title="Tải xuống"
                                                         >

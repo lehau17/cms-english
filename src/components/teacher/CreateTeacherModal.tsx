@@ -73,7 +73,6 @@ const CreateTeacherModal: React.FC<CreateTeacherModalProps> = ({ isOpen, onClose
             ...data,
             highlights: data.highlights.map(h => h.value).filter(v => v.trim() !== '')
         };
-        console.log('Create Teacher Data:', submitData);
         createTeacherMutation.mutate(submitData as any, {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['teachers'] });

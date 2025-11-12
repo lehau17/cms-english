@@ -89,7 +89,6 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, te
             ...data,
             highlights: data.highlights.map(h => h.value).filter(v => v.trim() !== '')
         };
-        console.log('Edit Teacher Data:', submitData);
         if (teacher) {
             updateTeacherMutation.mutate({ id: teacher.id, data: submitData as any }, {
                 onSuccess: () => {

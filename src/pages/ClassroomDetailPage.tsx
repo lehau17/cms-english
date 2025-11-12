@@ -3,6 +3,7 @@ import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
 import AddStudentToClassModal from '@/components/classroom/AddStudentToClassModal';
 import AssignmentDetailModal from '@/components/classroom/AssignmentDetailModal';
+import EditClassroomModal from '@/components/classroom/EditClassroomModal';
 import SendAnnouncementModal from '@/components/classroom/SendAnnouncementModal';
 import TransferStudentModal from '@/components/classroom/TransferStudentModal';
 import ViewStudentModal from '@/components/student/ViewStudentModal';
@@ -51,6 +52,7 @@ const ClassroomDetailPage: React.FC = () => {
     const [isSendAnnouncementModalOpen, setIsSendAnnouncementModalOpen] = useState(false);
     const [isTransferStudentModalOpen, setIsTransferStudentModalOpen] = useState(false);
     const [studentToTransfer, setStudentToTransfer] = useState<Student | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const updateStatusMutation = useUpdateClassroomStatus();
 
@@ -61,22 +63,11 @@ const ClassroomDetailPage: React.FC = () => {
         enabled: !!id,
     });
 
-    // Debug logging
-    console.log('=== ClassroomDetailPage Debug ===');
-    console.log('classroomDetailData:', classroomDetailData);
-    console.log('isLoadingDetail:', isLoadingDetail);
-
     // Use classroom detail data (has everything we need)
     const classroom = classroomDetailData as any;
-    console.log('classroom extracted:', classroom);
-    console.log('classroom.students:', classroom?.students);
-    console.log('classroom.students type:', typeof classroom?.students);
-    console.log('classroom.students length:', classroom?.students?.length);
 
     const courseFromClassroom = classroom?.course; // Course is already in detail API response
     const courseId = classroom?.courseId;
-    console.log('courseFromClassroom:', courseFromClassroom);
-    console.log('courseId:', courseId);
 
     const { data: courseData, isLoading: isLoadingCourse } = useQuery({
         queryKey: ['course', courseId],
@@ -184,7 +175,6 @@ const ClassroomDetailPage: React.FC = () => {
         try {
             // Gọi API để lấy chi tiết assignment với đầy đủ thông tin
             const response = await assignmentApi.getAssignmentById(assignmentId, false);
-            console.log('Assignment detail loaded:', response);
             setSelectedAssignment(response.data);
             setIsAssignmentDetailModalOpen(true);
         } catch (error) {
@@ -598,7 +588,7 @@ const ClassroomDetailPage: React.FC = () => {
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
                                 <div className="space-y-2">
                                     <button
-                                        onClick={() => {/* TODO: Add edit functionality */ }}
+                                        onClick={() => setIsEditModalOpen(true)}
                                         className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
                                     >
                                         <Edit className="w-4 h-4" />
@@ -892,6 +882,13 @@ const ClassroomDetailPage: React.FC = () => {
                 currentClassroomId={id!}
                 currentClassroomName={classroom?.name || ''}
                 student={studentToTransfer}
+            />
+
+            {/* Edit Classroom Modal */}
+            <EditClassroomModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                classroom={classroom as any}
             />
         </div>
     );

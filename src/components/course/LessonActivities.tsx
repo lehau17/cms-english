@@ -55,7 +55,6 @@ function UploadField({
     const uploadMutation = useMutation({
         mutationFn: uploadFile,
         onSuccess: (data) => {
-            console.log(`Upload success for ${name}:`, data.data.url);
             setValue(name, data.data.url, { shouldDirty: true, shouldValidate: true });
             toast.success(`${type === 'image' ? 'Image' : 'Audio'} uploaded successfully!`);
         },
@@ -67,7 +66,6 @@ function UploadField({
 
     const handleFileSelect = (file: File) => {
         if (file && file.type.startsWith(type === 'image' ? 'image/' : 'audio/')) {
-            console.log(`Starting upload for ${name}:`, file.name);
             uploadMutation.mutate(file);
         } else {
             toast.error(`Please upload a valid ${type} file`);
@@ -135,7 +133,6 @@ function UploadField({
                             type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                console.log(`Clearing value for ${name}`);
                                 setValue(name, '', { shouldDirty: true, shouldValidate: true });
                             }}
                             className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow-sm"
@@ -162,7 +159,6 @@ function UploadField({
                     onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                            console.log(`File selected for ${name}:`, file.name);
                             handleFileSelect(file);
                         }
                         // Reset input để có thể chọn cùng file lần nữa

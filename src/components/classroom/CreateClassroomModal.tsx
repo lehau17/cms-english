@@ -205,13 +205,8 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
     };
 
     const onSubmit = (data: CreateClassroomFormValues) => {
-        console.log('🔍 Form data before submit:', data);
-        console.log('🔍 teacherId value:', data.teacherId);
-        console.log('🔍 Form errors:', errors);
-
         // Validate teacherId explicitly
         if (!data.teacherId || data.teacherId.trim() === '') {
-            console.error('❌ TeacherId is empty!');
             alert('Please select a teacher');
             return;
         }
@@ -226,7 +221,6 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
         // Don't send periodEnd - let backend calculate it
         delete payload.periodEnd;
 
-        console.log('✅ Submitting payload:', payload);
         createMutation.mutate(payload);
     };
 
@@ -265,7 +259,6 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                         <select
                             {...register('courseId', {
                                 onChange: (e) => {
-                                    console.log('🔍 Course selected:', e.target.value);
                                     setValue('courseId', e.target.value, {
                                         shouldValidate: true,
                                         shouldDirty: true,
@@ -322,7 +315,6 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                         <select
                             {...register('teacherId', {
                                 onChange: (e) => {
-                                    console.log('🔍 Teacher selected:', e.target.value);
                                     setValue('teacherId', e.target.value, {
                                         shouldValidate: true,
                                         shouldDirty: true,

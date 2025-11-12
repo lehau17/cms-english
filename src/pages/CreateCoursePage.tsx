@@ -203,17 +203,8 @@ const CreateCoursePage = () => {
     };
 
     const onSubmit = (data: CreateCourseDto) => {
-        // Debug: Log session schedules data
-        console.log('🔍 DEBUG - Original form data:', {
-            sessionSchedules: data.sessionSchedules,
-            sessionSchedulesLength: data.sessionSchedules?.length || 0,
-            plannedSessions: data.plannedSessions
-        });
-
         // Sanitize activities content before submit
         const convertedSessionSchedules = data.sessionSchedules ? convertTempActivityIds(data.sessionSchedules) : undefined;
-
-        console.log('🔍 DEBUG - Converted session schedules:', convertedSessionSchedules);
 
         const payload: CreateCourseDto = {
             ...data,
@@ -339,7 +330,6 @@ const CreateCoursePage = () => {
                                 if (files.length > 0 && !uploadMutation.isPending) {
                                     const file = files[0];
                                     if (file && file.type.startsWith('image/')) {
-                                        console.log('Drag & drop upload for course image:', file.name);
                                         uploadMutation.mutate(file);
                                     } else {
                                         toast.error('Please upload an image file');
@@ -366,7 +356,6 @@ const CreateCoursePage = () => {
                                                 target.parentElement?.appendChild(errorDiv);
                                             }}
                                             onLoad={(e) => {
-                                                console.log('Image loaded successfully:', watch('imageUrl'));
                                                 e.currentTarget.style.opacity = '1';
                                             }}
                                         />
@@ -406,7 +395,6 @@ const CreateCoursePage = () => {
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file && !uploadMutation.isPending) {
-                                        console.log('Starting upload for course image:', file.name);
                                         uploadMutation.mutate(file);
                                     }
                                 }}

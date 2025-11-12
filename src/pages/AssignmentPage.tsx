@@ -2,6 +2,7 @@ import {
     Add as AddIcon,
     Delete as DeleteIcon,
     Edit as EditIcon,
+    FileCopy as FileCopyIcon,
     FileDownload as FileDownloadIcon,
     Publish as PublishIcon,
     UnpublishedOutlined as UnpublishedIcon,
@@ -16,10 +17,17 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
+    DialogContentText,
     DialogTitle,
+    FormControl,
+    FormControlLabel,
     Grid,
     IconButton,
+    InputLabel,
+    MenuItem,
     Paper,
+    Select,
+    Switch,
     Table,
     TableBody,
     TableCell,
@@ -29,16 +37,21 @@ import {
     TableRow,
     TextField,
     Tooltip,
-    Typography
+    Typography,
+    Checkbox
 } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { assignmentApi, downloadAssignmentPdf, type Assignment } from '../apis/assignment';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { assignmentApi, downloadAssignmentPdf, type Assignment, type CloneAssignmentPayload } from '../apis/assignment';
+import { getClassrooms } from '../apis/classroom';
+import type { Classroom } from '../interface/classroom.interface';
+import CreateAssignmentModal from '../components/classroom/CreateAssignmentModal';
+import type { AssignmentFormValues } from '../schemas/assignment.schema';
 
 export default function AssignmentPage() {
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
 
     // State
     const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -52,6 +65,12 @@ export default function AssignmentPage() {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showViewDialog, setShowViewDialog] = useState(false);
     const [downloading, setDownloading] = useState<string | null>(null);
+    const [reuseAssignment, setReuseAssignment] = useState<Assignment | null>(null);
+    const [isReuseDialogOpen, setIsReuseDialogOpen] = useState(false);
+    const [isCloning, setIsCloning] = useState(false);
+    const [editAssignment, setEditAssignment] = useState<Assignment | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editFormValues, setEditFormValues] = useState<AssignmentFormValues | null>(null);
 
     // Load assignments
     const loadAssignments = useCallback(async () => {
@@ -92,6 +111,44 @@ export default function AssignmentPage() {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+
+    const handleOpenReuseDialog = (assignment: Assignment) => {
+        setReuseAssignment(assignment);
+        setIsReuseDialogOpen(true);
+    };
+
+    const handleCloseReuseDialog = () => {
+        setIsReuseDialogOpen(false);
+        setReuseAssignment(null);
+    };
+
+    const handleCloneAssignment = async (payload: CloneAssignmentPayload) => {
+        if (!reuseAssignment) return;
+        try {
+            setIsCloning(true);
+            await assignmentApi.cloneAssignment(reuseAssignment.id, payload);
+            toast.success('Assignment cloned successfully');
+            handleCloseReuseDialog();
+            loadAssignments();
+        } catch (err: any) {
+            console.error('Clone assignment error:', err);
+            toast.error(err?.response?.data?.message || 'Failed to clone assignment');
+        } finally {
+            setIsCloning(false);
+        }
+    };
+
+    const { data: classroomsResponse, isLoading: classroomsLoading } = useQuery({
+        queryKey: ['classrooms', 'assignment-reuse'],
+        queryFn: () => getClassrooms({ page: 1, limit: 100 }),
+        enabled: isReuseDialogOpen,
+        staleTime: 1000 * 60 * 10,
+    });
+
+    const classrooms: Classroom[] = useMemo(
+        () => classroomsResponse?.data?.data || [],
+        [classroomsResponse],
+    );
 
     // Handle delete assignment
     const handleDeleteAssignment = async () => {
@@ -291,11 +348,55 @@ export default function AssignmentPage() {
                                                 </IconButton>
                                             </Tooltip>
 
+                                            {/* Reuse */}
+                                            <Tooltip title="Reuse in another classroom">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleOpenReuseDialog(assignment)}
+                                                >
+                                                    <FileCopyIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+
                                             {/* Edit */}
                                             <Tooltip title="Edit">
                                                 <IconButton
                                                     size="small"
-                                                    onClick={() => navigate(`/edit-assignment/${assignment.id}`)}
+                                                    onClick={async () => {
+                                                        try {
+                                                            const response = await assignmentApi.getAssignmentById(assignment.id);
+                                                            if (response.data) {
+                                                                const assignmentData = response.data;
+                                                                const formValues: AssignmentFormValues = {
+                                                                    title: assignmentData.title,
+                                                                    description: assignmentData.description || '',
+                                                                    instructions: assignmentData.instructions || '',
+                                                                    dueDate: assignmentData.dueDate || '',
+                                                                    totalPoints: assignmentData.totalPoints || 100,
+                                                                    timeLimit: assignmentData.timeLimit || undefined,
+                                                                    maxAttempts: assignmentData.maxAttempts || 1,
+                                                                    isPublished: assignmentData.isPublished || false,
+                                                                    activities: (assignmentData.assignmentActivities || []).map((activity) => ({
+                                                                        id: activity.id,
+                                                                        type: activity.type,
+                                                                        title: activity.title,
+                                                                        instructions: activity.instructions,
+                                                                        content: activity.content || {},
+                                                                        points: activity.points || 10,
+                                                                        passingScore: activity.passingScore,
+                                                                        difficulty: activity.difficulty as any,
+                                                                        hints: activity.hints || [],
+                                                                    })),
+                                                                };
+                                                                setEditFormValues(formValues);
+                                                                setEditAssignment(assignmentData);
+                                                                setIsEditModalOpen(true);
+                                                            }
+                                                        } catch (err: any) {
+                                                            console.error('Error loading assignment:', err);
+                                                            toast.error(err?.response?.data?.message || 'Failed to load assignment');
+                                                        }
+                                                    }}
                                                 >
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
@@ -477,6 +578,283 @@ export default function AssignmentPage() {
                     <Button onClick={() => setShowViewDialog(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
+            <ReuseAssignmentDialog
+                open={isReuseDialogOpen}
+                assignment={reuseAssignment}
+                classrooms={classrooms}
+                classroomsLoading={classroomsLoading}
+                submitting={isCloning}
+                onClose={handleCloseReuseDialog}
+                onSubmit={handleCloneAssignment}
+            />
+
+            {/* Edit Assignment Modal */}
+            {editAssignment && editFormValues && (
+                <CreateAssignmentModal
+                    open={isEditModalOpen}
+                    classroomId={editAssignment.classroomId}
+                    mode="edit"
+                    assignmentId={editAssignment.id}
+                    initialValues={editFormValues}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setEditAssignment(null);
+                        setEditFormValues(null);
+                    }}
+                    onSubmitted={() => {
+                        loadAssignments();
+                        setIsEditModalOpen(false);
+                        setEditAssignment(null);
+                        setEditFormValues(null);
+                    }}
+                />
+            )}
         </Box>
+    );
+}
+
+type ReuseAssignmentDialogProps = {
+    open: boolean;
+    assignment: Assignment | null;
+    classrooms: Classroom[];
+    classroomsLoading: boolean;
+    submitting: boolean;
+    onClose: () => void;
+    onSubmit: (payload: CloneAssignmentPayload) => void;
+};
+
+const toDateTimeLocal = (iso?: string | null) => {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    const offset = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offset * 60 * 1000);
+    return local.toISOString().slice(0, 16);
+};
+
+function ReuseAssignmentDialog({
+    open,
+    assignment,
+    classrooms,
+    classroomsLoading,
+    submitting,
+    onClose,
+    onSubmit,
+}: ReuseAssignmentDialogProps) {
+    const [selectedClassroomId, setSelectedClassroomId] = useState<string>('');
+    const [selectedActivityIds, setSelectedActivityIds] = useState<Set<string>>(new Set());
+    const [title, setTitle] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [isPublished, setIsPublished] = useState(false);
+
+    useEffect(() => {
+        if (open && assignment) {
+            setTitle(assignment.title || '');
+            setDueDate(assignment.dueDate ? toDateTimeLocal(assignment.dueDate) : '');
+            setIsPublished(false);
+
+            const activities = assignment.assignmentActivities || [];
+            setSelectedActivityIds(new Set(activities.map((activity) => activity.id)));
+
+            const fallbackClassroomId = classrooms[0]?.id || '';
+            setSelectedClassroomId((prev) => (prev ? prev : fallbackClassroomId));
+        } else if (!open) {
+            setSelectedActivityIds(new Set());
+            setSelectedClassroomId('');
+            setTitle('');
+            setDueDate('');
+            setIsPublished(false);
+        }
+    }, [open, assignment, classrooms]);
+
+    const toggleActivity = (activityId: string) => {
+        setSelectedActivityIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(activityId)) {
+                next.delete(activityId);
+            } else {
+                next.add(activityId);
+            }
+            return next;
+        });
+    };
+
+    const handleSelectAll = () => {
+        if (!assignment) return;
+        const allIds = new Set(
+            (assignment.assignmentActivities || []).map((activity) => activity.id),
+        );
+        setSelectedActivityIds(allIds);
+    };
+
+    const handleSubmit = () => {
+        if (!assignment) return;
+        if (!selectedClassroomId) {
+            toast.error('Please select a classroom to clone the assignment into');
+            return;
+        }
+
+        const activityIds = Array.from(selectedActivityIds);
+        if (activityIds.length === 0) {
+            toast.error('Select at least one activity to clone');
+            return;
+        }
+
+        const payload: CloneAssignmentPayload = {
+            targetClassroomId: selectedClassroomId,
+            activityIds,
+            title: title.trim() || undefined,
+            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+            isPublished,
+        };
+
+        onSubmit(payload);
+    };
+
+    const activities = assignment?.assignmentActivities || [];
+
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+            <DialogTitle>Reuse Assignment</DialogTitle>
+            <DialogContent dividers>
+                {!assignment ? (
+                    <DialogContentText>Select an assignment to reuse.</DialogContentText>
+                ) : (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight={600}>
+                                {assignment.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {assignment.description || 'No description'}
+                            </Typography>
+                        </Box>
+
+                        <FormControl fullWidth>
+                            <InputLabel id="reuse-classroom-label">Classroom</InputLabel>
+                            <Select
+                                labelId="reuse-classroom-label"
+                                label="Classroom"
+                                value={selectedClassroomId}
+                                onChange={(event) => setSelectedClassroomId(event.target.value)}
+                                disabled={classroomsLoading || classrooms.length === 0}
+                            >
+                                {classroomsLoading && (
+                                    <MenuItem value="">
+                                        <em>Loading...</em>
+                                    </MenuItem>
+                                )}
+                                {classrooms.map((classroom) => (
+                                    <MenuItem key={classroom.id} value={classroom.id}>
+                                        {classroom.name} ({classroom.classCode || 'N/A'})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            {classrooms.length === 0 && !classroomsLoading && (
+                                <Typography variant="caption" color="text.secondary">
+                                    You do not have any classrooms available.
+                                </Typography>
+                            )}
+                        </FormControl>
+
+                        <TextField
+                            label="New Title"
+                            value={title}
+                            onChange={(event) => setTitle(event.target.value)}
+                            fullWidth
+                        />
+
+                        <TextField
+                            label="Due Date"
+                            type="datetime-local"
+                            value={dueDate}
+                            onChange={(event) => setDueDate(event.target.value)}
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                        />
+
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={isPublished}
+                                    onChange={(event) => setIsPublished(event.target.checked)}
+                                />
+                            }
+                            label="Publish immediately"
+                        />
+
+                        <Box>
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                                <Typography variant="subtitle2">
+                                    Activities ({selectedActivityIds.size}/{activities.length})
+                                </Typography>
+                                <Button size="small" onClick={handleSelectAll}>
+                                    Select all
+                                </Button>
+                            </Box>
+                            <Box
+                                sx={{
+                                    maxHeight: 260,
+                                    overflowY: 'auto',
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    borderRadius: 1,
+                                    p: 1,
+                                }}
+                            >
+                                {activities.map((activity) => (
+                                    <Box
+                                        key={activity.id}
+                                        sx={{
+                                            border: '1px solid',
+                                            borderColor: selectedActivityIds.has(activity.id)
+                                                ? 'primary.main'
+                                                : 'divider',
+                                            borderRadius: 1,
+                                            p: 1,
+                                            mb: 1,
+                                        }}
+                                    >
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={selectedActivityIds.has(activity.id)}
+                                                    onChange={() => toggleActivity(activity.id)}
+                                                />
+                                            }
+                                            label={
+                                                <Box>
+                                                    <Typography variant="subtitle2">
+                                                        {activity.title}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Type: {activity.type} · {activity.points || 0} pts
+                                                    </Typography>
+                                                </Box>
+                                            }
+                                        />
+                                    </Box>
+                                ))}
+                                {activities.length === 0 && (
+                                    <Typography variant="body2" color="text.secondary">
+                                        This assignment has no activities to reuse.
+                                    </Typography>
+                                )}
+                            </Box>
+                        </Box>
+                    </Box>
+                )}
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose}>Cancel</Button>
+                <Button
+                    onClick={handleSubmit}
+                    variant="contained"
+                    disabled={submitting || !assignment || classrooms.length === 0}
+                >
+                    {submitting ? 'Cloning...' : 'Clone Assignment'}
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 }

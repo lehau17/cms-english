@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
     Clock,
     Download,
@@ -9,14 +9,16 @@ import {
     Upload,
     X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import {
     assignmentApi,
+    type Assignment,
+    type AssignmentActivity,
     type CreateAssignmentDto
 } from '../../apis/assignment'
-import { AssignmentFormValues } from '../../schemas/assignment.schema'
+import { ActivityFormValues, AssignmentFormValues } from '../../schemas/assignment.schema'
 import { TypeSpecificFields } from '../assignment/TypeSpecificFields'
 
 type Props = {
@@ -80,6 +82,324 @@ function Section({
     )
 }
 
+const toDatetimeLocal = (iso?: string | null) => {
+    if (!iso) return ''
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return ''
+    const offset = date.getTimezoneOffset()
+    const local = new Date(date.getTime() - offset * 60 * 1000)
+    return local.toISOString().slice(0, 16)
+}
+
+const deepClone = <T,>(value: T): T => {
+    if (value === null || value === undefined) {
+        return value
+    }
+    return JSON.parse(JSON.stringify(value))
+}
+
+const transformActivityForForm = (activity: AssignmentActivity): ActivityFormValues => ({
+    type: activity.type,
+    title: activity.title,
+    instructions: activity.instructions ?? '',
+    content: deepClone(activity.content ?? {}),
+    points: activity.points ?? 10,
+    difficulty: (activity.difficulty as ActivityFormValues['difficulty']) ?? undefined,
+    hints: activity.hints ?? [],
+})
+
+type ReuseAssignmentDialogProps = {
+    open: boolean
+    onClose: () => void
+    onApply: (payload: { assignment: Assignment; activities: AssignmentActivity[] }) => void
+}
+
+function ReuseAssignmentDialog({
+    open,
+    onClose,
+    onApply,
+}: ReuseAssignmentDialogProps) {
+    const [searchTerm, setSearchTerm] = useState('')
+    const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null)
+    const [selectedActivityIds, setSelectedActivityIds] = useState<Set<string>>(new Set())
+
+    const { data, isLoading, isError, refetch } = useQuery({
+        queryKey: ['assignments', 'library'],
+        queryFn: () => assignmentApi.getMyAssignments({ page: 1, limit: 50 }),
+        enabled: open,
+        staleTime: 1000 * 60 * 5,
+    })
+
+    useEffect(() => {
+        if (!open) {
+            setSearchTerm('')
+            setSelectedAssignmentId(null)
+            setSelectedActivityIds(new Set())
+        } else {
+            refetch()
+        }
+    }, [open, refetch])
+
+    const assignments: Assignment[] = useMemo(() => {
+        const list: Assignment[] = data?.data?.assignments || data?.assignments || []
+        if (!searchTerm.trim()) {
+            return list
+        }
+        const keyword = searchTerm.trim().toLowerCase()
+        return list.filter((assignment) =>
+            assignment.title.toLowerCase().includes(keyword) ||
+            assignment.classroom?.name?.toLowerCase().includes(keyword),
+        )
+    }, [data, searchTerm])
+
+    const selectedAssignment = useMemo(() => {
+        const list: Assignment[] = data?.data?.assignments || data?.assignments || []
+        return list.find((assignment) => assignment.id === selectedAssignmentId) || null
+    }, [data, selectedAssignmentId])
+
+    useEffect(() => {
+        if (selectedAssignment) {
+            const allIds = new Set<string>(
+                (selectedAssignment.assignmentActivities || []).map((activity) => activity.id),
+            )
+            setSelectedActivityIds(allIds)
+        } else {
+            setSelectedActivityIds(new Set())
+        }
+    }, [selectedAssignmentId, selectedAssignment])
+
+    const toggleActivity = (activityId: string) => {
+        setSelectedActivityIds((prev) => {
+            const next = new Set(prev)
+            if (next.has(activityId)) {
+                next.delete(activityId)
+            } else {
+                next.add(activityId)
+            }
+            return next
+        })
+    }
+
+    const handleSelectAllActivities = () => {
+        if (!selectedAssignment) return
+        const allIds = new Set<string>(
+            (selectedAssignment.assignmentActivities || []).map((activity) => activity.id),
+        )
+        setSelectedActivityIds(allIds)
+    }
+
+    const handleApply = () => {
+        if (!selectedAssignment) {
+            toast.error('Chọn một bài tập để sử dụng lại')
+            return
+        }
+        const activities =
+            selectedAssignment.assignmentActivities?.filter((activity) =>
+                selectedActivityIds.has(activity.id),
+            ) ?? []
+        if (activities.length === 0) {
+            toast.error('Chọn ít nhất một hoạt động')
+            return
+        }
+        onApply({ assignment: selectedAssignment, activities })
+    }
+
+    if (!open) return null
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl flex flex-col">
+                <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Chọn bài tập có sẵn</h3>
+                        <p className="text-sm text-gray-500">
+                            Chọn bài tập và các hoạt động muốn sử dụng lại cho lớp hiện tại.
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+                        aria-label="Đóng"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div className="border-b border-gray-200 px-6 py-3">
+                    <input
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        placeholder="Tìm kiếm bài tập theo tiêu đề hoặc lớp..."
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    />
+                </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+                    {isLoading ? (
+                        <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+                            Đang tải danh sách bài tập...
+                        </div>
+                    ) : isError ? (
+                        <div className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
+                            <p>Không thể tải danh sách bài tập.</p>
+                            <button
+                                onClick={() => refetch()}
+                                className="rounded-lg border border-rose-300 px-3 py-1 text-xs font-semibold hover:bg-rose-100"
+                            >
+                                Thử lại
+                            </button>
+                        </div>
+                    ) : assignments.length === 0 ? (
+                        <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+                            Chưa có bài tập nào để sử dụng lại.
+                        </div>
+                    ) : (
+                        <div className="grid gap-4 md:grid-cols-[280px_1fr]">
+                            <div className="space-y-3 pr-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                    Danh sách bài tập
+                                </p>
+                                <div className="space-y-2">
+                                    {assignments.map((assignment) => {
+                                        const isActive = assignment.id === selectedAssignmentId
+                                        return (
+                                            <button
+                                                key={assignment.id}
+                                                type="button"
+                                                onClick={() => setSelectedAssignmentId(assignment.id)}
+                                                className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
+                                                    isActive
+                                                        ? 'border-indigo-500 bg-indigo-50 shadow-sm'
+                                                        : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">
+                                                            {assignment.title}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {assignment.classroom?.name || 'Không rõ lớp'}
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                                                        {assignment.assignmentActivities?.length || 0} hoạt động
+                                                    </span>
+                                                </div>
+                                                <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                                                    <span>
+                                                        Loại:{' '}
+                                                        <span className="font-medium text-indigo-600">
+                                                            {assignment.type || 'HOMEWORK'}
+                                                        </span>
+                                                    </span>
+                                                    {assignment.dueDate && (
+                                                        <span>
+                                                            Hạn: {new Date(assignment.dueDate).toLocaleDateString('vi-VN')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                            <div className="rounded-xl border border-gray-200 p-4">
+                                {selectedAssignment ? (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-gray-900">
+                                                    Hoạt động trong "{selectedAssignment.title}"
+                                                </h4>
+                                                <p className="text-xs text-gray-500">
+                                                    Chọn những hoạt động bạn muốn sao chép.
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleSelectAllActivities}
+                                                className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold hover:bg-gray-50"
+                                            >
+                                                Chọn tất cả
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                                            {(selectedAssignment.assignmentActivities || []).map(
+                                                (activity) => {
+                                                    const checked = selectedActivityIds.has(activity.id)
+                                                    return (
+                                                        <label
+                                                            key={activity.id}
+                                                            className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-2 text-sm transition ${
+                                                                checked
+                                                                    ? 'border-indigo-500 bg-indigo-50'
+                                                                    : 'border-gray-200 hover:border-indigo-200 hover:bg-gray-50'
+                                                            }`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={checked}
+                                                                onChange={() => toggleActivity(activity.id)}
+                                                                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                            />
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-600">
+                                                                        {activity.type}
+                                                                    </span>
+                                                                    <span className="font-semibold text-gray-900">
+                                                                        {activity.title}
+                                                                    </span>
+                                                                </div>
+                                                                {activity.instructions && (
+                                                                    <p className="text-xs text-gray-500 line-clamp-2">
+                                                                        {activity.instructions}
+                                                                    </p>
+                                                                )}
+                                                                <div className="flex flex-wrap gap-2 text-[11px] text-gray-500">
+                                                                    <span>{activity.points ?? 10} điểm</span>
+                                                                    {activity.difficulty && (
+                                                                        <span>Độ khó: {activity.difficulty}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    )
+                                                },
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+                                        Chọn một bài tập để xem hoạt động.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-4">
+                    <button
+                        onClick={onClose}
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={handleApply}
+                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700"
+                    >
+                        <Download className="h-4 w-4" />
+                        Sử dụng hoạt động đã chọn
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 function Labeled({
     label,
     children,
@@ -132,16 +452,12 @@ export default function CreateAssignmentModal({
 }) {
     const mode = rest.mode ?? 'create'
     const [showImportDialog, setShowImportDialog] = useState(false)
+    const [showReuseDialog, setShowReuseDialog] = useState(false)
+    const [reuseSource, setReuseSource] = useState<Assignment | null>(null)
     const [importPreview, setImportPreview] =
         useState<ImportPreviewResult | null>(null)
     const [isUploading, setIsUploading] = useState(false)
 
-    console.log('🚀 CreateAssignmentModal render:', {
-        open,
-        mode,
-        hasInitialValues: !!rest.initialValues,
-        initialActivitiesCount: rest.initialValues?.activities?.length,
-    })
 
     const queryClient = useQueryClient()
     const { register, control, handleSubmit, watch, setValue, reset } =
@@ -172,16 +488,6 @@ export default function CreateAssignmentModal({
     // Reset form when initialValues change (for edit mode)
     useEffect(() => {
         if (rest.initialValues && mode === 'edit') {
-            console.log('🔄 Resetting form with initialValues:', rest.initialValues)
-            console.log('📋 Activities count:', rest.initialValues.activities?.length)
-            rest.initialValues.activities?.forEach((activity, index) => {
-                console.log(`📝 Activity ${index}:`, {
-                    type: activity.type,
-                    title: activity.title,
-                    content: activity.content,
-                })
-            })
-
             // Reset the entire form
             reset(rest.initialValues)
 
@@ -189,21 +495,8 @@ export default function CreateAssignmentModal({
             if (rest.initialValues.activities) {
                 replaceActivities(rest.initialValues.activities)
             }
-
-            // Also manually ensure field array is updated
-            setTimeout(() => {
-                console.log('📊 After reset - actFields length:', actFields.length)
-            }, 100)
         }
-    }, [rest.initialValues, mode, reset, actFields.length])
-
-    // Debug log current field array state
-    useEffect(() => {
-        console.log('📊 Current actFields length:', actFields.length)
-        actFields.forEach((field, index) => {
-            console.log(`📋 Field ${index}:`, field)
-        })
-    }, [actFields])
+    }, [rest.initialValues, mode, reset])
 
     // Import handlers
     const handleDownloadTemplate = async () => {
@@ -316,22 +609,22 @@ export default function CreateAssignmentModal({
                 })),
             }
             return mode === 'edit' && rest.assignmentId
-                ? (async () => {
-                    // TODO: Implement update assignment API
-                    return assignmentApi.createAssignment(classroomId, createDto)
-                })()
+                ? assignmentApi.updateAssignment(rest.assignmentId, createDto)
                 : assignmentApi.createAssignment(classroomId, createDto)
         },
         onSuccess: () => {
-            toast.success('Tạo bài tập thành công')
+            toast.success(mode === 'edit' ? 'Cập nhật bài tập thành công' : 'Tạo bài tập thành công')
             queryClient.invalidateQueries({
                 queryKey: ['classroom-detail', classroomId],
+            })
+            queryClient.invalidateQueries({
+                queryKey: ['assignments'],
             })
             onClose()
             rest.onSubmitted?.()
         },
         onError: (e: any) => {
-            toast.error(e?.response?.data?.message || 'Tạo bài tập thất bại')
+            toast.error(e?.response?.data?.message || (mode === 'edit' ? 'Cập nhật bài tập thất bại' : 'Tạo bài tập thất bại'))
         },
     })
 
@@ -422,6 +715,48 @@ export default function CreateAssignmentModal({
         addAct(base as any)
     }
 
+    const applyReuseSelection = ({
+        assignment,
+        activities,
+    }: {
+        assignment: Assignment
+        activities: AssignmentActivity[]
+    }) => {
+        if (activities.length === 0) {
+            toast.error('Chọn ít nhất một hoạt động để sử dụng')
+            return
+        }
+
+        const clonedActivities: ActivityFormValues[] = activities.map(transformActivityForForm)
+        replaceActivities(clonedActivities)
+
+        setReuseSource(assignment)
+        setValue('title', assignment.title || '')
+        setValue('description', assignment.description ?? '')
+        setValue('instructions', assignment.instructions ?? '')
+
+        const calculatedTotalPoints =
+            assignment.totalPoints ??
+            clonedActivities.reduce((sum, activity) => sum + (activity.points ?? 0), 0)
+        setValue('totalPoints', (calculatedTotalPoints ?? undefined) as any)
+        setValue('timeLimit', (assignment.timeLimit ?? undefined) as any)
+        setValue('maxAttempts', assignment.maxAttempts ?? 1)
+        setValue(
+            'dueDate',
+            (assignment.dueDate ? toDatetimeLocal(assignment.dueDate) : '') as any,
+        )
+        setValue('isPublished', 'false' as any)
+
+        toast.success(
+            `Đã thêm ${clonedActivities.length} hoạt động từ "${assignment.title}". Bạn có thể chỉnh sửa nội dung trước khi lưu.`,
+        )
+        setShowReuseDialog(false)
+    }
+
+    const clearReuseSource = () => {
+        setReuseSource(null)
+    }
+
     const onSubmit = (values: AssignmentFormValues) => {
         // ensure dueDate ISO if provided (from datetime-local)
         const due = (values as any).dueDate as any
@@ -447,6 +782,16 @@ export default function CreateAssignmentModal({
                         {mode === 'create' && (
                             <button
                                 type="button"
+                                onClick={() => setShowReuseDialog(true)}
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                            >
+                                <Download className="h-4 w-4" />
+                                Chọn bài tập có sẵn
+                            </button>
+                        )}
+                        {mode === 'create' && (
+                            <button
+                                type="button"
                                 onClick={() => setShowImportDialog(true)}
                                 className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
                             >
@@ -464,6 +809,37 @@ export default function CreateAssignmentModal({
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {reuseSource && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+                            <div className="flex flex-col">
+                                <span className="font-semibold">
+                                    Đang sử dụng hoạt động từ "{reuseSource.title}"
+                                </span>
+                                {reuseSource.classroom?.name && (
+                                    <span className="text-xs text-indigo-600">
+                                        Lớp gốc: {reuseSource.classroom.name}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReuseDialog(true)}
+                                    className="rounded-lg border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-100"
+                                >
+                                    Chọn lại
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={clearReuseSource}
+                                    className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-100"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                    Bỏ liên kết
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     <Section title="Thông tin bài tập">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Labeled label="Tiêu đề">
@@ -798,6 +1174,11 @@ export default function CreateAssignmentModal({
                     </div>
                 </div>
             )}
+            <ReuseAssignmentDialog
+                open={showReuseDialog}
+                onClose={() => setShowReuseDialog(false)}
+                onApply={applyReuseSelection}
+            />
         </div>
     )
 }

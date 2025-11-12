@@ -75,6 +75,21 @@ export interface AssignmentActivityDto {
     hints?: string[];
 }
 
+export interface CloneAssignmentPayload {
+    targetClassroomId: string;
+    activityIds?: string[];
+    title?: string;
+    description?: string;
+    instructions?: string;
+    dueDate?: string;
+    totalPoints?: number;
+    timeLimit?: number;
+    maxAttempts?: number;
+    weight?: number;
+    isPublished?: boolean;
+    customContent?: any;
+}
+
 export interface AssignmentsResponse {
     assignments: Assignment[];
     total: number;
@@ -114,6 +129,12 @@ export const assignmentApi = {
     // Create assignment
     createAssignment: async (classroomId: string, data: CreateAssignmentDto) => {
         const response = await axiosInstance.post(`/private/v1/assignments/classroom/${classroomId}`, data);
+        return response.data;
+    },
+
+    // Clone assignment
+    cloneAssignment: async (assignmentId: string, data: CloneAssignmentPayload) => {
+        const response = await axiosInstance.post(`/private/v1/assignments/${assignmentId}/clone`, data);
         return response.data;
     },
 

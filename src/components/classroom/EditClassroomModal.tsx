@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit } from 'lucide-react';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import * as yup from 'yup';
 import FormField from '../forms/FormField';
 import Button from '../ui/Button';
@@ -70,9 +71,14 @@ const EditClassroomModal: React.FC<EditClassroomModalProps> = ({ isOpen, onClose
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Classroom> }) => updateClassroom(id, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['classrooms'] });
+      queryClient.invalidateQueries({ queryKey: ['classroom-detail', variables.id] });
+      toast.success('Classroom updated successfully');
       onClose();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to update classroom');
     },
   });
 

@@ -233,7 +233,6 @@ const ApiReportPage: React.FC = () => {
             files: [] as any[],
         };
 
-        console.log('🎬 Starting stream for message:', messageToSend);
 
         // Clear any existing streaming timer
         if (streamingTimerRef.current) {
@@ -259,32 +258,24 @@ const ApiReportPage: React.FC = () => {
                         language: selectedLanguage,
                     },
                     (chunk) => {
-                        console.log('🔥 Chunk received in component:', chunk);
-
                         if (chunk.type === 'metadata' && chunk.data?.conversationId) {
-                            console.log('📊 Setting conversation ID:', chunk.data.conversationId);
                             setCurrentConversationId(chunk.data.conversationId);
                             setActiveConversationId(chunk.data.conversationId); // ✅ Also set active conversation ID
                         } else if (chunk.type === 'token' && chunk.content) {
-                            console.log('💬 Token content:', chunk.content);
                             accumulatedResponse.current += chunk.content;
                             // Buffer tokens for batched rendering
                             streamingBufferRef.current += chunk.content;
                         } else if (chunk.type === 'tool' && chunk.tool) {
-                            console.log('🔧 Tool used:', chunk.tool);
                             metadata.toolsUsed.push(chunk.tool);
                             toast(`Using tool: ${chunk.tool}`);
                         } else if (chunk.type === 'chart' && chunk.chart) {
-                            console.log('📊 Chart received:', chunk.chart);
                             metadata.chart = chunk.chart;
                             setStreamingChart(chunk.chart); // Show chart immediately
                             toast.success('📊 Chart generated!');
                         } else if (chunk.type === 'file' && chunk.file) {
-                            console.log('📄 File received:', chunk.file);
                             metadata.files.push(chunk.file);
                             toast.success(`📄 File ready: ${chunk.file.filename}`);
                         } else if (chunk.type === 'complete' && chunk.data) {
-                            console.log('✅ Complete chunk received:', chunk.data);
                             metadata.toolsUsed = chunk.data.toolsUsed || [];
                             metadata.reasoning = chunk.data.reasoning || '';
                             metadata.processingTime = chunk.data.processingTime || Date.now() - startTime;
@@ -308,8 +299,6 @@ const ApiReportPage: React.FC = () => {
                         setIsStreaming(false);
                     },
                     () => {
-                        console.log('🏁 Stream complete callback');
-                        console.log('📊 Accumulated response:', accumulatedResponse.current);
 
                         // Clear streaming timer and flush any remaining buffer
                         if (streamingTimerRef.current) {
@@ -344,7 +333,6 @@ const ApiReportPage: React.FC = () => {
                             files: metadata.files.length > 0 ? metadata.files : undefined, // Save files info
                         };
 
-                        console.log('💾 Saving message to history:', newMessage);
                         setChatHistory((prev) => [newMessage, ...prev]);
                         toast.success('AI response complete!');
 

@@ -148,19 +148,13 @@ const ParentSchedulePage = () => {
     );
 
     if (!weeklyData) {
-      console.log('❌ weeklyData is null/undefined');
       return base;
     }
 
-    console.log('✅ weeklyData received:', weeklyData);
-    console.log('📅 Days count:', weeklyData.days?.length);
-
     weeklyData.days.forEach((day: ParentScheduleDay) => {
       const dayOfWeekKey = day.dayOfWeek;
-      console.log(`📆 Processing day: ${dayOfWeekKey}, sessions: ${day.sessions?.length || 0}`);
 
       if (!WEEKDAYS.some(w => w.key === dayOfWeekKey)) {
-        console.warn(`⚠️ Invalid dayOfWeek: ${dayOfWeekKey}`);
         return;
       }
 
@@ -173,7 +167,6 @@ const ParentSchedulePage = () => {
               sessionStartHour < period.endHour
           );
         const targetPeriod = matchedPeriod || TIME_PERIODS[2]; // Default to evening
-        console.log(`  📌 Session "${session.title}" at ${sessionStartHour}h → ${targetPeriod.label} (${targetPeriod.key})`);
 
         const periodSessions = base[targetPeriod.key]?.[dayOfWeekKey];
         if (periodSessions) {
@@ -181,8 +174,6 @@ const ParentSchedulePage = () => {
         }
       });
     });
-
-    console.log('🎯 Final periodGridData:', base);
     return base;
   }, [weeklyData]);
 

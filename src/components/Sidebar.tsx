@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/interface/enum.interface";
-import { CalendarMonth, CardMembership, Class, FamilyRestroom, Person, RoomOutlined, School } from "@mui/icons-material";
+import { CalendarMonth, CardMembership, Class, FamilyRestroom, MenuBook, Person, RoomOutlined, School } from "@mui/icons-material";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
@@ -36,6 +36,7 @@ const NAV: NavItem[] = [
     { to: "/schedule", label: "Schedule", icon: <CalendarMonth />, roles: [UserRole.ADMIN] },
     { to: "/teacher-schedule", label: "My Schedule", icon: <CalendarMonth />, roles: [UserRole.TEACHER] },
     { to: "/rooms", label: "Room", icon: <RoomOutlined />, roles: [UserRole.ADMIN] },
+    { to: "/vocabulary", label: "Vocabulary", icon: <MenuBook />, roles: [UserRole.ADMIN] },
     { to: "/api-report", label: "API Report", icon: <AssessmentOutlinedIcon />, roles: [UserRole.ADMIN] },
 ];
 

@@ -49,7 +49,6 @@ export const streamAgentChat = async (
   onError?: (error: Error) => void,
   onComplete?: () => void,
 ): Promise<{ abort: () => void }> => {
-  console.log('🚀 Starting stream request:', { message: request.message, context: request.context });
 
   // Get token from localStorage (format: {token: "..."})
   const raw = localStorage.getItem('cms_auth');
@@ -79,8 +78,6 @@ export const streamAgentChat = async (
   }
 
   const url = `${baseURL}/private/v1/agent/chat/stream?${params.toString()}`;
-  console.log('🔗 Request URL:', url);
-  console.log('🔑 Token:', token.substring(0, 20) + '...');
 
   const controller = new AbortController();
 
@@ -94,8 +91,6 @@ export const streamAgentChat = async (
       signal: controller.signal,
     });
 
-    console.log('📡 Response status:', response.status);
-    console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       console.error('❌ HTTP error:', response.status, response.statusText);
@@ -120,13 +115,11 @@ export const streamAgentChat = async (
           const { done, value } = await reader.read();
 
           if (done) {
-            console.log('✅ Stream completed:', chunkCount, 'chunks received');
             if (onComplete) onComplete();
             break;
           }
 
           const text = decoder.decode(value, { stream: true });
-          console.log('📦 Raw chunk received:', text);
           buffer += text;
 
           // Split by double newline (SSE format)
@@ -137,14 +130,11 @@ export const streamAgentChat = async (
             const lines = message.split('\n');
             for (const line of lines) {
               const trimmed = line.trim();
-              console.log('🔍 Processing line:', trimmed);
 
               if (trimmed.startsWith('data: ')) {
                 const data = trimmed.substring(6);
-                console.log('📨 Data extracted:', data);
 
                 if (data === '[DONE]') {
-                  console.log('🏁 Received [DONE] signal');
                   if (onComplete) onComplete();
                   return;
                 }
@@ -152,11 +142,9 @@ export const streamAgentChat = async (
                 try {
                   const chunk = JSON.parse(data);
                   chunkCount++;
-                  console.log(`✨ Parsed chunk #${chunkCount}:`, chunk);
                   onChunk(chunk);
 
                   if (chunk.type === 'complete' || chunk.type === 'error') {
-                    console.log('🏁 Received completion/error chunk');
                     if (onComplete) onComplete();
                     return;
                   }
@@ -177,7 +165,6 @@ export const streamAgentChat = async (
 
     return {
       abort: () => {
-        console.log('⛔ Aborting stream');
         controller.abort();
       },
     };
