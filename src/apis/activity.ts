@@ -1,9 +1,9 @@
 
 import axiosInstance from "../config/axiosConfig";
 import { Activity } from "../interface/activity.interface";
+import { ActivityType, DifficultyLevel } from "../interface/enums";
 import { PageResponseDto } from "../interface/pagination.inerface";
 import { RequestPagingDto } from "../interface/request-paging.interface";
-import { ActivityType, DifficultyLevel } from "../interface/enums";
 
 // Re-export for convenience
 export { ActivityType, DifficultyLevel };

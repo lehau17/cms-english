@@ -1,29 +1,29 @@
-import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  FormLabel,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  Box,
-  Typography,
-  LinearProgress,
-  Alert,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  Grid,
-  Paper,
-} from '@mui/material';
 import { Close } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormLabel,
+  Grid,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
 import {
   ActivityType,
   DifficultyLevel,
@@ -121,7 +121,7 @@ export const AIActivityGeneratorModal: React.FC<AIActivityGeneratorModalProps> =
 
       onActivitiesGenerated(response.activities);
       onClose();
-      
+
       // Reset state
       setCount(5);
       setUserPrompt('');
@@ -191,8 +191,8 @@ export const AIActivityGeneratorModal: React.FC<AIActivityGeneratorModalProps> =
                     lessonDifficulty === DifficultyLevel.BEGINNER || lessonDifficulty === DifficultyLevel.ELEMENTARY
                       ? 'success'
                       : lessonDifficulty === DifficultyLevel.INTERMEDIATE || lessonDifficulty === DifficultyLevel.UPPER_INTERMEDIATE
-                      ? 'warning'
-                      : 'error'
+                        ? 'warning'
+                        : 'error'
                   }
                 />
               </Box>
