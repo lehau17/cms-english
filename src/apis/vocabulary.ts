@@ -133,3 +133,40 @@ export const updateVocabularyTerm = async (
 export const deleteVocabularyTerm = async (termId: string): Promise<void> => {
   await axiosInstance.delete(`/private/v1/admin/vocabulary/terms/${termId}`)
 }
+
+export const suggestVocabularyUnit = async (
+  listId: string,
+): Promise<{ suggestions: Array<{ title: string; description: string }> }> => {
+  const response = await axiosInstance.post(
+    `/private/v1/admin/vocabulary/lists/${listId}/units/suggest`,
+  )
+  return response.data.data
+}
+
+export const suggestVocabularyTerms = async (
+  unitId: string,
+): Promise<{ suggestions: Array<{ word: string; hint: string }> }> => {
+  const response = await axiosInstance.post(
+    `/private/v1/admin/vocabulary/units/${unitId}/terms/suggest`,
+  )
+  return response.data.data
+}
+
+export const autoCompleteVocabularyTerm = async (word: string): Promise<{
+  word: string
+  definition: string
+  translationVi: string
+  pronunciation: string
+  partOfSpeech: string
+  synonyms: string[]
+  antonyms: string[]
+  examples: Array<{ sentence: string; translation: string }>
+  difficulty: string
+  audioUrl?: string
+}> => {
+  const response = await axiosInstance.post(
+    `/private/v1/admin/vocabulary/terms/auto-complete`,
+    { word },
+  )
+  return response.data.data
+}

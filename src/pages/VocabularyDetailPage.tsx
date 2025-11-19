@@ -6,6 +6,9 @@ import {
   getVocabularyListById,
   getVocabularyUnitById,
   getVocabularyUnits,
+  suggestVocabularyUnit,
+  suggestVocabularyTerms,
+  autoCompleteVocabularyTerm,
   updateVocabularyTerm,
   updateVocabularyUnit,
 } from '@/apis/vocabulary'
@@ -29,11 +32,13 @@ import {
   Edit,
   Layers,
   Plus,
+  Sparkles,
   Trash2,
 } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import TermModalWithAI from '@/components/vocabulary/TermModalWithAI'
 
 const difficultyOptions = Object.values(DifficultyLevel).map((value) => ({
   value,
@@ -177,11 +182,34 @@ const VocabularyDetailPage: React.FC = () => {
   const [selectedUnit, setSelectedUnit] = useState<VocabularyUnit | null>(null)
   const [isUnitDeleteOpen, setIsUnitDeleteOpen] = useState(false)
 
+  // AI suggestions state
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false)
+  const [aiSuggestions, setAiSuggestions] = useState<
+    Array<{ title: string; description: string }>
+  >([])
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null)
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+
   const [termModalMode, setTermModalMode] = useState<'create' | 'edit'>('create')
   const [isTermModalOpen, setIsTermModalOpen] = useState(false)
   const [termForm, setTermForm] = useState<TermFormState>(defaultTermForm)
   const [selectedTerm, setSelectedTerm] = useState<VocabularyTerm | null>(null)
   const [isTermDeleteOpen, setIsTermDeleteOpen] = useState(false)
+
+  // AI term suggestions state
+  const [termTabMode, setTermTabMode] = useState<'ai-generate' | 'manual-input'>(
+    'ai-generate',
+  )
+  const [showTermSuggestions, setShowTermSuggestions] = useState(false)
+  const [termSuggestions, setTermSuggestions] = useState<Array<{ word: string; hint: string }>>(
+    [],
+  )
+  const [selectedTermSuggestionIndex, setSelectedTermSuggestionIndex] = useState<number | null>(
+    null,
+  )
+  const [isLoadingTermSuggestions, setIsLoadingTermSuggestions] = useState(false)
+  const [isAutoCompleting, setIsAutoCompleting] = useState(false)
+  const [manualWord, setManualWord] = useState('')
 
   const unitCreateMutation = useMutation({
     mutationFn: (payload: CreateVocabularyUnitInput) => createVocabularyUnit(listId!, payload),
@@ -266,7 +294,40 @@ const VocabularyDetailPage: React.FC = () => {
   const handleOpenCreateUnit = () => {
     setUnitModalMode('create')
     setUnitForm(defaultUnitForm)
+    setShowAiSuggestions(false)
+    setAiSuggestions([])
+    setSelectedSuggestionIndex(null)
     setIsUnitModalOpen(true)
+  }
+
+  const handleGetAiSuggestions = async () => {
+    if (!listId) return
+
+    setIsLoadingSuggestions(true)
+    setShowAiSuggestions(false)
+
+    try {
+      const result = await suggestVocabularyUnit(listId)
+      setAiSuggestions(result.suggestions || [])
+      setShowAiSuggestions(true)
+      setSelectedSuggestionIndex(null)
+      toast.success('Đã tạo gợi ý từ AI')
+    } catch (error) {
+      toast.error('Không thể lấy gợi ý từ AI')
+      console.error('AI suggestion error:', error)
+    } finally {
+      setIsLoadingSuggestions(false)
+    }
+  }
+
+  const handleSelectSuggestion = (index: number) => {
+    setSelectedSuggestionIndex(index)
+    const suggestion = aiSuggestions[index]
+    setUnitForm({
+      title: suggestion.title,
+      description: suggestion.description,
+      orderIndex: unitForm.orderIndex,
+    })
   }
 
   const handleOpenEditUnit = (unit: VocabularyUnit) => {
@@ -317,7 +378,99 @@ const VocabularyDetailPage: React.FC = () => {
     setSelectedTerm(null)
     setTermForm({ ...defaultTermForm })
     setExpandedUnitId(unitId)
+    setTermTabMode('ai-generate')
+    setShowTermSuggestions(false)
+    setTermSuggestions([])
+    setSelectedTermSuggestionIndex(null)
+    setManualWord('')
     setIsTermModalOpen(true)
+  }
+
+  const handleGetTermSuggestions = async () => {
+    if (!expandedUnitId) return
+
+    setIsLoadingTermSuggestions(true)
+    setShowTermSuggestions(false)
+
+    try {
+      const result = await suggestVocabularyTerms(expandedUnitId)
+      setTermSuggestions(result.suggestions || [])
+      setShowTermSuggestions(true)
+      setSelectedTermSuggestionIndex(null)
+      toast.success('Đã tạo gợi ý từ vựng từ AI')
+    } catch (error) {
+      toast.error('Không thể lấy gợi ý từ AI')
+      console.error('AI term suggestion error:', error)
+    } finally {
+      setIsLoadingTermSuggestions(false)
+    }
+  }
+
+  const handleSelectTermSuggestion = async (index: number) => {
+    setSelectedTermSuggestionIndex(index)
+    const suggestion = termSuggestions[index]
+
+    // Auto-complete full data for selected word
+    setIsAutoCompleting(true)
+    try {
+      const data = await autoCompleteVocabularyTerm(suggestion.word)
+      setTermForm({
+        word: data.word,
+        definition: data.definition,
+        translationVi: data.translationVi,
+        pronunciation: data.pronunciation,
+        partOfSpeech: data.partOfSpeech,
+        audioUrl: data.audioUrl || '',
+        imageUrl: '',
+        synonyms: data.synonyms.join(', '),
+        antonyms: data.antonyms.join(', '),
+        examples: data.examples
+          .map((ex) => `${ex.sentence} | ${ex.translation}`)
+          .join('\n'),
+        difficulty: data.difficulty as any,
+        orderIndex: termForm.orderIndex,
+      })
+      toast.success('Đã điền dữ liệu từ AI')
+    } catch (error) {
+      toast.error('Không thể lấy dữ liệu từ AI')
+      console.error('Auto-complete error:', error)
+    } finally {
+      setIsAutoCompleting(false)
+    }
+  }
+
+  const handleManualAutoComplete = async () => {
+    if (!manualWord.trim()) {
+      toast.error('Vui lòng nhập từ vựng')
+      return
+    }
+
+    setIsAutoCompleting(true)
+    try {
+      const data = await autoCompleteVocabularyTerm(manualWord.trim())
+      setTermForm({
+        word: data.word,
+        definition: data.definition,
+        translationVi: data.translationVi,
+        pronunciation: data.pronunciation,
+        partOfSpeech: data.partOfSpeech,
+        audioUrl: data.audioUrl || '',
+        imageUrl: '',
+        synonyms: data.synonyms.join(', '),
+        antonyms: data.antonyms.join(', '),
+        examples: data.examples
+          .map((ex) => `${ex.sentence} | ${ex.translation}`)
+          .join('\n'),
+        difficulty: data.difficulty as any,
+        orderIndex: termForm.orderIndex,
+      })
+      toast.success('Đã điền dữ liệu từ AI')
+    } catch (error) {
+      toast.error('Không thể lấy dữ liệu từ AI')
+      console.error('Auto-complete error:', error)
+    } finally {
+      setIsAutoCompleting(false)
+    }
   }
 
   const parseArrayField = (value?: string) => {
@@ -642,6 +795,62 @@ const VocabularyDetailPage: React.FC = () => {
         onClose={() => setIsUnitModalOpen(false)}
       >
         <form className="space-y-4" onSubmit={handleSubmitUnit}>
+          {unitModalMode === 'create' && (
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={handleGetAiSuggestions}
+                disabled={isLoadingSuggestions}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2.5 text-sm font-semibold text-white shadow hover:from-purple-600 hover:to-pink-600 disabled:opacity-60"
+              >
+                <Sparkles className="h-4 w-4" />
+                {isLoadingSuggestions ? 'Đang tạo gợi ý...' : 'Gợi ý từ AI ✨'}
+              </button>
+            </div>
+          )}
+
+          {showAiSuggestions && aiSuggestions.length > 0 && (
+            <div className="space-y-3 rounded-xl border border-purple-200 bg-purple-50 p-4">
+              <p className="text-sm font-semibold text-purple-900">
+                Chọn một trong 3 gợi ý từ AI:
+              </p>
+              <div className="space-y-2">
+                {aiSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleSelectSuggestion(index)}
+                    className={`w-full rounded-lg border-2 p-3 text-left transition ${
+                      selectedSuggestionIndex === index
+                        ? 'border-purple-500 bg-purple-100'
+                        : 'border-purple-200 bg-white hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${
+                          selectedSuggestionIndex === index
+                            ? 'bg-purple-500 text-white'
+                            : 'bg-purple-200 text-purple-600'
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {suggestion.title}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                          {suggestion.description}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Tiêu đề *</label>
             <input
@@ -702,191 +911,28 @@ const VocabularyDetailPage: React.FC = () => {
         </form>
       </Modal>
 
-      <Modal
+      <TermModalWithAI
         open={isTermModalOpen}
-        title={termModalMode === 'create' ? 'Thêm từ vựng' : 'Cập nhật từ vựng'}
+        mode={termModalMode}
+        termForm={termForm}
+        setTermForm={setTermForm}
         onClose={() => setIsTermModalOpen(false)}
-      >
-        <form className="space-y-4" onSubmit={handleSubmitTerm}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Từ vựng *</label>
-              <input
-                value={termForm.word}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, word: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Từ loại</label>
-              <input
-                value={termForm.partOfSpeech || ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, partOfSpeech: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Định nghĩa *</label>
-            <textarea
-              value={termForm.definition}
-              onChange={(event) =>
-                setTermForm((prev) => ({ ...prev, definition: event.target.value }))
-              }
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              rows={3}
-              required
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Dịch nghĩa</label>
-              <input
-                value={termForm.translationVi || ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, translationVi: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Phiên âm</label>
-              <input
-                value={termForm.pronunciation || ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, pronunciation: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Audio URL</label>
-              <input
-                value={termForm.audioUrl || ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, audioUrl: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Image URL</label>
-              <input
-                value={termForm.imageUrl || ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, imageUrl: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Ví dụ (mỗi dòng: câu | dịch)</label>
-            <textarea
-              value={termForm.examples || ''}
-              onChange={(event) =>
-                setTermForm((prev) => ({ ...prev, examples: event.target.value }))
-              }
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Từ đồng nghĩa (phân tách bằng dấu phẩy)</label>
-              <input
-                value={termForm.synonyms || ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, synonyms: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Từ trái nghĩa (phân tách bằng dấu phẩy)</label>
-              <input
-                value={termForm.antonyms || ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({ ...prev, antonyms: event.target.value }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Độ khó</label>
-              <select
-                value={termForm.difficulty}
-                onChange={(event) =>
-                  setTermForm((prev) => ({
-                    ...prev,
-                    difficulty: event.target.value as DifficultyLevel,
-                  }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              >
-                {difficultyOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Thứ tự hiển thị</label>
-              <input
-                type="number"
-                value={termForm.orderIndex ?? ''}
-                onChange={(event) =>
-                  setTermForm((prev) => ({
-                    ...prev,
-                    orderIndex: event.target.value ? Number(event.target.value) : undefined,
-                  }))
-                }
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                min={0}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setIsTermModalOpen(false)}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={termCreateMutation.isPending || termUpdateMutation.isPending}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-60"
-            >
-              {termModalMode === 'create'
-                ? termCreateMutation.isPending
-                  ? 'Đang thêm...'
-                  : 'Thêm từ'
-                : termUpdateMutation.isPending
-                ? 'Đang lưu...'
-                : 'Lưu thay đổi'}
-            </button>
-          </div>
-        </form>
-      </Modal>
+        onSubmit={handleSubmitTerm}
+        isPending={termCreateMutation.isPending || termUpdateMutation.isPending}
+        difficultyOptions={difficultyOptions}
+        termTabMode={termTabMode}
+        setTermTabMode={setTermTabMode}
+        showTermSuggestions={showTermSuggestions}
+        termSuggestions={termSuggestions}
+        selectedTermSuggestionIndex={selectedTermSuggestionIndex}
+        isLoadingTermSuggestions={isLoadingTermSuggestions}
+        isAutoCompleting={isAutoCompleting}
+        manualWord={manualWord}
+        setManualWord={setManualWord}
+        onGetTermSuggestions={handleGetTermSuggestions}
+        onSelectTermSuggestion={handleSelectTermSuggestion}
+        onManualAutoComplete={handleManualAutoComplete}
+      />
 
       <ConfirmDialog
         open={isUnitDeleteOpen}
