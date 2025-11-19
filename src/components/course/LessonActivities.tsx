@@ -182,7 +182,7 @@ function UploadField({
 const defaultContentByType = (type: ActivityType) => {
     switch (type) {
         case ActivityType.QUIZ:
-            return { question: "", options: ["", ""], correctIndex: 0, explanation: "" };
+            return { questions: [{ question: "", options: ["", ""], correctIndex: 0, explanation: "" }] };
         case ActivityType.VOCAB:
             return {
                 items: [
@@ -203,11 +203,11 @@ const defaultContentByType = (type: ActivityType) => {
         case ActivityType.MINI_GAME:
             return { target: "", pool: [""], rounds: 3 };
         case ActivityType.READING:
-            return { passage: "", question: "", options: ["", ""], correctIndex: 0 };
+            return { passage: "", questions: [{ question: "", options: ["", ""], correctIndex: 0 }] };
         case ActivityType.WRITING:
             return { prompt: "", minWords: 40, rubric: [""] };
         case ActivityType.GRAMMAR:
-            return { rule: "", question: "", options: ["", ""], correctIndex: 0 };
+            return { rule: "", exercises: [{ question: "", options: ["", ""], correctIndex: 0 }] };
         case ActivityType.FLASHCARD:
             return { cards: [{ front: "", back: "", imageUrl: "" }] };
         case ActivityType.CONVERSATION:
@@ -363,8 +363,8 @@ function StringArrayField({
                             <input
                                 {...register(`${name}.${i}` as const)}
                                 className={`w-full px-3 py-2 text-sm border rounded focus:ring-1 transition-colors ${fieldError
-                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                                     }`}
                                 placeholder={placeholder}
                             />
@@ -669,8 +669,11 @@ function ActivityContentFields({
         case ActivityType.QUIZ:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Question *" />
-                    <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} showExplanation />
+                    <ListeningQuestionsEditor
+                        basePath={`${basePath}.content.questions`}
+                        control={control}
+                        register={register}
+                    />
                 </>,
                 "Quiz"
             );
@@ -774,9 +777,15 @@ function ActivityContentFields({
         case ActivityType.READING:
             return section(
                 <>
-                    <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" rows={4} placeholder="Passage *" />
-                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Question *" />
-                    <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
+                    <div className="mb-4">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Passage *</label>
+                        <textarea {...register(`${basePath}.content.passage` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" rows={4} placeholder="Reading passage *" />
+                    </div>
+                    <ListeningQuestionsEditor
+                        basePath={`${basePath}.content.questions`}
+                        control={control}
+                        register={register}
+                    />
                 </>,
                 "Reading"
             );
@@ -809,9 +818,15 @@ function ActivityContentFields({
         case ActivityType.GRAMMAR:
             return section(
                 <>
-                    <input {...register(`${basePath}.content.rule` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Rule *" />
-                    <input {...register(`${basePath}.content.question` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Question *" />
-                    <OptionsEditor basePath={`${basePath}.content`} control={control} register={register} />
+                    <div className="mb-4">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Grammar Rule *</label>
+                        <input {...register(`${basePath}.content.rule` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Grammar rule *" />
+                    </div>
+                    <ListeningQuestionsEditor
+                        basePath={`${basePath}.content.exercises`}
+                        control={control}
+                        register={register}
+                    />
                 </>,
                 "Grammar"
             );

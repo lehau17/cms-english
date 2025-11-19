@@ -165,6 +165,7 @@ const EditCoursePage: React.FC = () => {
 
     const editMutation = useMutation({
         mutationFn: (data: EditCourseFormValues) => {
+            // Sanitize activities content before submit (similar to CreateCoursePage)
             const courseData = {
                 ...data,
                 lessons: data.lessons?.map(lesson => ({
@@ -174,6 +175,55 @@ const EditCoursePage: React.FC = () => {
                             ? lesson.objectives.split('\n').filter((obj: string) => obj.trim())
                             : lesson.objectives)
                         : [],
+                    activities: (lesson.activities || []).map((act) => {
+                        const next = { ...act } as any;
+                        const content = next.content ?? {};
+
+                        // Fill Blank: support [____] placeholders and [answer] extraction
+                        if (next.type === 'fill_blank' || next.type === 'FILL_BLANK') {
+                            const passage: string = content.passage || '';
+                            // Case 1: [answer] → extract answers and clean passage
+                            if (/\[[^_\]]+\]/.test(passage)) {
+                                const answers: string[] = [];
+                                const clean = passage.replace(/\[([^_\]]+)\]/g, (_m: string, g1: string) => {
+                                    answers.push(g1);
+                                    return g1;
+                                });
+                                next.content = {
+                                    ...content,
+                                    passage: clean,
+                                    blanks: answers,
+                                };
+                            } else {
+                                // Case 2: [____] placeholders → ensure blanks length
+                                const count = (passage.match(/\[_{2,}\]/g) || []).length;
+                                const blanks: string[] = Array.isArray(content.blanks) ? [...content.blanks] : [];
+                                if (count > 0 && blanks.length !== count) {
+                                    const resized = Array.from({ length: count }, (_: unknown, i: number) => blanks[i] || '');
+                                    next.content = { ...content, blanks: resized };
+                                }
+                            }
+                        }
+
+                        // Matching: map leftItems/rightItems → pairs if present
+                        if (next.type === 'matching' || next.type === 'MATCHING') {
+                            const left: string[] | undefined = (content as any).leftItems;
+                            const right: string[] | undefined = (content as any).rightItems;
+                            if (Array.isArray(left) && Array.isArray(right)) {
+                                const len = Math.min(left.length, right.length);
+                                const pairs = Array.from({ length: len }, (_: unknown, i: number) => ({ left: left[i], right: right[i] }));
+                                const { leftItems, rightItems, ...rest } = content as any;
+                                next.content = { ...rest, pairs };
+                            }
+                        }
+
+                        // Dictation: default minWords
+                        if (next.type === 'dictation' || next.type === 'DICTATION') {
+                            next.content = { ...content, minWords: typeof content.minWords === 'number' ? content.minWords : 0 };
+                        }
+
+                        return next;
+                    }),
                 })),
             };
             return updateCourse(id as string, courseData as Partial<Course>);
