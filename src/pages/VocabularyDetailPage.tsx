@@ -1,4 +1,6 @@
 import {
+  autoCompleteVocabularyTerm,
+  bulkGenerateVocabularyTerms,
   createVocabularyTerm,
   createVocabularyUnit,
   deleteVocabularyTerm,
@@ -6,12 +8,13 @@ import {
   getVocabularyListById,
   getVocabularyUnitById,
   getVocabularyUnits,
-  suggestVocabularyUnit,
   suggestVocabularyTerms,
-  autoCompleteVocabularyTerm,
+  suggestVocabularyUnit,
   updateVocabularyTerm,
   updateVocabularyUnit,
+  uploadImage,
 } from '@/apis/vocabulary'
+import TermModalWithAI from '@/components/vocabulary/TermModalWithAI'
 import { DifficultyLevel } from '@/interface/enums'
 import {
   CreateVocabularyTermInput,
@@ -36,9 +39,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import TermModalWithAI from '@/components/vocabulary/TermModalWithAI'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 const difficultyOptions = Object.values(DifficultyLevel).map((value) => ({
   value,
@@ -473,6 +475,37 @@ const VocabularyDetailPage: React.FC = () => {
     }
   }
 
+  const handleBulkGenerate = async (count: number) => {
+    if (!selectedUnitId) {
+      toast.error('Vui lòng chọn unit trước')
+      return
+    }
+
+    setIsLoadingTermSuggestions(true)
+    try {
+      const result = await bulkGenerateVocabularyTerms(selectedUnitId, count)
+      toast.success(`✅ Đã tạo ${result.created} từ vựng!`)
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-unit-detail', selectedUnitId] })
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-units', id] })
+      setTermModal(false)
+    } catch (error) {
+      toast.error('Không thể tạo từ vựng hàng loạt')
+      console.error('Bulk generate error:', error)
+    } finally {
+      setIsLoadingTermSuggestions(false)
+    }
+  }
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      const url = await uploadImage(file)
+      setTermForm((prev) => ({ ...prev, imageUrl: url }))
+    } catch (error) {
+      console.error('Upload error:', error)
+      throw error
+    }
+  }
+
   const parseArrayField = (value?: string) => {
     if (!value) return undefined
     const items = value
@@ -820,19 +853,17 @@ const VocabularyDetailPage: React.FC = () => {
                     key={index}
                     type="button"
                     onClick={() => handleSelectSuggestion(index)}
-                    className={`w-full rounded-lg border-2 p-3 text-left transition ${
-                      selectedSuggestionIndex === index
+                    className={`w-full rounded-lg border-2 p-3 text-left transition ${selectedSuggestionIndex === index
                         ? 'border-purple-500 bg-purple-100'
                         : 'border-purple-200 bg-white hover:border-purple-300'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${
-                          selectedSuggestionIndex === index
+                        className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${selectedSuggestionIndex === index
                             ? 'bg-purple-500 text-white'
                             : 'bg-purple-200 text-purple-600'
-                        }`}
+                          }`}
                       >
                         {index + 1}
                       </div>
@@ -904,8 +935,8 @@ const VocabularyDetailPage: React.FC = () => {
                   ? 'Đang tạo...'
                   : 'Tạo unit'
                 : unitUpdateMutation.isPending
-                ? 'Đang lưu...'
-                : 'Lưu thay đổi'}
+                  ? 'Đang lưu...'
+                  : 'Lưu thay đổi'}
             </button>
           </div>
         </form>
@@ -932,6 +963,8 @@ const VocabularyDetailPage: React.FC = () => {
         onGetTermSuggestions={handleGetTermSuggestions}
         onSelectTermSuggestion={handleSelectTermSuggestion}
         onManualAutoComplete={handleManualAutoComplete}
+        onBulkGenerate={handleBulkGenerate}
+        onImageUpload={handleImageUpload}
       />
 
       <ConfirmDialog

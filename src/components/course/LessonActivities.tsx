@@ -2,7 +2,7 @@ import { uploadFile } from "@/apis/upload";
 import { CreateCourseDto } from "@/interface/course.interface";
 import { ActivityType, DifficultyLevel } from "@/interface/enums";
 import { useMutation } from "@tanstack/react-query";
-import { Brain, Image, Music, Plus, Trash2, X } from "lucide-react";
+import { Brain, Image, Music, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
     type Control,
@@ -14,6 +14,8 @@ import {
     type UseFormWatch
 } from "react-hook-form";
 import toast from "react-hot-toast";
+import { AIActivityGeneratorModal } from "./AIActivityGeneratorModal";
+import type { Activity } from "@/interface/activity.interface";
 const asPath = (s: string) => s as Path<CreateCourseDto>;
 
 
@@ -1032,6 +1034,33 @@ const LessonActivities = ({
         name: `lessons.${lessonIndex}.activities` as const,
     });
 
+    const [showAIModal, setShowAIModal] = useState(false);
+
+    // Get course and lesson context from form
+    const courseTitle = watch('title') || '';
+    const courseDescription = watch('description');
+    const lessonTitle = watch(`lessons.${lessonIndex}.title`) || '';
+    const lessonDescription = watch(`lessons.${lessonIndex}.description`);
+    const lessonDifficulty = watch(`lessons.${lessonIndex}.difficulty`);
+
+    const handleActivitiesGenerated = (generatedActivities: Activity[]) => {
+        // Append all generated activities to the activities field array
+        generatedActivities.forEach((activity) => {
+            append({
+                type: activity.type as ActivityType,
+                orderNo: fields.length + 1,
+                title: activity.title,
+                difficulty: activity.difficulty as DifficultyLevel,
+                points: activity.points || 10,
+                instructions: activity.instructions,
+                passingScore: activity.passingScore,
+                content: activity.content,
+            } as any);
+        });
+
+        toast.success(`Đã thêm ${generatedActivities.length} hoạt động từ AI!`);
+    };
+
     return (
         <div className="mt-6 pl-6 border-l-2 border-gray-200">
             <h4 className="text-lg font-semibold text-gray-800 mb-4">Activities</h4>
@@ -1126,23 +1155,44 @@ const LessonActivities = ({
                 );
             })}
 
-            <button
-                type="button"
-                onClick={() =>
-                    append({
-                        type: ActivityType.QUIZ,
-                        orderNo: fields.length + 1,
-                        title: "",
-                        difficulty: DifficultyLevel.BEGINNER,
-                        points: 10,
-                        content: defaultContentByType(ActivityType.QUIZ),
-                    } as any)
-                }
-                className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded font-medium transition-colors flex items-center border border-gray-300 text-sm hover:border-gray-400"
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Activity
-            </button>
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    onClick={() => setShowAIModal(true)}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded font-medium transition-all flex items-center border-none text-sm shadow-sm"
+                >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    AI Generate Activities
+                </button>
+                <button
+                    type="button"
+                    onClick={() =>
+                        append({
+                            type: ActivityType.QUIZ,
+                            orderNo: fields.length + 1,
+                            title: "",
+                            difficulty: DifficultyLevel.BEGINNER,
+                            points: 10,
+                            content: defaultContentByType(ActivityType.QUIZ),
+                        } as any)
+                    }
+                    className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded font-medium transition-colors flex items-center border border-gray-300 text-sm hover:border-gray-400"
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Activity
+                </button>
+            </div>
+
+            <AIActivityGeneratorModal
+                open={showAIModal}
+                onClose={() => setShowAIModal(false)}
+                courseTitle={courseTitle}
+                courseDescription={courseDescription}
+                lessonTitle={lessonTitle}
+                lessonDescription={lessonDescription}
+                lessonDifficulty={lessonDifficulty}
+                onActivitiesGenerated={handleActivitiesGenerated}
+            />
         </div>
     );
 };

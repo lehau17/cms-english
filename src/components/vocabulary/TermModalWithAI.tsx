@@ -41,6 +41,8 @@ interface TermModalWithAIProps {
   onGetTermSuggestions: () => void
   onSelectTermSuggestion: (index: number) => void
   onManualAutoComplete: () => void
+  onBulkGenerate: (count: number) => void
+  onImageUpload: (file: File) => Promise<void>
 }
 
 const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
@@ -64,8 +66,45 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
   onGetTermSuggestions,
   onSelectTermSuggestion,
   onManualAutoComplete,
+  onBulkGenerate,
+  onImageUpload,
 }) => {
+  const [bulkCount, setBulkCount] = useState(3)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const imageInputRef = React.useRef<HTMLInputElement>(null)
+
   if (!open) return null
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước ảnh không được vượt quá 5MB')
+      return
+    }
+
+    setIsUploadingImage(true)
+    try {
+      await onImageUpload(file)
+      toast.success('Upload ảnh thành công!')
+    } catch (error) {
+      console.error('Image upload error:', error)
+      toast.error('Upload ảnh thất bại')
+    } finally {
+      setIsUploadingImage(false)
+      if (imageInputRef.current) {
+        imageInputRef.current.value = ''
+      }
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
@@ -89,11 +128,10 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                 <button
                   type="button"
                   onClick={() => setTermTabMode('ai-generate')}
-                  className={`flex-1 rounded-t-lg px-4 py-2 text-sm font-semibold transition ${
-                    termTabMode === 'ai-generate'
+                  className={`flex-1 rounded-t-lg px-4 py-2 text-sm font-semibold transition ${termTabMode === 'ai-generate'
                       ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   <Sparkles className="mr-2 inline h-4 w-4" />
                   AI Tạo Từ Mới
@@ -101,11 +139,10 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                 <button
                   type="button"
                   onClick={() => setTermTabMode('manual-input')}
-                  className={`flex-1 rounded-t-lg px-4 py-2 text-sm font-semibold transition ${
-                    termTabMode === 'manual-input'
+                  className={`flex-1 rounded-t-lg px-4 py-2 text-sm font-semibold transition ${termTabMode === 'manual-input'
                       ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   Tự Nhập Từ
                 </button>
@@ -116,6 +153,47 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
           <form className="space-y-4 px-6 py-5" onSubmit={onSubmit}>
             {mode === 'create' && termTabMode === 'ai-generate' && (
               <div className="space-y-4">
+                {/* Bulk Generation UI */}
+                <div className="rounded-xl border-2 border-green-200 bg-green-50 p-4">
+                  <p className="mb-3 text-sm font-semibold text-green-900">
+                    🚀 Tạo nhiều từ vựng cùng lúc (AI tự động gen tất cả):
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-green-800">Số lượng:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={bulkCount}
+                      onChange={(e) => setBulkCount(Math.min(10, Math.max(1, Number(e.target.value))))}
+                      className="w-20 rounded-lg border border-green-300 px-3 py-1.5 text-center text-sm font-semibold focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onBulkGenerate(bulkCount)}
+                      disabled={isLoadingTermSuggestions}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow hover:from-green-600 hover:to-emerald-600 disabled:opacity-60"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {isLoadingTermSuggestions ? 'Đang tạo...' : `AI Tạo ${bulkCount} Từ Cùng Lúc`}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-green-700">
+                    💡 AI sẽ tạo {bulkCount} từ vựng hoàn chỉnh (định nghĩa, dịch, phát âm, audio...). Có thể mất 30s-2 phút tuỳ số lượng.
+                  </p>
+                </div>
+
+                {/* OR Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-white px-4 text-slate-500 font-medium">hoặc tạo từng từ một</span>
+                  </div>
+                </div>
+
+                {/* Single Term Suggestions */}
                 <button
                   type="button"
                   onClick={onGetTermSuggestions}
@@ -138,19 +216,17 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                           type="button"
                           onClick={() => onSelectTermSuggestion(index)}
                           disabled={isAutoCompleting}
-                          className={`w-full rounded-lg border-2 p-3 text-left transition disabled:opacity-50 ${
-                            selectedTermSuggestionIndex === index
+                          className={`w-full rounded-lg border-2 p-3 text-left transition disabled:opacity-50 ${selectedTermSuggestionIndex === index
                               ? 'border-purple-500 bg-purple-100'
                               : 'border-purple-200 bg-white hover:border-purple-300'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start gap-3">
                             <div
-                              className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                                selectedTermSuggestionIndex === index
+                              className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${selectedTermSuggestionIndex === index
                                   ? 'bg-purple-500 text-white'
                                   : 'bg-purple-200 text-purple-600'
-                              }`}
+                                }`}
                             >
                               {index + 1}
                             </div>
@@ -270,14 +346,39 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
-                  Image URL <span className="text-xs text-slate-500">(có thể upload)</span>
+                  Image URL <span className="text-xs text-slate-500">(hoặc upload từ máy)</span>
                 </label>
-                <input
-                  value={termForm.imageUrl || ''}
-                  onChange={(e) => setTermForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder="https://..."
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+                <div className="flex gap-2">
+                  <input
+                    value={termForm.imageUrl || ''}
+                    onChange={(e) => setTermForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                    placeholder="https://..."
+                    className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  />
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {isUploadingImage ? 'Đang tải...' : 'Upload'}
+                  </button>
+                </div>
+                {termForm.imageUrl && (
+                  <img
+                    src={termForm.imageUrl}
+                    alt="Preview"
+                    className="mt-2 h-20 w-20 rounded-lg border border-slate-200 object-cover"
+                  />
+                )}
               </div>
             </div>
 
@@ -371,8 +472,8 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                     ? 'Đang thêm...'
                     : 'Thêm từ'
                   : isPending
-                  ? 'Đang lưu...'
-                  : 'Lưu thay đổi'}
+                    ? 'Đang lưu...'
+                    : 'Lưu thay đổi'}
               </button>
             </div>
           </form>

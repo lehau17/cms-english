@@ -3,6 +3,26 @@ import axiosInstance from "../config/axiosConfig";
 import { Activity } from "../interface/activity.interface";
 import { PageResponseDto } from "../interface/pagination.inerface";
 import { RequestPagingDto } from "../interface/request-paging.interface";
+import { ActivityType, DifficultyLevel } from "../interface/enums";
+
+// Re-export for convenience
+export { ActivityType, DifficultyLevel };
+
+// AI Activity Generation Types
+export interface GenerateActivitiesRequest {
+  courseTitle: string;
+  courseDescription?: string;
+  lessonTitle: string;
+  lessonDescription?: string;
+  userPrompt?: string;
+  count: number;
+  activityTypes?: ActivityType[];
+  difficulty?: DifficultyLevel;
+}
+
+export interface GenerateActivitiesResponse {
+  activities: Activity[];
+}
 
 export const getActivities = async (params: RequestPagingDto): Promise<PageResponseDto<Activity>> => {
   const response = await axiosInstance.get<PageResponseDto<Activity>>("/private/v1/activities", { params });
@@ -26,4 +46,14 @@ export const updateActivity = async (id: string, data: any): Promise<Activity> =
 
 export const deleteActivity = async (id: string): Promise<void> => {
   await axiosInstance.delete(`/private/v1/activities/${id}`);
+};
+
+export const generateActivitiesWithAI = async (
+  data: GenerateActivitiesRequest
+): Promise<GenerateActivitiesResponse> => {
+  const response = await axiosInstance.post<GenerateActivitiesResponse>(
+    "/private/v1/admin/activities/ai-generate",
+    data
+  );
+  return response.data;
 };

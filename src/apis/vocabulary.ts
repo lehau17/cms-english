@@ -2,16 +2,16 @@ import axiosInstance from '@/config/axiosConfig'
 import { BaseRequest } from '@/interface/base-request.interface'
 import { PageResponseDto } from '@/interface/pagination.inerface'
 import {
-  CreateVocabularyListInput,
-  CreateVocabularyTermInput,
-  CreateVocabularyUnitInput,
-  UpdateVocabularyListInput,
-  UpdateVocabularyTermInput,
-  UpdateVocabularyUnitInput,
-  VocabularyList,
-  VocabularyTerm,
-  VocabularyUnit,
-  VocabularyUnitWithTerms,
+    CreateVocabularyListInput,
+    CreateVocabularyTermInput,
+    CreateVocabularyUnitInput,
+    UpdateVocabularyListInput,
+    UpdateVocabularyTermInput,
+    UpdateVocabularyUnitInput,
+    VocabularyList,
+    VocabularyTerm,
+    VocabularyUnit,
+    VocabularyUnitWithTerms,
 } from '@/interface/vocabulary.interface'
 
 export const getVocabularyLists = async (
@@ -169,4 +169,30 @@ export const autoCompleteVocabularyTerm = async (word: string): Promise<{
     { word },
   )
   return response.data.data
+}
+
+export const bulkGenerateVocabularyTerms = async (
+  unitId: string,
+  count: number,
+): Promise<{
+  created: number
+  terms: VocabularyTerm[]
+}> => {
+  const response = await axiosInstance.post(
+    `/private/v1/admin/vocabulary/units/${unitId}/terms/bulk-generate`,
+    { count },
+  )
+  return response.data.data
+}
+
+export const uploadImage = async (file: File): Promise<string> => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await axiosInstance.post('/public/v1/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return response.data.url
 }
