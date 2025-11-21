@@ -1,4 +1,7 @@
+import { ApiResponse } from "@/interface/base-response.interface";
 import axiosInstance from "../config/axiosConfig";
+import { CreateBroadcastNotificationDto, GetNotificationsQuery, Notification } from "../interface/notification.interface";
+import { PageResponseDto } from "../interface/pagination.inerface";
 
 export interface CreateClassroomAnnouncementPayload {
     classroomId: string;
@@ -25,4 +28,14 @@ export const createClassroomAnnouncement = async (
         data: CreateClassroomAnnouncementResponse;
     }>("/private/v1/notifications/classroom-announcement", payload);
     return response.data.data;
+};
+
+export const getNotifications = async (params: GetNotificationsQuery): Promise<PageResponseDto<Notification>> => {
+    const response = await axiosInstance.get<PageResponseDto<Notification>>("/private/v1/notifications", { params });
+    return response.data;
+};
+
+export const broadcastNotification = async (data: CreateBroadcastNotificationDto): Promise<ApiResponse<{ count: number }>> => {
+    const response = await axiosInstance.post<ApiResponse<{ count: number }>>("/private/v1/notifications/broadcast", data);
+    return response.data;
 };

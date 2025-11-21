@@ -4,6 +4,7 @@ import RecentStudentsWidget from "@/components/dashboard/RecentStudentsWidget";
 import RegistrationTrendWidget from "@/components/dashboard/RegistrationTrendWidget";
 import StatsCardsWidget from "@/components/dashboard/StatsCardsWidget";
 import UpcomingClassesWidget from "@/components/dashboard/UpcomingClassesWidget";
+import AIAnalyticsDashboardWidget from "@/components/dashboard/AIAnalyticsDashboardWidget";
 import { Box, Container, Grid, Typography } from "@mui/material";
 import * as React from "react";
 
@@ -35,8 +36,11 @@ const DashboardPage: React.FC = () => {
                     <CourseDistributionWidget />
                 </Grid>
 
-                {/* Row 3: Notifications */}
-                <Grid item xs={12}>
+                {/* Row 3: AI Analytics & Notifications */}
+                <Grid item xs={12} lg={6}>
+                    <AIAnalyticsDashboardWidget />
+                </Grid>
+                <Grid item xs={12} lg={6}>
                     <NotificationsWidget />
                 </Grid>
 

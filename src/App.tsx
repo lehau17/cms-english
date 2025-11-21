@@ -24,10 +24,17 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ParentLoginPage from "./pages/ParentLoginPage";
 import ParentPage from "./pages/ParentPage";
 import ParentSchedulePage from "./pages/ParentSchedulePage";
+import CreateNotificationPage from "./pages/CreateNotificationPage";
+import CreatePodcastPage from "./pages/CreatePodcastPage";
+import EditPodcastPage from "./pages/EditPodcastPage";
+import NotificationPage from "./pages/NotificationPage";
+import PaymentPage from "./pages/PaymentPage";
+import PodcastPage from "./pages/PodcastPage";
 import RoomPage from "./pages/RoomPage";
 import SchedulePage from "./pages/SchedulePage";
 import SettingsPage from "./pages/SettingsPage";
 import StudentPage from "./pages/StudentPage";
+import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 import StudentSchedulePage from "./pages/StudentSchedulePage";
 import TeacherClassroomDashboardPage from "./pages/TeacherClassroomDashboardPage";
 import TeacherDashboardPage from "./pages/TeacherDashboardPage";
@@ -69,6 +76,14 @@ const router = createBrowserRouter([
                     { path: "/courses/edit/:id", element: <EditCoursePage /> },
                     { path: "/assignments", element: <AssignmentPage /> },
                     { path: "/classrooms/:classroomId/create-assignment", element: <CreateAssignmentPage /> },
+                    { path: "/podcasts", element: <PodcastPage /> },
+                    { path: "/podcasts/create", element: <CreatePodcastPage /> },
+                    { path: "/podcasts/edit/:id", element: <EditPodcastPage /> },
+                    { path: "/podcasts/:id", element: <EditPodcastPage /> },
+                    { path: "/students/:id/analytics", element: <StudentAnalyticsPage /> },
+                    { path: "/notifications", element: <NotificationPage /> },
+                    { path: "/notifications/create", element: <CreateNotificationPage /> },
+                    { path: "/payments", element: <PaymentPage /> },
                     { path: "/certificates", element: <CertificatesPage /> },
                     { path: "/certificate-templates", element: <CertificateTemplatesPage /> },
                     { path: "/certificate-templates/create", element: <CreateCertificateTemplatePage /> },
