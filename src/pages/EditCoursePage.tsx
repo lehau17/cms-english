@@ -1,11 +1,13 @@
 import { getCourseById, updateCourse } from '@/apis/course';
+import { uploadFile } from '@/apis/upload';
 import LessonActivities from '@/components/course/LessonActivities';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calendar, CheckCircle, ChevronDown, ChevronRight, CircleDot, FileEdit, GripVertical, Library, Lock, Plus, RefreshCw, Save, Target, Trash2, Zap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calendar, CheckCircle, ChevronDown, ChevronRight, CircleDot, FileEdit, GripVertical, Library, Lock, Plus, RefreshCw, Save, Target, Trash2, Upload, X, Zap } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import * as yup from 'yup';
 import FormField from '../components/forms/FormField';
@@ -43,6 +45,8 @@ interface EditCourseFormValues {
   price: number;
   difficulty: string;
   language: string;
+  imageUrl?: string;
+  prerequisites?: string[];
   isPublished: boolean;
   lessons: LessonFormData[];
 }
@@ -79,6 +83,8 @@ const schema = yup.object({
   price: yup.number().min(0).required('Price is required'),
   difficulty: yup.string().required('Difficulty is required'),
   language: yup.string().required('Language is required'),
+  imageUrl: yup.string().optional(),
+  prerequisites: yup.array().of(yup.string()).optional(),
   isPublished: yup.boolean().default(false),
   lessons: yup.array().of(lessonSchema).default([]),
 });
@@ -99,6 +105,8 @@ const EditCoursePage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'course' | 'lessons'>('course');
   const [expandedLessons, setExpandedLessons] = useState<Set<number>>(new Set());
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     data: courseDetailResponse,
@@ -111,6 +119,31 @@ const EditCoursePage: React.FC = () => {
   });
 
   const detailCourse = courseDetailResponse?.data;
+
+  // Upload mutation for image
+  const uploadMutation = useMutation({
+    mutationFn: uploadFile,
+    onSuccess: (data: any) => {
+      const imageUrl = data.data.url;
+      const urlWithTimestamp = imageUrl.includes('?')
+        ? `${imageUrl}&t=${Date.now()}`
+        : `${imageUrl}?t=${Date.now()}`;
+      setValue('imageUrl', urlWithTimestamp);
+      toast.success('Upload ảnh thành công!');
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    onError: (error: any) => {
+      console.error('Upload error for course image:', error);
+      toast.error('Upload ảnh thất bại!');
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  });
 
   const methods = useForm<EditCourseFormValues>({
     resolver: yupResolver(schema),
@@ -130,6 +163,8 @@ const EditCoursePage: React.FC = () => {
         price: detailCourse.price || 0,
         difficulty: detailCourse.difficulty,
         language: detailCourse.language,
+        imageUrl: detailCourse.imageUrl || '',
+        prerequisites: detailCourse.prerequisites || [],
         isPublished: detailCourse.isPublished ?? false,
         lessons: detailCourse.lessons?.map(lesson => ({
           id: lesson.id,
@@ -395,19 +430,112 @@ const EditCoursePage: React.FC = () => {
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">⚙️ Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Instructor (Read-only)</label>
-                      <input
-                        type="text"
-                        value={`${detailCourse.instructor?.firstName || ''} ${detailCourse.instructor?.lastName || ''}`.trim() || 'N/A'}
-                        disabled
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Instructor cannot be changed after creation</p>
-                    </div>
                     <FormField name="price" label="Price ($)" type="number" placeholder="0" />
                     <FormField name="difficulty" label="Difficulty" placeholder="beginner" />
                     <FormField name="language" label="Language" placeholder="en" />
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Course Image (Optional)</label>
+                      <div
+                        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 cursor-pointer ${isDragOver
+                            ? 'border-indigo-500 bg-indigo-50'
+                            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                          }`}
+                        onClick={() => {
+                          if (!uploadMutation.isPending && fileInputRef.current) {
+                            fileInputRef.current.click();
+                          }
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDragOver(true);
+                        }}
+                        onDragLeave={() => setIsDragOver(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDragOver(false);
+                          const files = e.dataTransfer.files;
+                          if (files.length > 0 && !uploadMutation.isPending) {
+                            const file = files[0];
+                            if (file && file.type.startsWith('image/')) {
+                              uploadMutation.mutate(file);
+                            } else {
+                              toast.error('Please upload an image file');
+                            }
+                          }
+                        }}
+                      >
+                        {watch('imageUrl') ? (
+                          <div className="space-y-3">
+                            <div className="relative inline-block">
+                              <img
+                                src={watch('imageUrl')}
+                                alt="Course cover"
+                                className="h-24 w-auto max-w-full rounded shadow-md mx-auto hover:shadow-lg transition-shadow duration-300 object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setValue('imageUrl', '');
+                                  if (fileInputRef.current) {
+                                    fileInputRef.current.value = '';
+                                  }
+                                }}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-600">Click to change image or drag a new one here</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                              <Upload className={`w-6 h-6 ${isDragOver ? 'text-indigo-600' : 'text-gray-400'} transition-colors`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-700">
+                                {isDragOver ? 'Drop your image here!' : 'Drag & drop course image'}
+                              </p>
+                              <p className="text-xs text-gray-500">or click to browse files</p>
+                            </div>
+                          </div>
+                        )}
+                        {uploadMutation.isPending && (
+                          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+                            <div className="text-center">
+                              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                              <p className="text-sm text-gray-600 mt-2">Uploading...</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            uploadMutation.mutate(file);
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Prerequisites (Optional)</label>
+                      <input
+                        type="text"
+                        {...register('prerequisites')}
+                        placeholder="Enter comma-separated course IDs"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Comma-separated list of prerequisite course IDs</p>
+                    </div>
                   </div>
                   <div className="mt-3 flex items-center p-2 bg-gray-50 rounded-lg">
                     <input

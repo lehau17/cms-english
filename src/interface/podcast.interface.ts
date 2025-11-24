@@ -48,23 +48,38 @@ export interface PodcastGap {
 
 export interface Podcast {
     id: string;
+    code: string;
     title: string;
     description: string;
-    content: string;
+    transcript: string; // Changed from 'content'
     audioUrl?: string;
     videoUrl?: string;
     mediaType: PodcastMediaType;
     thumbnailUrl?: string;
     category: PodcastCategory;
     difficulty: PodcastDifficulty;
-    source: PodcastSource;
-    status: PodcastStatus;
-    duration?: number;
-    durationFormatted?: string;
-    views: number;
-    rating: number;
+    duration: number;
+    viewCount: number; // Changed from 'views'
+    averageRating: number; // Changed from 'rating'
+    difficultyRating: number;
+    qualityRating: number;
     totalRatings: number;
-    gaps: PodcastGap[];
+    authorId: string;
+    author?: {
+        id: string;
+        displayName: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl?: string;
+    };
+    gaps?: Array<{
+        id: string;
+        podcastId: string;
+        startIndex: number;
+        endIndex: number;
+        answer: string;
+        orderNo: number;
+    }>;
     createdAt: string;
     updatedAt: string;
 }
