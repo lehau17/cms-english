@@ -4,6 +4,7 @@ import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
 import { Course } from '@/interface/course.interface';
 import {
     BookOpen,
+    CheckCircle,
     ChevronLeft,
     ChevronRight,
     Clock,
@@ -13,7 +14,8 @@ import {
     Search,
     Trash2,
     User,
-    Users
+    Users,
+    XCircle
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -181,6 +183,26 @@ const CoursePage: React.FC = () => {
                                             }`}>
                                             {course.difficulty?.toUpperCase() || 'N/A'}
                                         </span>
+                                    </div>
+
+                                    {/* Published Status Badge */}
+                                    <div className="absolute top-2 left-2">
+                                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${course.isPublished
+                                            ? 'bg-green-500/90 text-white'
+                                            : 'bg-gray-500/90 text-white'
+                                            }`}>
+                                            {course.isPublished ? (
+                                                <>
+                                                    <CheckCircle className="w-3 h-3" />
+                                                    <span>Published</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle className="w-3 h-3" />
+                                                    <span>Draft</span>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Price Badge */}

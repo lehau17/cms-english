@@ -1,6 +1,5 @@
 import { getCourseById, updateCourse } from '@/apis/course';
 import { uploadFile } from '@/apis/upload';
-import LessonActivities from '@/components/course/LessonActivities';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -437,8 +436,8 @@ const EditCoursePage: React.FC = () => {
                       <label className="block text-xs font-medium text-gray-600 mb-1">Course Image (Optional)</label>
                       <div
                         className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 cursor-pointer ${isDragOver
-                            ? 'border-indigo-500 bg-indigo-50'
-                            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                          ? 'border-indigo-500 bg-indigo-50'
+                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
                           }`}
                         onClick={() => {
                           if (!uploadMutation.isPending && fileInputRef.current) {
@@ -731,14 +730,28 @@ const EditCoursePage: React.FC = () => {
                               </button>
 
                               {expandedLessons.has(index) && (
-                                <LessonActivities
-                                  lessonIndex={index}
-                                  control={control as any}
-                                  register={register as any}
-                                  errors={errors as any}
-                                  setValue={setValue as any}
-                                  watch={watch as any}
-                                />
+                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                  <div className="flex items-center gap-2 text-amber-600 mb-3">
+                                    <Lock className="w-5 h-5" />
+                                    <span className="font-medium">Activities are locked for editing</span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 mb-4">
+                                    Activities cannot be modified in edit mode. To change activities, you need to create a new course version.
+                                  </p>
+                                  <div className="space-y-2">
+                                    {watch(`lessons.${index}.activities`)?.map((activity: any, actIndex: number) => (
+                                      <div key={actIndex} className="bg-white p-3 rounded border border-gray-200">
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <span className="font-medium text-gray-900">{activity.title || `Activity ${actIndex + 1}`}</span>
+                                            <span className="ml-2 text-xs text-gray-500">({activity.type})</span>
+                                          </div>
+                                          <span className="text-xs text-gray-500">Order: {activity.orderNo}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>
