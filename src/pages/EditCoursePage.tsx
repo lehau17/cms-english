@@ -1,6 +1,5 @@
 import { getCourseById, updateCourse } from '@/apis/course';
 import LessonActivities from '@/components/course/LessonActivities';
-import { useTeachers } from '@/hooks/useTeacher';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -42,7 +41,6 @@ interface EditCourseFormValues {
     title: string;
     description: string;
     price: number;
-    instructorId: string;
     difficulty: string;
     language: string;
     isPublished: boolean;
@@ -79,7 +77,6 @@ const schema = yup.object({
     title: yup.string().required('Course title is required'),
     description: yup.string().required('Description is required'),
     price: yup.number().min(0).required('Price is required'),
-    instructorId: yup.string().required('Instructor is required'),
     difficulty: yup.string().required('Difficulty is required'),
     language: yup.string().required('Language is required'),
     isPublished: yup.boolean().default(false),
@@ -100,7 +97,6 @@ const EditCoursePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { data: teachersData, isLoading: isLoadingTeachers } = useTeachers({ limit: 1000 });
     const [activeTab, setActiveTab] = useState<'course' | 'lessons'>('course');
     const [expandedLessons, setExpandedLessons] = useState<Set<number>>(new Set());
 
@@ -132,7 +128,6 @@ const EditCoursePage: React.FC = () => {
                 title: detailCourse.title,
                 description: detailCourse.description || '',
                 price: detailCourse.price || 0,
-                instructorId: detailCourse.instructorId,
                 difficulty: detailCourse.difficulty,
                 language: detailCourse.language,
                 isPublished: detailCourse.isPublished ?? false,
@@ -341,7 +336,8 @@ const EditCoursePage: React.FC = () => {
                                 </span>
                             </div>
                             <Button
-                                type="submit"
+                                type="button"
+                                onClick={handleSubmit(onSubmit)}
                                 disabled={isSubmitting}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm"
                             >
@@ -400,20 +396,14 @@ const EditCoursePage: React.FC = () => {
                                     <h3 className="text-sm font-semibold text-gray-700 mb-3">⚙️ Settings</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Instructor *</label>
-                                            <select
-                                                {...register('instructorId')}
-                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                disabled={isLoadingTeachers}
-                                            >
-                                                <option value="">{isLoadingTeachers ? 'Loading...' : 'Select instructor'}</option>
-                                                {teachersData?.data.data.map((teacher) => (
-                                                    <option key={teacher.id} value={teacher.id}>
-                                                        {teacher.firstName} {teacher.lastName}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {errors.instructorId && <p className="text-red-500 text-xs mt-1">{errors.instructorId.message}</p>}
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Instructor (Read-only)</label>
+                                            <input
+                                                type="text"
+                                                value={`${detailCourse.instructor?.firstName || ''} ${detailCourse.instructor?.lastName || ''}`.trim() || 'N/A'}
+                                                disabled
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">Instructor cannot be changed after creation</p>
                                         </div>
                                         <FormField name="price" label="Price ($)" type="number" placeholder="0" />
                                         <FormField name="difficulty" label="Difficulty" placeholder="beginner" />

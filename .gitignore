@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Tài liệu nội bộ
+tai_lieu/
+tai_lieu
