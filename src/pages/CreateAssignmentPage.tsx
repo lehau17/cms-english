@@ -290,7 +290,7 @@ export default function CreateAssignmentPage() {
       // Handle validation errors from backend
       if (error?.response?.data?.message && Array.isArray(error.response.data.message)) {
         const validationErrors = error.response.data.message;
-        
+
         // Format error messages for better readability
         const formattedErrors = validationErrors
           .filter((err: any) => err.errors && err.errors.length > 0)
