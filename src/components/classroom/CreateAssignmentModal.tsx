@@ -589,13 +589,14 @@ export default function CreateAssignmentModal({
         mutationFn: (payload: AssignmentFormValues) => {
             // Convert AssignmentFormValues to CreateAssignmentDto
             const createDto: CreateAssignmentDto = {
-                title: payload.title,
-                description: payload.description,
-                instructions: payload.instructions,
-                dueDate: payload.dueDate,
-                totalPoints: payload.totalPoints,
-                timeLimit: payload.timeLimit,
-                maxAttempts: payload.maxAttempts,
+                title: payload.title?.trim(),
+                description: payload.description?.trim() || undefined,
+                instructions: payload.instructions?.trim() || undefined,
+                dueDate: payload.dueDate || undefined,
+                totalPoints: payload.totalPoints || 100,
+                // Only send timeLimit if it's a valid positive integer
+                timeLimit: payload.timeLimit && payload.timeLimit > 0 ? Math.floor(payload.timeLimit) : undefined,
+                maxAttempts: payload.maxAttempts && payload.maxAttempts > 0 ? Math.floor(payload.maxAttempts) : 1,
                 isPublished: payload.isPublished,
                 assignedTo: [],
                 activities: (payload.activities || []).map((activity: any) => ({
@@ -624,7 +625,37 @@ export default function CreateAssignmentModal({
             rest.onSubmitted?.()
         },
         onError: (e: any) => {
-            toast.error(e?.response?.data?.message || (mode === 'edit' ? 'Cập nhật bài tập thất bại' : 'Tạo bài tập thất bại'))
+            // Handle validation errors from backend
+            if (e?.response?.data?.message && Array.isArray(e.response.data.message)) {
+                const validationErrors = e.response.data.message;
+                
+                // Format error messages for better readability
+                const formattedErrors = validationErrors
+                    .filter((err: any) => err.errors && err.errors.length > 0)
+                    .map((err: any) => {
+                        const fieldName = err.field.charAt(0).toUpperCase() + err.field.slice(1).replace(/([A-Z])/g, ' $1');
+                        return `• ${fieldName}: ${err.errors.join(', ')}`;
+                    });
+
+                if (formattedErrors.length > 0) {
+                    toast.error(
+                        <div style={{ textAlign: 'left' }}>
+                            <strong>Validation Errors:</strong>
+                            <br />
+                            {formattedErrors.map((msg: string, idx: number) => (
+                                <div key={idx}>{msg}</div>
+                            ))}
+                        </div>,
+                        { duration: 6000 }
+                    );
+                } else {
+                    toast.error('Invalid data. Please check your input.');
+                }
+            } else if (e?.response?.data?.message) {
+                toast.error(e.response.data.message);
+            } else {
+                toast.error(mode === 'edit' ? 'Cập nhật bài tập thất bại' : 'Tạo bài tập thất bại');
+            }
         },
     })
 
@@ -878,16 +909,24 @@ export default function CreateAssignmentModal({
                                 <TextInput
                                     type="number"
                                     min={0}
+                                    placeholder="Để trống = không giới hạn"
                                     {...register('timeLimit', { valueAsNumber: true })}
                                 />
+                                {errors.timeLimit && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.timeLimit.message}</p>
+                                )}
                             </Labeled>
                             <Labeled label="Số lần làm tối đa">
                                 <TextInput
                                     type="number"
                                     min={1}
                                     defaultValue={1}
+                                    placeholder="Tối thiểu: 1"
                                     {...register('maxAttempts', { valueAsNumber: true })}
                                 />
+                                {errors.maxAttempts && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.maxAttempts.message}</p>
+                                )}
                             </Labeled>
                             <Labeled label="Trạng thái">
                                 <select

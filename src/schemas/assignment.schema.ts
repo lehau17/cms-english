@@ -72,8 +72,17 @@ export const assignmentSchema = yup.object({
         return !isNaN(date.getTime()) && value.includes('T');
     }),
     totalPoints: yup.number().min(1).optional(),
-    timeLimit: yup.number().min(1, 'Time limit must be at least 1 minute').optional(),
-    maxAttempts: yup.number().min(1).optional(),
+    timeLimit: yup.number()
+        .transform((value, originalValue) => {
+            // Convert empty string or 0 to undefined (no limit)
+            if (originalValue === '' || originalValue === 0 || originalValue === null) return undefined;
+            return value;
+        })
+        .min(1, 'Time limit must be at least 1 minute if set')
+        .integer('Time limit must be a whole number')
+        .optional()
+        .nullable(),
+    maxAttempts: yup.number().min(1, 'Max attempts must be at least 1').integer('Max attempts must be a whole number').optional(),
     isPublished: yup.boolean().default(false),
     activities: yup.array().of(activitySchema).optional(),
 });

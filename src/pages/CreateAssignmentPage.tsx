@@ -236,15 +236,27 @@ export default function CreateAssignmentPage() {
     try {
       setIsSubmitting(true);
 
+      // Validate before submission
+      if (!data.title?.trim()) {
+        toast.error('Assignment title is required');
+        return;
+      }
+
+      if (!data.activities || data.activities.length === 0) {
+        toast.error('At least one activity is required');
+        return;
+      }
+
       // Map to API format
       const createDto: CreateAssignmentDto = {
-        title: data.title,
-        description: data.description,
-        instructions: data.instructions,
-        dueDate: data.dueDate || null, // Convert empty string to null
-        totalPoints: data.totalPoints,
-        timeLimit: data.timeLimit && data.timeLimit > 0 ? data.timeLimit : null, // Convert 0 to null
-        maxAttempts: data.maxAttempts,
+        title: data.title.trim(),
+        description: data.description?.trim() || undefined,
+        instructions: data.instructions?.trim() || undefined,
+        dueDate: data.dueDate || undefined,
+        totalPoints: data.totalPoints || 100,
+        // Only send timeLimit if it's a valid positive integer
+        timeLimit: data.timeLimit && data.timeLimit > 0 ? Math.floor(data.timeLimit) : undefined,
+        maxAttempts: data.maxAttempts && data.maxAttempts > 0 ? Math.floor(data.maxAttempts) : 1,
         isPublished: data.isPublished,
         assignedTo: [],
         activities: (data.activities || []).map((activity: any): AssignmentActivityDto => ({
@@ -275,15 +287,36 @@ export default function CreateAssignmentPage() {
     } catch (error: any) {
       console.error('Create assignment error:', error);
 
-      // Handle validation errors
+      // Handle validation errors from backend
       if (error?.response?.data?.message && Array.isArray(error.response.data.message)) {
         const validationErrors = error.response.data.message;
-        const errorMessages = validationErrors.map((err: any) =>
-          `${err.field}: ${err.errors.join(', ')}`
-        ).join('\n');
-        toast.error(`Validation errors:\n${errorMessages}`);
+        
+        // Format error messages for better readability
+        const formattedErrors = validationErrors
+          .filter((err: any) => err.errors && err.errors.length > 0)
+          .map((err: any) => {
+            const fieldName = err.field.charAt(0).toUpperCase() + err.field.slice(1).replace(/([A-Z])/g, ' $1');
+            return `• ${fieldName}: ${err.errors.join(', ')}`;
+          });
+
+        if (formattedErrors.length > 0) {
+          toast.error(
+            <div style={{ textAlign: 'left' }}>
+              <strong>Validation Errors:</strong>
+              <br />
+              {formattedErrors.map((msg: string, idx: number) => (
+                <div key={idx}>{msg}</div>
+              ))}
+            </div>,
+            { duration: 6000 }
+          );
+        } else {
+          toast.error('Invalid data. Please check your input.');
+        }
+      } else if (error?.response?.data?.message) {
+        toast.error(error.response.data.message);
       } else {
-        toast.error(error?.response?.data?.message || 'Failed to create assignment');
+        toast.error('Failed to create assignment. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
@@ -432,7 +465,10 @@ export default function CreateAssignmentPage() {
                       label="Time Limit (minutes)"
                       type="number"
                       {...register('timeLimit', { valueAsNumber: true })}
-                      placeholder="0 = No limit"
+                      error={!!errors.timeLimit}
+                      helperText={errors.timeLimit?.message || "Leave empty or 0 for no limit"}
+                      placeholder="Leave empty for no limit"
+                      inputProps={{ min: 0 }}
                     />
                   </Grid>
                   <Grid item xs={12} md={3}>
@@ -441,7 +477,10 @@ export default function CreateAssignmentPage() {
                       label="Max Attempts"
                       type="number"
                       {...register('maxAttempts', { valueAsNumber: true })}
+                      error={!!errors.maxAttempts}
+                      helperText={errors.maxAttempts?.message || "Minimum: 1 attempt"}
                       placeholder="1"
+                      inputProps={{ min: 1 }}
                     />
                   </Grid>
                 </Grid>
