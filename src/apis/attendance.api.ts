@@ -1,16 +1,16 @@
 import axiosInstance from '@/config/axiosConfig';
-import { ApiResponse } from '@/interface/base-response.interface';
 import {
-  AttendanceRecord,
-  BulkAttendanceRequest,
-  ClassroomAttendanceStats,
-  MarkAllAbsentResponse,
-  MarkAttendanceRequest,
-  SessionAttendanceSummary,
-  StudentAttendanceHistory,
-  StudentHistoryFilter,
-  UnmarkedStudent,
+    AttendanceRecord,
+    BulkAttendanceRequest,
+    ClassroomAttendanceStats,
+    MarkAllAbsentResponse,
+    MarkAttendanceRequest,
+    SessionAttendanceSummary,
+    StudentAttendanceHistory,
+    StudentHistoryFilter,
+    UnmarkedStudent,
 } from '@/interface/attendance.interface';
+import { ApiResponse } from '@/interface/base-response.interface';
 
 const BASE_URL = '/private/v1';
 

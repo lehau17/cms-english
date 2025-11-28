@@ -1,11 +1,11 @@
-import { Box, Card, CardContent, Typography, Grid, LinearProgress } from '@mui/material';
-import {
-  CheckCircle as PresentIcon,
-  Cancel as AbsentIcon,
-  AccessTime as LateIcon,
-  EventAvailable as ExcusedIcon,
-} from '@mui/icons-material';
 import { SessionAttendanceSummary } from '@/interface/attendance.interface';
+import {
+  Cancel as AbsentIcon,
+  EventAvailable as ExcusedIcon,
+  AccessTime as LateIcon,
+  CheckCircle as PresentIcon,
+} from '@mui/icons-material';
+import { Box, Card, CardContent, Grid, LinearProgress, Typography } from '@mui/material';
 
 interface AttendanceSummaryCardProps {
   summary: SessionAttendanceSummary;

@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
-  Box,
-  Typography,
-  Chip,
-  Tabs,
-  Tab,
-} from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
-import { SessionAttendancePanel } from './SessionAttendancePanel';
-import { ClassroomAttendanceStats } from './ClassroomAttendanceStats';
 import { useClassroomAttendanceStats } from '@/hooks/useAttendance';
+import { Close as CloseIcon } from '@mui/icons-material';
+import {
+  Box,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
+import { useState } from 'react';
+import { ClassroomAttendanceStats } from './ClassroomAttendanceStats';
+import { SessionAttendancePanel } from './SessionAttendancePanel';
 
 interface AttendanceDialogProps {
   open: boolean;
@@ -66,8 +66,8 @@ export const AttendanceDialog = ({
                     sessionStatus === 'ongoing'
                       ? 'success'
                       : sessionStatus === 'completed'
-                      ? 'default'
-                      : 'warning'
+                        ? 'default'
+                        : 'warning'
                   }
                 />
               )}

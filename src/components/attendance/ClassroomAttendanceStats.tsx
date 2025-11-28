@@ -1,19 +1,19 @@
+import { ClassroomAttendanceStats as StatsData } from '@/interface/attendance.interface';
 import {
+  Avatar,
   Box,
   Card,
   CardContent,
-  Typography,
+  Chip,
+  LinearProgress,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  LinearProgress,
-  Avatar,
-  Chip,
+  Typography,
 } from '@mui/material';
-import { ClassroomAttendanceStats as StatsData } from '@/interface/attendance.interface';
 
 interface ClassroomAttendanceStatsProps {
   stats: StatsData;

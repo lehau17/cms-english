@@ -1,9 +1,9 @@
-import { Chip, ChipProps } from '@mui/material';
 import {
-  SessionStatus,
-  SESSION_STATUS_LABELS,
   SESSION_STATUS_COLORS,
+  SESSION_STATUS_LABELS,
+  SessionStatus,
 } from '@/interface/attendance.interface';
+import { Chip, ChipProps } from '@mui/material';
 
 interface SessionStatusBadgeProps {
   status: SessionStatus | string;

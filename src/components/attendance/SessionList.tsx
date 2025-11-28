@@ -1,16 +1,15 @@
-import { useState, useMemo } from 'react';
+import { ClassroomSession } from '@/interface/attendance.interface';
+import { Search as SearchIcon } from '@mui/icons-material';
 import {
   Box,
-  Typography,
-  TextField,
   InputAdornment,
+  Stack,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Chip,
-  Stack,
+  Typography
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
-import { ClassroomSession, SessionStatus } from '@/interface/attendance.interface';
+import { useMemo, useState } from 'react';
 import SessionCard from './SessionCard';
 
 interface SessionListProps {

@@ -1,5 +1,5 @@
-import { Chip, ChipProps } from '@mui/material';
 import { AttendanceStatus } from '@/interface/attendance.interface';
+import { Chip, ChipProps } from '@mui/material';
 
 interface AttendanceStatusBadgeProps {
   status: AttendanceStatus | string;

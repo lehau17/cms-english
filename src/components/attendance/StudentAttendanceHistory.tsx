@@ -1,29 +1,29 @@
 import {
+  AttendanceStatus,
+  StudentAttendanceHistory as StudentHistoryData,
+  StudentHistoryFilter,
+} from '@/interface/attendance.interface';
+import {
   Box,
   Card,
   CardContent,
-  Typography,
+  Chip,
+  FormControl,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
   TablePagination,
-  Chip,
-  LinearProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  TableRow,
   TextField,
-  Stack,
+  Typography,
 } from '@mui/material';
-import {
-  AttendanceStatus,
-  StudentAttendanceHistory as StudentHistoryData,
-  StudentHistoryFilter,
-} from '@/interface/attendance.interface';
 import AttendanceStatusBadge from './AttendanceStatusBadge';
 
 interface StudentAttendanceHistoryProps {
@@ -123,8 +123,8 @@ export const StudentAttendanceHistory = ({
                   data.attendanceRate >= 80
                     ? 'success'
                     : data.attendanceRate >= 50
-                    ? 'warning'
-                    : 'error'
+                      ? 'warning'
+                      : 'error'
                 }
                 sx={{ flex: 1, height: 8, borderRadius: 4 }}
               />

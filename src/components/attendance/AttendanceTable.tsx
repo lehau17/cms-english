@@ -1,30 +1,30 @@
-import { useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Checkbox,
-  Avatar,
-  Box,
-  Typography,
-  IconButton,
-  Tooltip,
-  Select,
-  MenuItem,
-  TextField,
-  CircularProgress,
-} from '@mui/material';
+import { AttendanceRecord, AttendanceStatus } from '@/interface/attendance.interface';
 import {
   Login as CheckInIcon,
   Logout as CheckOutIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { AttendanceRecord, AttendanceStatus } from '@/interface/attendance.interface';
+import {
+  Avatar,
+  Box,
+  Checkbox,
+  CircularProgress,
+  IconButton,
+  MenuItem,
+  Paper,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useState } from 'react';
 import AttendanceStatusBadge from './AttendanceStatusBadge';
 
 interface AttendanceTableProps {

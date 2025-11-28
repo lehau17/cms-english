@@ -1,19 +1,11 @@
+import { ClassroomSession, SessionStatus } from '@/interface/attendance.interface';
 import {
   Box,
   Card,
   CardContent,
-  Typography,
-  IconButton,
-  Tooltip,
-  Chip,
   LinearProgress,
+  Typography
 } from '@mui/material';
-import {
-  PlayArrow as StartIcon,
-  CheckCircle as CompleteIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
-import { ClassroomSession, SessionStatus } from '@/interface/attendance.interface';
 import SessionStatusBadge from './SessionStatusBadge';
 
 interface SessionCardProps {

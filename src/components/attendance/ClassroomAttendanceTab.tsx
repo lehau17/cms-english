@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Box, Typography, Paper, Divider, Alert, CircularProgress } from '@mui/material';
-import { ClassroomSession, SessionStatus } from '@/interface/attendance.interface';
 import { useClassroomAttendanceStats } from '@/hooks/useAttendance';
-import SessionList from './SessionList';
-import SessionAttendancePanel from './SessionAttendancePanel';
+import { ClassroomSession } from '@/interface/attendance.interface';
+import { Alert, Box, CircularProgress, Divider, Paper, Typography } from '@mui/material';
+import { useState } from 'react';
 import ClassroomAttendanceStats from './ClassroomAttendanceStats';
+import SessionAttendancePanel from './SessionAttendancePanel';
+import SessionList from './SessionList';
 
 interface ClassroomAttendanceTabProps {
   classroomId: string;
