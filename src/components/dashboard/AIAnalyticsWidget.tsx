@@ -115,8 +115,8 @@ export default function AIAnalyticsWidget({
                             🤖 AI Analytics: {analytics.studentName}
                         </Typography>
                         <Chip
-                            label={`${analytics.averageScore.toFixed(1)} điểm`}
-                            color={analytics.averageScore >= 80 ? 'success' : analytics.averageScore >= 60 ? 'warning' : 'error'}
+                            label={`${analytics.averageScore != null ? analytics.averageScore.toFixed(1) : '0.0'} điểm`}
+                            color={analytics.averageScore != null && analytics.averageScore >= 80 ? 'success' : analytics.averageScore != null && analytics.averageScore >= 60 ? 'warning' : 'error'}
                             size="small"
                         />
                     </Box>
@@ -133,7 +133,7 @@ export default function AIAnalyticsWidget({
                                 Hoàn thành
                             </Typography>
                             <Typography variant="h6">
-                                {analytics.completionRate.toFixed(1)}%
+                                {analytics.completionRate != null ? analytics.completionRate.toFixed(1) : '0.0'}%
                             </Typography>
                         </Box>
                         <Box>

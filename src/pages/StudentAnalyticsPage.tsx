@@ -146,7 +146,7 @@ export default function StudentAnalyticsPage() {
                 <Grid item xs={12} md={3}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'white' }}>
                         <EmojiEvents sx={{ fontSize: 40, mb: 1 }} />
-                        <Typography variant="h4">{analytics.averageScore.toFixed(1)}</Typography>
+                        <Typography variant="h4">{analytics.averageScore != null ? analytics.averageScore.toFixed(1) : '0.0'}</Typography>
                         <Typography variant="caption">Điểm trung bình</Typography>
                     </Paper>
                 </Grid>
@@ -154,7 +154,7 @@ export default function StudentAnalyticsPage() {
                 <Grid item xs={12} md={3}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.light', color: 'white' }}>
                         <CheckCircleOutline sx={{ fontSize: 40, mb: 1 }} />
-                        <Typography variant="h4">{analytics.completionRate.toFixed(1)}%</Typography>
+                        <Typography variant="h4">{analytics.completionRate != null ? analytics.completionRate.toFixed(1) : '0.0'}%</Typography>
                         <Typography variant="caption">Tỷ lệ hoàn thành</Typography>
                     </Paper>
                 </Grid>

@@ -1,6 +1,7 @@
 import { Assignment, AssignmentType, assignmentApi } from '@/apis/assignment';
 import { getClassroomDetail } from '@/apis/classroom-detail';
 import { getCourseById } from '@/apis/course';
+import { ClassroomAttendanceTab } from '@/components/attendance';
 import AddStudentToClassModal from '@/components/classroom/AddStudentToClassModal';
 import AssignmentDetailModal from '@/components/classroom/AssignmentDetailModal';
 import EditClassroomModal from '@/components/classroom/EditClassroomModal';
@@ -20,6 +21,7 @@ import {
     Calendar,
     CheckCircle,
     ChevronDown,
+    ClipboardList,
     Clock,
     Edit,
     Eye,
@@ -35,7 +37,7 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 
-type TabType = 'overview' | 'assignments' | 'students' | 'schedule';
+type TabType = 'overview' | 'assignments' | 'students' | 'attendance' | 'schedule';
 
 const ClassroomDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -74,6 +76,8 @@ const ClassroomDetailPage: React.FC = () => {
         queryFn: () => getCourseById(courseId as string),
         enabled: !!courseId && !courseFromClassroom, // Only fetch if course not already in classroom data
     });
+
+    // Fetch classroom attendance stats - now handled by ClassroomAttendanceTab
 
     const formatDate = (dateString: string | Date | null | undefined): string => {
         if (!dateString) return 'N/A';
@@ -319,6 +323,16 @@ const ClassroomDetailPage: React.FC = () => {
                             <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
                                 {classroom.students?.length || 0}
                             </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('attendance')}
+                            className={`flex items-center space-x-2 px-6 py-4 font-medium transition-colors ${activeTab === 'attendance'
+                                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                                : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                        >
+                            <ClipboardList className="w-5 h-5" />
+                            <span>Diem Danh</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('schedule')}
@@ -778,6 +792,15 @@ const ClassroomDetailPage: React.FC = () => {
                             </div>
                         )}
                     </div>
+                )}
+
+                {/* Attendance Tab */}
+                {activeTab === 'attendance' && (
+                    <ClassroomAttendanceTab
+                        classroomId={id || ''}
+                        sessions={classroom.sessions || []}
+                        totalStudents={classroom.students?.length || 0}
+                    />
                 )}
 
                 {/* Schedule Tab */}

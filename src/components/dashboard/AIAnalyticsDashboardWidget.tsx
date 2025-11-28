@@ -1,9 +1,15 @@
 import {
+    CheckCircleOutline,
+    InfoOutlined,
+    LightbulbOutlined,
+    TrendingDown,
+    TrendingUp
+} from '@mui/icons-material';
+import {
     Alert,
     Box,
     Card,
     CardContent,
-    Chip,
     CircularProgress,
     FormControl,
     InputLabel,
@@ -14,18 +20,10 @@ import {
     MenuItem,
     Select,
     Stack,
-    Typography,
+    Typography
 } from '@mui/material';
-import {
-    TrendingUp,
-    TrendingDown,
-    LightbulbOutlined,
-    CheckCircleOutline,
-    ErrorOutline,
-    InfoOutlined,
-} from '@mui/icons-material';
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { getStudentAnalytics } from '../../apis/analytics';
 import { getStudents } from '../../apis/student';
 import { AnalyticsPeriod } from '../../interface/analytics.interface';
@@ -35,10 +33,10 @@ export default function AIAnalyticsDashboardWidget() {
     const [period] = useState<AnalyticsPeriod>(AnalyticsPeriod.LAST_30_DAYS);
 
     // Fetch students list
-    const { data: studentsData } = useQuery({
+    const { data: studentsData }: any = useQuery({
         queryKey: ['students', { page: 1, limit: 50 }],
         queryFn: () => getStudents({ page: 1, limit: 50 }),
-    });
+    }) as any;
 
     // Fetch analytics for selected student
     const { data: analytics, isLoading, error } = useQuery({
@@ -76,7 +74,7 @@ export default function AIAnalyticsDashboardWidget() {
                     {/* Header with Student Selector */}
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography variant="h6">
-                            🤖 AI Analytics
+                            AI Analytics
                         </Typography>
                     </Box>
 
@@ -88,7 +86,7 @@ export default function AIAnalyticsDashboardWidget() {
                             label="Chọn học viên"
                             onChange={(e) => setSelectedStudentId(e.target.value)}
                         >
-                            {studentsData?.data?.data?.data?.map((student: any) => (
+                            {studentsData?.data?.data?.map((student: any) => (
                                 <MenuItem key={student.id} value={student.id}>
                                     {student.displayName || `${student.firstName} ${student.lastName}`}
                                 </MenuItem>
@@ -129,7 +127,7 @@ export default function AIAnalyticsDashboardWidget() {
                                         Điểm TB
                                     </Typography>
                                     <Typography variant="h6">
-                                        {analytics.averageScore.toFixed(1)}
+                                        {analytics.averageScore != null ? analytics.averageScore.toFixed(1) : '0.0'}
                                     </Typography>
                                 </Box>
                                 <Box>
@@ -137,7 +135,7 @@ export default function AIAnalyticsDashboardWidget() {
                                         Hoàn thành
                                     </Typography>
                                     <Typography variant="h6">
-                                        {analytics.completionRate.toFixed(1)}%
+                                        {analytics.completionRate != null ? analytics.completionRate.toFixed(1) : '0.0'}%
                                     </Typography>
                                 </Box>
                                 <Box>
