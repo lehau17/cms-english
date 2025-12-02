@@ -38,7 +38,7 @@ const NAV: NavItem[] = [
     { to: "/certificates", label: "Certificates", icon: <CardMembership />, roles: [UserRole.ADMIN] },
     { to: "/schedule", label: "Schedule", icon: <CalendarMonth />, roles: [UserRole.ADMIN] },
     { to: "/teacher-schedule", label: "My Schedule", icon: <CalendarMonth />, roles: [UserRole.TEACHER] },
-    { to: "/rooms", label: "Room", icon: <RoomOutlined />, roles: [UserRole.ADMIN] },
+    // { to: "/rooms", label: "Room", icon: <RoomOutlined />, roles: [UserRole.ADMIN] }, // Hidden - not needed
     { to: "/vocabulary", label: "Vocabulary", icon: <MenuBook />, roles: [UserRole.ADMIN] },
     { to: "/api-report", label: "API Report", icon: <AssessmentOutlinedIcon />, roles: [UserRole.ADMIN] },
 ];
