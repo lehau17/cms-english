@@ -7,9 +7,21 @@ export interface RegistrationTrendPoint {
     count: number;
 }
 
+export interface RevenueTrendPoint {
+    date: string;
+    amount: number;
+}
+
 export interface CourseDistributionItem {
     label: string;
     value: number;
+}
+
+export interface TopCourseItem {
+    id: string;
+    title: string;
+    enrollments: number;
+    revenue: number;
 }
 
 export interface UpcomingClassItem {
@@ -41,15 +53,29 @@ export interface DashboardNotificationItem {
 }
 
 export interface AdminDashboardData {
+    // Basic stats
     totalStudents: number;
     totalCourses: number;
     totalLessons: number;
     totalActivities: number;
+    // Extended stats (NEW)
+    totalTeachers: number;
+    totalParents: number;
+    totalClassrooms: number;
+    activeClassrooms: number;
+    totalRevenue: number;
+    revenueThisMonth: number;
+    averageCourseCompletionRate: number;
+    pendingSubmissions: number;
+    // Lists
     recentStudents: RecentStudentItem[];
     registrationTrend: RegistrationTrendPoint[];
     courseDistribution: CourseDistributionItem[];
     upcomingClasses: UpcomingClassItem[];
     notifications: DashboardNotificationItem[];
+    // New lists
+    revenueTrend: RevenueTrendPoint[];
+    topCourses: TopCourseItem[];
 }
 
 export const getAdminDashboardData = async (): Promise<AdminDashboardData> => {

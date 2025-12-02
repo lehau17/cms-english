@@ -1,127 +1,133 @@
 import { useUpcomingClasses } from "@/hooks/useDashboard";
-import { Schedule } from "@mui/icons-material";
+import { CalendarMonth, Groups, Schedule } from "@mui/icons-material";
 import {
-  Alert,
+  alpha,
+  Avatar,
+  Box,
   Card,
   CardContent,
   Chip,
   Skeleton,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography
+  Typography,
+  useTheme,
 } from "@mui/material";
 import moment from "moment";
 import * as React from "react";
 
 const UpcomingClassesWidget: React.FC = () => {
-  const { data: upcomingClasses, isLoading, isError, error } = useUpcomingClasses();
+  const { data: upcomingClasses, isLoading, isError } = useUpcomingClasses();
+  const theme = useTheme();
 
   const renderContent = () => {
     if (isLoading) {
       return (
-        <TableBody>
-          {Array.from(new Array(3)).map((_, index) => (
-            <TableRow key={index}>
-              <TableCell><Skeleton variant="text" /></TableCell>
-              <TableCell><Skeleton variant="text" /></TableCell>
-              <TableCell><Skeleton variant="text" /></TableCell>
-              <TableCell><Skeleton variant="text" /></TableCell>
-              <TableCell align="right"><Skeleton variant="text" /></TableCell>
-            </TableRow>
+        <Stack spacing={1.5}>
+          {[1, 2, 3].map((i) => (
+            <Box key={i} sx={{ display: "flex", gap: 1.5 }}>
+              <Skeleton variant="rounded" width={48} height={48} />
+              <Box flex={1}>
+                <Skeleton variant="text" width="70%" height={18} />
+                <Skeleton variant="text" width="50%" height={14} />
+              </Box>
+            </Box>
           ))}
-        </TableBody>
+        </Stack>
       );
     }
 
-    if (isError) {
+    if (isError || !upcomingClasses || upcomingClasses.length === 0) {
       return (
-        <TableBody>
-            <TableRow>
-                <TableCell colSpan={5}>
-                    <Alert severity="error" sx={{width: '100%'}}>Không thể tải danh sách lớp học. {error?.message}</Alert>
-                </TableCell>
-            </TableRow>
-        </TableBody>
-      );
-    }
-
-    if (!upcomingClasses || upcomingClasses.length === 0) {
-      return (
-        <TableBody>
-          <TableRow>
-            <TableCell colSpan={5} align="center">
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 2, mb: 2 }}>
-                Không có lớp học nào trong vài giờ tới.
-              </Typography>
-            </TableCell>
-          </TableRow>
-        </TableBody>
+        <Box
+          sx={{
+            py: 3,
+            textAlign: "center",
+            bgcolor: alpha(theme.palette.grey[500], 0.05),
+            borderRadius: 1,
+          }}
+        >
+          <CalendarMonth sx={{ fontSize: 36, color: "text.disabled", mb: 1 }} />
+          <Typography variant="body2" color="text.secondary">
+            Không có lớp học sắp tới
+          </Typography>
+        </Box>
       );
     }
 
     return (
-      <TableBody>
-        {upcomingClasses.map((cls) => (
-          <TableRow key={cls.id}>
-            <TableCell>
-              <Stack spacing={0.5}>
-                <Typography variant="body2" fontWeight={600}>
+      <Stack spacing={1.5}>
+        {upcomingClasses.slice(0, 4).map((cls) => (
+          <Box
+            key={cls.id}
+            sx={{
+              p: 1.5,
+              borderRadius: 1,
+              bgcolor: alpha(theme.palette.primary.main, 0.04),
+              border: `1px solid ${theme.palette.divider}`,
+              transition: "all 0.2s",
+              "&:hover": {
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                borderColor: theme.palette.primary.main,
+              },
+            }}
+          >
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Avatar
+                sx={{
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: "primary.main",
+                  width: 40,
+                  height: 40,
+                }}
+              >
+                <Schedule sx={{ fontSize: 20 }} />
+              </Avatar>
+              <Box flex={1} minWidth={0}>
+                <Typography variant="body2" fontWeight={600} noWrap>
                   {cls.classroomName}
                 </Typography>
-                {cls.courseTitle && (
-                  <Typography variant="caption" color="textSecondary">
-                    {cls.courseTitle}
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                  <Chip
+                    label={`${moment(cls.startTime).format("HH:mm")}`}
+                    size="small"
+                    color="primary"
+                    sx={{ height: 18, fontSize: "0.65rem" }}
+                  />
+                  <Typography variant="caption" color="text.secondary" noWrap>
+                    {cls.teacherName}
                   </Typography>
-                )}
-              </Stack>
-            </TableCell>
-            <TableCell>{cls.teacherName}</TableCell>
-            <TableCell>
+                </Stack>
+              </Box>
               <Chip
-                icon={<Schedule />}
-                label={`${moment(cls.startTime).format("HH:mm")} - ${moment(cls.endTime).format("HH:mm")}`}
+                icon={<Groups sx={{ fontSize: 14 }} />}
+                label={cls.activeStudents}
                 size="small"
                 variant="outlined"
+                sx={{ height: 24 }}
               />
-            </TableCell>
-            <TableCell>{cls.roomName ?? "Chưa phân phòng"}</TableCell>
-            <TableCell align="right">
-              {cls.activeStudents}
-              {typeof cls.maxStudents === "number" && cls.maxStudents > 0
-                ? `/${cls.maxStudents}`
-                : ""}
-            </TableCell>
-          </TableRow>
+            </Stack>
+          </Box>
         ))}
-      </TableBody>
+      </Stack>
     );
   };
 
   return (
     <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Lớp học hôm nay
-        </Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Lớp học</TableCell>
-                <TableCell>Giáo viên</TableCell>
-                <TableCell>Thời gian</TableCell>
-                <TableCell>Phòng</TableCell>
-                <TableCell align="right">Sĩ số</TableCell>
-              </TableRow>
-            </TableHead>
-            {renderContent()}
-          </Table>
-        </TableContainer>
+      <CardContent sx={{ p: 2.5 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" fontWeight={600}>
+            Lớp học hôm nay
+          </Typography>
+          <Chip
+            label={`${upcomingClasses?.length ?? 0} lớp`}
+            size="small"
+            color="info"
+            variant="outlined"
+            sx={{ height: 22 }}
+          />
+        </Stack>
+        {renderContent()}
       </CardContent>
     </Card>
   );

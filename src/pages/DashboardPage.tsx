@@ -2,58 +2,55 @@ import CourseDistributionWidget from "@/components/dashboard/CourseDistributionW
 import NotificationsWidget from "@/components/dashboard/NotificationsWidget";
 import RecentStudentsWidget from "@/components/dashboard/RecentStudentsWidget";
 import RegistrationTrendWidget from "@/components/dashboard/RegistrationTrendWidget";
-import StatsCardsWidget from "@/components/dashboard/StatsCardsWidget";
+import RevenueTrendWidget from "@/components/dashboard/RevenueTrendWidget";
+import StatsOverviewWidget from "@/components/dashboard/StatsOverviewWidget";
+import TopCoursesWidget from "@/components/dashboard/TopCoursesWidget";
 import UpcomingClassesWidget from "@/components/dashboard/UpcomingClassesWidget";
-import AIAnalyticsDashboardWidget from "@/components/dashboard/AIAnalyticsDashboardWidget";
-import { Box, Container, Grid, Typography } from "@mui/material";
+import WelcomeWidget from "@/components/dashboard/WelcomeWidget";
+import { Box, Container, Grid } from "@mui/material";
 import * as React from "react";
 
 const DashboardPage: React.FC = () => {
-    return (
-        <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 3, md: 4 }, mb: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2 } }}>
-            {/* Page Header */}
-            <Box sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
-                <Typography variant="h4" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
-                    Dashboard
-                </Typography>
-                <Typography variant="body1" color="textSecondary" sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}>
-                    Tổng quan hoạt động
-                </Typography>
-            </Box>
+  return (
+    <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
+      <Grid container spacing={3}>
+        {/* Row 1: Welcome Banner + Notifications */}
+        <Grid item xs={12} lg={8}>
+          <WelcomeWidget />
+        </Grid>
+        <Grid item xs={12} lg={4}>
+          <NotificationsWidget />
+        </Grid>
 
-            {/* Main Grid Layout */}
-            <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-                {/* Row 1: Stat Cards */}
-                <Grid item xs={12}>
-                    <StatsCardsWidget />
-                </Grid>
+        {/* Row 2: Key Stats Cards (6 main metrics) */}
+        <Grid item xs={12}>
+          <StatsOverviewWidget />
+        </Grid>
 
-                {/* Row 2: Charts */}
-                <Grid item xs={12} lg={8}>
-                    <RegistrationTrendWidget />
-                </Grid>
-                <Grid item xs={12} lg={4}>
-                    <CourseDistributionWidget />
-                </Grid>
+        {/* Row 3: Charts - Revenue & Course Distribution */}
+        <Grid item xs={12} lg={8}>
+          <RevenueTrendWidget />
+        </Grid>
+        <Grid item xs={12} lg={4}>
+          <CourseDistributionWidget />
+        </Grid>
 
-                {/* Row 3: AI Analytics & Notifications */}
-                <Grid item xs={12} lg={6}>
-                    <AIAnalyticsDashboardWidget />
-                </Grid>
-                <Grid item xs={12} lg={6}>
-                    <NotificationsWidget />
-                </Grid>
-
-                {/* Row 4: Tables / Lists */}
-                <Grid item xs={12} lg={7}>
-                    <UpcomingClassesWidget />
-                </Grid>
-                <Grid item xs={12} lg={5}>
-                    <RecentStudentsWidget />
-                </Grid>
-            </Grid>
-        </Container>
-    );
+        {/* Row 4: Lists - Top Courses, Recent Students, Upcoming Classes */}
+        <Grid item xs={12} md={6} lg={4}>
+          <TopCoursesWidget />
+        </Grid>
+        <Grid item xs={12} md={6} lg={4}>
+          <RecentStudentsWidget />
+        </Grid>
+        <Grid item xs={12} lg={4}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <UpcomingClassesWidget />
+            <RegistrationTrendWidget />
+          </Box>
+        </Grid>
+      </Grid>
+    </Container>
+  );
 };
 
 export default DashboardPage;

@@ -119,7 +119,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   const groupedConversations = groupConversationsByDate(conversations);
 
   return (
-    <div className="w-64 bg-gray-50 border-r h-screen flex flex-col">
+    <div className="w-64 bg-gray-50 border-r h-full max-h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b bg-white">
         <button

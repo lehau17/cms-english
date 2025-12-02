@@ -22,6 +22,23 @@ import {
   YAxis,
 } from 'recharts';
 
+interface LineConfig {
+  dataKey: string;
+  color: string;
+  strokeWidth?: number;
+}
+
+interface BarConfig {
+  dataKey: string;
+  color: string;
+}
+
+interface AreaConfig {
+  dataKey: string;
+  color: string;
+  fillOpacity?: number;
+}
+
 interface ChartConfig {
   type: 'chart';
   chartType: 'bar' | 'line' | 'pie' | 'area' | 'radar' | 'scatter';
@@ -30,9 +47,13 @@ interface ChartConfig {
   config: {
     xLabel?: string;
     yLabel?: string;
+    xAxisKey?: string;
     colors?: string[];
     responsive?: boolean;
     legend?: boolean;
+    lines?: LineConfig[];
+    bars?: BarConfig[];
+    areas?: AreaConfig[];
   };
 }
 
@@ -42,9 +63,17 @@ interface ChartRendererProps {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+// Helper to extract dataKeys from data
+const getDataKeys = (data: any[]): string[] => {
+  if (!data || data.length === 0) return ['value'];
+  const firstItem = data[0];
+  return Object.keys(firstItem).filter(key => key !== 'name' && typeof firstItem[key] === 'number');
+};
+
 export const ChartRenderer: React.FC<ChartRendererProps> = ({ chart }) => {
   const { chartType, title, data, config } = chart;
   const colors = config.colors || COLORS;
+  const xAxisKey = config.xAxisKey || 'name';
 
   // Common chart props
   const commonProps = {
@@ -55,37 +84,58 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({ chart }) => {
 
   const renderChart = () => {
     switch (chartType) {
-      case 'bar':
+      case 'bar': {
+        // Use config.bars if provided, otherwise auto-detect from data
+        const bars = config.bars || getDataKeys(data).map((key, i) => ({
+          dataKey: key,
+          color: colors[i % colors.length],
+        }));
+
         return (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart {...commonProps}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" label={{ value: config.xLabel, position: 'insideBottom', offset: -5 }} />
+              <XAxis dataKey={xAxisKey} label={{ value: config.xLabel, position: 'insideBottom', offset: -5 }} />
               <YAxis label={{ value: config.yLabel, angle: -90, position: 'insideLeft' }} />
               <Tooltip />
-              {config.legend && <Legend />}
-              <Bar dataKey="value" fill={colors[0]}>
-                {data.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                ))}
-              </Bar>
+              <Legend />
+              {bars.map((bar, index) => (
+                <Bar key={bar.dataKey} dataKey={bar.dataKey} fill={bar.color || colors[index % colors.length]} />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         );
+      }
 
-      case 'line':
+      case 'line': {
+        // Use config.lines if provided, otherwise auto-detect from data
+        const lines = config.lines || getDataKeys(data).map((key, i) => ({
+          dataKey: key,
+          color: colors[i % colors.length],
+          strokeWidth: 2,
+        }));
+
         return (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart {...commonProps}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" label={{ value: config.xLabel, position: 'insideBottom', offset: -5 }} />
+              <XAxis dataKey={xAxisKey} label={{ value: config.xLabel, position: 'insideBottom', offset: -5 }} />
               <YAxis label={{ value: config.yLabel, angle: -90, position: 'insideLeft' }} />
               <Tooltip />
-              {config.legend && <Legend />}
-              <Line type="monotone" dataKey="value" stroke={colors[0]} strokeWidth={2} />
+              <Legend />
+              {lines.map((line, index) => (
+                <Line
+                  key={line.dataKey}
+                  type="monotone"
+                  dataKey={line.dataKey}
+                  stroke={line.color || colors[index % colors.length]}
+                  strokeWidth={line.strokeWidth || 2}
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         );
+      }
 
       case 'pie':
         return (
@@ -106,24 +156,41 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({ chart }) => {
                 ))}
               </Pie>
               <Tooltip />
-              {config.legend && <Legend />}
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         );
 
-      case 'area':
+      case 'area': {
+        // Use config.areas if provided, otherwise auto-detect from data
+        const areas = config.areas || getDataKeys(data).map((key, i) => ({
+          dataKey: key,
+          color: colors[i % colors.length],
+          fillOpacity: 0.6,
+        }));
+
         return (
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart {...commonProps}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" label={{ value: config.xLabel, position: 'insideBottom', offset: -5 }} />
+              <XAxis dataKey={xAxisKey} label={{ value: config.xLabel, position: 'insideBottom', offset: -5 }} />
               <YAxis label={{ value: config.yLabel, angle: -90, position: 'insideLeft' }} />
               <Tooltip />
-              {config.legend && <Legend />}
-              <Area type="monotone" dataKey="value" stroke={colors[0]} fill={colors[0]} fillOpacity={0.6} />
+              <Legend />
+              {areas.map((area, index) => (
+                <Area
+                  key={area.dataKey}
+                  type="monotone"
+                  dataKey={area.dataKey}
+                  stroke={area.color || colors[index % colors.length]}
+                  fill={area.color || colors[index % colors.length]}
+                  fillOpacity={area.fillOpacity || 0.6}
+                />
+              ))}
             </AreaChart>
           </ResponsiveContainer>
         );
+      }
 
       case 'radar':
         return (
@@ -134,7 +201,7 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({ chart }) => {
               <PolarRadiusAxis />
               <Radar name="Value" dataKey="value" stroke={colors[0]} fill={colors[0]} fillOpacity={0.6} />
               <Tooltip />
-              {config.legend && <Legend />}
+              <Legend />
             </RadarChart>
           </ResponsiveContainer>
         );
@@ -156,7 +223,7 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({ chart }) => {
         {renderChart()}
       </div>
       <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
-        <span className="capitalize">{chartType} chart • {data.length} data points</span>
+        <span className="capitalize">{chartType} chart - {data.length} data points</span>
         <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">Interactive</span>
       </div>
     </div>
