@@ -61,11 +61,11 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ isOpen, onClose, st
 
   useEffect(() => {
     if (studentData?.data) {
-      // Only populate editable fields
+      // Only populate editable fields - username removed, use displayName directly
       const editableData = {
         email: studentData.data.email,
         phone: studentData.data.phone,
-        displayName: studentData.data.username, // Map username to displayName
+        displayName: studentData.data.displayName || '',
         firstName: studentData.data.firstName,
         lastName: studentData.data.lastName,
         avatarUrl: studentData.data.avatarUrl,
@@ -99,12 +99,23 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ isOpen, onClose, st
     }
   };
 
+  const getStudentDisplayName = (student: Student | null): string => {
+    if (!student) return 'student';
+    if (student.displayName) return student.displayName;
+    if (student.firstName && student.lastName) {
+      return `${student.firstName} ${student.lastName}`.trim();
+    }
+    if (student.firstName) return student.firstName;
+    if (student.lastName) return student.lastName;
+    return student.email || 'student';
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Edit Student"
-      description={`Update ${student?.username}'s information`}
+      description={`Update ${getStudentDisplayName(student)}'s information`}
       icon={<Edit className="w-6 h-6 text-green-600" />}
     >
       <FormProvider {...methods}>

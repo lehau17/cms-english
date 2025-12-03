@@ -15,6 +15,7 @@ import {
   uploadImage,
 } from '@/apis/vocabulary'
 import TermModalWithAI from '@/components/vocabulary/TermModalWithAI'
+import { DataTable, type ActionButton, type TableColumn } from '@/components/ui'
 import { DifficultyLevel } from '@/interface/enums'
 import {
   CreateVocabularyTermInput,
@@ -28,11 +29,14 @@ import {
 } from '@/interface/vocabulary.interface'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+} from '@mui/icons-material'
+import {
   ArrowLeft,
   BookOpen,
   ChevronDown,
   ChevronRight,
-  Edit,
   Layers,
   Plus,
   Sparkles,
@@ -597,71 +601,56 @@ const VocabularyDetailPage: React.FC = () => {
     termDeleteMutation.mutate(selectedTerm.id)
   }
 
-  const renderTermRows = useMemo(() => {
-    if (!expandedUnit || !expandedUnit.terms) return null
-    if (expandedUnit.terms.length === 0) {
-      return (
-        <div className="rounded-xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
-          Chưa có từ vựng nào trong unit này.
+  const getTermColumns = (): TableColumn<VocabularyTerm>[] => [
+    {
+      id: 'word',
+      label: 'Từ vựng',
+      render: (term) => (
+        <div>
+          <div className="font-semibold">{term.word}</div>
+          <div className="text-xs text-slate-500">{term.partOfSpeech}</div>
         </div>
-      )
-    }
+      ),
+    },
+    {
+      id: 'definition',
+      label: 'Định nghĩa',
+      render: (term) => (
+        <div className="line-clamp-3 leading-relaxed">{term.definition}</div>
+      ),
+    },
+    {
+      id: 'translationVi',
+      label: 'Dịch nghĩa',
+      render: (term) => (
+        <span>{term.translationVi || <span className="text-xs text-slate-400">—</span>}</span>
+      ),
+    },
+    {
+      id: 'difficulty',
+      label: 'Độ khó',
+      render: (term) => (
+        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+          {term.difficulty}
+        </span>
+      ),
+    },
+  ];
 
-    return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-100 text-left">
-          <thead>
-            <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <th className="px-4 py-3">Từ vựng</th>
-              <th className="px-4 py-3">Định nghĩa</th>
-              <th className="px-4 py-3">Dịch nghĩa</th>
-              <th className="px-4 py-3">Độ khó</th>
-              <th className="px-4 py-3 text-right">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {expandedUnit.terms.map((term) => (
-              <tr key={term.id} className="bg-white">
-                <td className="px-4 py-3 align-top text-sm font-semibold text-slate-800">
-                  <div>{term.word}</div>
-                  <div className="text-xs text-slate-500">{term.partOfSpeech}</div>
-                </td>
-                <td className="px-4 py-3 align-top text-sm text-slate-600">
-                  <div className="line-clamp-3 leading-relaxed">{term.definition}</div>
-                </td>
-                <td className="px-4 py-3 align-top text-sm text-slate-600">
-                  {term.translationVi || <span className="text-xs text-slate-400">—</span>}
-                </td>
-                <td className="px-4 py-3 align-top">
-                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-                    {term.difficulty}
-                  </span>
-                </td>
-                <td className="px-4 py-3 align-top text-right">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => handleOpenEditTerm(term)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                    >
-                      <Edit className="h-3.5 w-3.5" />
-                      Sửa
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTerm(term)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Xóa
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
-  }, [expandedUnit])
+  const getTermActions = (): ActionButton<VocabularyTerm>[] => [
+    {
+      icon: <EditIcon fontSize="small" />,
+      label: 'Sửa',
+      color: 'warning',
+      onClick: handleOpenEditTerm,
+    },
+    {
+      icon: <DeleteIcon fontSize="small" />,
+      label: 'Xóa',
+      color: 'error',
+      onClick: handleDeleteTerm,
+    },
+  ];
 
   if (listLoading || !listId || !list) {
     return (
@@ -809,8 +798,20 @@ const VocabularyDetailPage: React.FC = () => {
                           <div className="rounded-xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
                             Đang tải từ vựng...
                           </div>
+                        ) : !expandedUnit || !expandedUnit.terms || expandedUnit.terms.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+                            Chưa có từ vựng nào trong unit này.
+                          </div>
                         ) : (
-                          renderTermRows
+                          <div style={{ margin: '-16px' }}>
+                            <DataTable
+                              columns={getTermColumns()}
+                              data={expandedUnit.terms}
+                              isLoading={false}
+                              actions={getTermActions()}
+                              getRowId={(term) => term.id}
+                            />
+                          </div>
                         )}
                       </div>
                     )}

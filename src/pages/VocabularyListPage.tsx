@@ -3,27 +3,29 @@ import {
   deleteVocabularyList,
   getVocabularyLists,
   updateVocabularyList,
-} from '@/apis/vocabulary'
-import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery'
-import { ESoftOrder } from '@/interface/base-request.interface'
-import { DifficultyLevel, LanguageCode } from '@/interface/enums'
+} from '@/apis/vocabulary';
+import { DataTable, PageHeader, PaginationBar, SearchFilterBar, type ActionButton, type TableColumn } from '@/components/ui';
+import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
+import { ESoftOrder } from '@/interface/base-request.interface';
+import { DifficultyLevel, LanguageCode } from '@/interface/enums';
 import {
   CreateVocabularyListInput,
   UpdateVocabularyListInput,
   VocabularyList,
-} from '@/interface/vocabulary.interface'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+} from '@/interface/vocabulary.interface';
 import {
-  ArrowUpDown,
-  Edit,
-  ListChecks,
-  Plus,
-  Search,
-  Trash2,
-} from 'lucide-react'
-import React, { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
+    Add as PlusIcon,
+    Book as BookIcon,
+    Delete as TrashIcon,
+    Edit as EditIcon,
+    PlaylistAddCheck as ListChecksIcon,
+    Sort as SortAscendingIcon
+} from '@mui/icons-material';
+import { Box, Button, Chip, Container, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const defaultListForm: CreateVocabularyListInput = {
   title: '',
@@ -35,9 +37,9 @@ const defaultListForm: CreateVocabularyListInput = {
   bannerUrl: '',
   isPublic: true,
   language: LanguageCode.EN,
-}
+};
 
-type ListFormState = CreateVocabularyListInput
+type ListFormState = CreateVocabularyListInput;
 
 const difficultyOptions = Object.values(DifficultyLevel).map((value) => ({
   value,
@@ -45,20 +47,20 @@ const difficultyOptions = Object.values(DifficultyLevel).map((value) => ({
     .split('_')
     .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
     .join(' '),
-}))
+}));
 
 const languageOptions = Object.values(LanguageCode).map((value) => ({
   value,
   label: value.toUpperCase(),
-}))
+}));
 
 const Modal: React.FC<{
-  open: boolean
-  title: string
-  onClose: () => void
-  children: React.ReactNode
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
 }> = ({ open, title, onClose, children }) => {
-  if (!open) return null
+  if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
       <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl">
@@ -74,16 +76,16 @@ const Modal: React.FC<{
         <div className="max-h-[75vh] overflow-y-auto px-6 py-5">{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const ConfirmDialog: React.FC<{
-  open: boolean
-  description: string
-  onConfirm: () => void
-  onCancel: () => void
+  open: boolean;
+  description: string;
+  onConfirm: () => void;
+  onCancel: () => void;
 }> = ({ open, description, onConfirm, onCancel }) => {
-  if (!open) return null
+  if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
@@ -104,12 +106,12 @@ const ConfirmDialog: React.FC<{
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const VocabularyListPage: React.FC = () => {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -124,62 +126,62 @@ const VocabularyListPage: React.FC = () => {
     queryKey: ['admin-vocabulary-lists'],
     queryFn: getVocabularyLists,
     initial: { sortBy: 'createdAt', sortOrder: ESoftOrder.DESC },
-  })
+  });
 
-  const lists = data?.data.data ?? []
-  const pagination = data?.data
+  const lists = data?.data.data ?? [];
+  const pagination = data?.data;
 
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isEditOpen, setIsEditOpen] = useState(false)
-  const [selectedList, setSelectedList] = useState<VocabularyList | null>(null)
-  const [formState, setFormState] = useState<ListFormState>(defaultListForm)
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedList, setSelectedList] = useState<VocabularyList | null>(null);
+  const [formState, setFormState] = useState<ListFormState>(defaultListForm);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const resetForm = () => {
-    setFormState({ ...defaultListForm })
-  }
+    setFormState({ ...defaultListForm });
+  };
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateVocabularyListInput) => createVocabularyList(payload),
     onSuccess: () => {
-      toast.success('Tạo danh sách từ vựng thành công')
-      queryClient.invalidateQueries({ queryKey: ['admin-vocabulary-lists'] })
-      setIsCreateOpen(false)
-      resetForm()
+      toast.success('Tạo danh sách từ vựng thành công');
+      queryClient.invalidateQueries({ queryKey: ['admin-vocabulary-lists'] });
+      setIsCreateOpen(false);
+      resetForm();
     },
     onError: () => toast.error('Không thể tạo danh sách'),
-  })
+  });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateVocabularyListInput }) =>
       updateVocabularyList(id, payload),
     onSuccess: () => {
-      toast.success('Cập nhật danh sách thành công')
-      queryClient.invalidateQueries({ queryKey: ['admin-vocabulary-lists'] })
-      setIsEditOpen(false)
-      setSelectedList(null)
+      toast.success('Cập nhật danh sách thành công');
+      queryClient.invalidateQueries({ queryKey: ['admin-vocabulary-lists'] });
+      setIsEditOpen(false);
+      setSelectedList(null);
     },
     onError: () => toast.error('Không thể cập nhật danh sách'),
-  })
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteVocabularyList(id),
     onSuccess: () => {
-      toast.success('Đã xóa danh sách')
-      queryClient.invalidateQueries({ queryKey: ['admin-vocabulary-lists'] })
-      setIsDeleteOpen(false)
-      setSelectedList(null)
+      toast.success('Đã xóa danh sách');
+      queryClient.invalidateQueries({ queryKey: ['admin-vocabulary-lists'] });
+      setIsDeleteOpen(false);
+      setSelectedList(null);
     },
     onError: () => toast.error('Không thể xóa danh sách'),
-  })
+  });
 
   const handleOpenCreate = () => {
-    resetForm()
-    setIsCreateOpen(true)
-  }
+    resetForm();
+    setIsCreateOpen(true);
+  };
 
   const handleOpenEdit = (list: VocabularyList) => {
-    setSelectedList(list)
+    setSelectedList(list);
     setFormState({
       title: list.title,
       description: list.description,
@@ -190,228 +192,184 @@ const VocabularyListPage: React.FC = () => {
       bannerUrl: list.bannerUrl,
       isPublic: list.isPublic,
       language: list.language,
-    })
-    setIsEditOpen(true)
-  }
+    });
+    setIsEditOpen(true);
+  };
 
   const handleSubmitCreate = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    createMutation.mutate(formState)
-  }
+    event.preventDefault();
+    createMutation.mutate(formState);
+  };
 
   const handleSubmitEdit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!selectedList) return
+    event.preventDefault();
+    if (!selectedList) return;
     const payload: UpdateVocabularyListInput = {
       ...formState,
-    }
-    updateMutation.mutate({ id: selectedList.id, payload })
-  }
+    };
+    updateMutation.mutate({ id: selectedList.id, payload });
+  };
 
   const handleDelete = (list: VocabularyList) => {
-    setSelectedList(list)
-    setIsDeleteOpen(true)
-  }
+    setSelectedList(list);
+    setIsDeleteOpen(true);
+  };
 
   const handleConfirmDelete = () => {
-    if (!selectedList) return
-    deleteMutation.mutate(selectedList.id)
-  }
+    if (!selectedList) return;
+    deleteMutation.mutate(selectedList.id);
+  };
 
   const handleSortToggle = () => {
-    const nextOrder = request.sortOrder === ESoftOrder.DESC ? ESoftOrder.ASC : ESoftOrder.DESC
-    setSort('createdAt', nextOrder)
-    refetch()
-  }
+    const nextOrder = request.sortOrder === ESoftOrder.DESC ? ESoftOrder.ASC : ESoftOrder.DESC;
+    setSort('createdAt', nextOrder);
+    refetch();
+  };
 
-  const renderDifficultyBadge = (difficulty: DifficultyLevel) => {
-    const base = 'px-2.5 py-1 rounded-full text-xs font-semibold'
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= (pagination?.totalPages || 1)) {
+      setPage(newPage);
+    }
+  };
+
+  const getDifficultyChip = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
       case DifficultyLevel.BEGINNER:
-        return <span className={`${base} bg-emerald-100 text-emerald-700`}>Beginner</span>
+        return <Chip label="Beginner" color="success" size="small" />;
       case DifficultyLevel.INTERMEDIATE:
-        return <span className={`${base} bg-sky-100 text-sky-700`}>Intermediate</span>
+        return <Chip label="Intermediate" color="info" size="small" />;
       case DifficultyLevel.ADVANCED:
-        return <span className={`${base} bg-purple-100 text-purple-700`}>Advanced</span>
+        return <Chip label="Advanced" color="secondary" size="small" />;
       default:
-        return <span className={`${base} bg-slate-100 text-slate-700`}>{difficulty}</span>
+        return <Chip label={difficulty} size="small" />;
     }
-  }
+  };
 
-  const renderedRows = useMemo(
-    () =>
-      lists.map((list) => (
-        <tr
-          key={list.id}
-          className="rounded-xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-        >
-          <td className="px-4 py-3 align-top">
-            <div className="font-semibold text-slate-900">{list.title}</div>
-            <div className="text-xs text-slate-500">{list.description || 'Không có mô tả'}</div>
-          </td>
-          <td className="px-4 py-3 align-top">
-            <div className="flex flex-wrap gap-2">
-              {renderDifficultyBadge(list.difficulty)}
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                {list.language.toUpperCase()}
-              </span>
-              <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-600">
-                {list.totalUnits} units
-              </span>
-              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600">
-                {list.totalTerms} terms
-              </span>
-            </div>
-          </td>
-          <td className="px-4 py-3 align-top text-sm text-slate-500">
-            <div>{new Date(list.createdAt).toLocaleDateString()}</div>
-            <div className="text-xs">Cập nhật {new Date(list.updatedAt).toLocaleDateString()}</div>
-          </td>
-          <td className="px-4 py-3 align-top text-right text-sm">
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => navigate(`/vocabulary/${list.id}`)}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-              >
-                <ListChecks className="h-3.5 w-3.5" />
-                Quản lý
-              </button>
-              <button
-                onClick={() => handleOpenEdit(list)}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-              >
-                <Edit className="h-3.5 w-3.5" />
-                Sửa
-              </button>
-              <button
-                onClick={() => handleDelete(list)}
-                className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Xóa
-              </button>
-            </div>
-          </td>
-        </tr>
-      )),
-    [lists, navigate],
-  )
+  const columns: TableColumn<VocabularyList>[] = [
+    {
+      id: 'title',
+      label: 'Danh sách',
+      render: (list) => (
+        <Stack spacing={0.5}>
+          <Typography variant="body2" fontWeight={600}>
+            {list.title}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {list.description || 'Không có mô tả'}
+          </Typography>
+        </Stack>
+      ),
+    },
+    {
+      id: 'info',
+      label: 'Thông tin',
+      render: (list) => (
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          {getDifficultyChip(list.difficulty)}
+          <Chip label={list.language.toUpperCase()} size="small" variant="outlined" />
+          <Chip label={`${list.totalUnits} units`} size="small" color="primary" variant="outlined" />
+          <Chip label={`${list.totalTerms} terms`} size="small" color="warning" variant="outlined" />
+        </Stack>
+      ),
+    },
+    {
+      id: 'time',
+      label: 'Thời gian',
+      render: (list) => (
+        <Stack spacing={0.5}>
+          <Typography variant="body2">
+            {new Date(list.createdAt).toLocaleDateString()}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Cập nhật {new Date(list.updatedAt).toLocaleDateString()}
+          </Typography>
+        </Stack>
+      ),
+    },
+  ];
+
+  const actions: ActionButton<VocabularyList>[] = [
+    {
+      icon: <ListChecksIcon fontSize="small" />,
+      label: 'Quản lý',
+      color: 'primary',
+      onClick: (list) => navigate(`/vocabulary/${list.id}`),
+    },
+    {
+      icon: <EditIcon fontSize="small" />,
+      label: 'Sửa',
+      color: 'warning',
+      onClick: handleOpenEdit,
+    },
+    {
+      icon: <TrashIcon fontSize="small" />,
+      label: 'Xóa',
+      color: 'error',
+      onClick: handleDelete,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-4 sm:p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Vocabulary Management</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Quản lý danh sách từ vựng, unit và các từ cho học viên.
-            </p>
-          </div>
-          <button
-            onClick={handleOpenCreate}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:from-indigo-700 hover:to-purple-700 hover:-translate-y-0.5"
-          >
-            <Plus className="h-4 w-4" />
-            Tạo danh sách mới
-          </button>
-        </div>
+    <Container maxWidth="xl">
+      <Stack spacing={3} sx={{ py: 3 }}>
+        <PageHeader
+          title="Vocabulary Management"
+          description="Quản lý danh sách từ vựng, unit và các từ cho học viên."
+          createButtonLabel="Tạo danh sách mới"
+          onCreateClick={handleOpenCreate}
+        />
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 gap-3">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={request.search || ''}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Tìm kiếm theo tiêu đề, mô tả..."
-                  className="w-full rounded-xl border border-slate-200 bg-white px-9 py-2.5 text-sm text-slate-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-              <button
-                onClick={handleSortToggle}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <SearchFilterBar
+            searchValue={request.search || ''}
+            onSearchChange={setSearch}
+            searchPlaceholder="Tìm kiếm theo tiêu đề, mô tả..."
+            limitValue={request.limit || 10}
+            onLimitChange={setLimit}
+            isLoading={isLoading}
+            limitOptions={[10, 20, 50]}
+          />
+          <Tooltip title="Sắp xếp">
+            <IconButton onClick={handleSortToggle}>
+              <SortAscendingIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        <DataTable
+          columns={columns}
+          data={lists}
+          isLoading={isLoading}
+          actions={actions}
+          getRowId={(list) => list.id}
+          emptyState={{
+            icon: <BookIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />,
+            title: 'Chưa có danh sách nào',
+            description: 'Tạo danh sách từ vựng mới để bắt đầu.',
+            actionButton: (
+              <Button
+                variant="contained"
+                startIcon={<PlusIcon />}
+                onClick={handleOpenCreate}
               >
-                <ArrowUpDown className="h-4 w-4" />
-                Sắp xếp
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-slate-500">Hiển thị:</label>
-              <select
-                value={request.limit}
-                onChange={(event) => setLimit(Number(event.target.value))}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              >
-                {[10, 20, 50].map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+                Tạo danh sách đầu tiên
+              </Button>
+            ),
+          }}
+        />
 
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 text-left">
-              <thead>
-                <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3">Danh sách</th>
-                  <th className="px-4 py-3">Thông tin</th>
-                  <th className="px-4 py-3">Thời gian</th>
-                  <th className="px-4 py-3 text-right">Hành động</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                      Đang tải dữ liệu...
-                    </td>
-                  </tr>
-                ) : lists.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                      Chưa có danh sách nào.
-                    </td>
-                  </tr>
-                ) : (
-                  renderedRows
-                )}
-              </tbody>
-            </table>
-          </div>
+        {pagination && (
+          <PaginationBar
+            page={pagination.page}
+            totalPages={pagination.totalPages ?? 1}
+            totalItems={pagination.totalItems ?? 0}
+            limit={pagination.limit}
+            onPageChange={handlePageChange}
+          />
+        )}
+      </Stack>
 
-          {pagination && (
-            <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-slate-100 pt-4 text-sm text-slate-600 sm:flex-row">
-              <div>
-                Hiển thị trang {pagination.page} / {pagination.totalPages} · Tổng {pagination.totalItems}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage(Math.max(1, (pagination.page ?? 1) - 1))}
-                  className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                  disabled={(pagination.page ?? 1) === 1}
-                >
-                  ← Trước
-                </button>
-                <button
-                  onClick={() =>
-                    setPage(
-                      Math.min(pagination.totalPages || 1, (pagination.page ?? 1) + 1),
-                    )
-                  }
-                  className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                  disabled={(pagination.page ?? 1) >= (pagination.totalPages || 1)}
-                >
-                  Sau →
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
+      {/* Modals - giữ nguyên */}
       <Modal open={isCreateOpen} title="Tạo danh sách từ vựng" onClose={() => setIsCreateOpen(false)}>
         <form className="space-y-4" onSubmit={handleSubmitCreate}>
           <div className="grid gap-4 md:grid-cols-2">
@@ -706,7 +664,7 @@ const VocabularyListPage: React.FC = () => {
               disabled={updateMutation.isPending}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-60"
             >
-              {updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+              {updateMutation.isPending ? 'Đang cập nhật...' : 'Cập nhật'}
             </button>
           </div>
         </form>
@@ -714,15 +672,12 @@ const VocabularyListPage: React.FC = () => {
 
       <ConfirmDialog
         open={isDeleteOpen}
-        description={`Bạn có chắc muốn xóa danh sách "${selectedList?.title ?? ''}"?`}
-        onCancel={() => {
-          setIsDeleteOpen(false)
-          setSelectedList(null)
-        }}
+        description={`Bạn có chắc chắn muốn xóa danh sách "${selectedList?.title}"? Hành động này không thể hoàn tác.`}
         onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteOpen(false)}
       />
-    </div>
-  )
-}
+    </Container>
+  );
+};
 
-export default VocabularyListPage
+export default VocabularyListPage;

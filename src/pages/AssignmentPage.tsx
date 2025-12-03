@@ -1,5 +1,6 @@
 import {
     Add as AddIcon,
+    Assignment as AssignmentIcon,
     Delete as DeleteIcon,
     Edit as EditIcon,
     FileCopy as FileCopyIcon,
@@ -13,29 +14,14 @@ import {
     Box,
     Button,
     Card,
-    Checkbox,
     Chip,
+    Container,
     Dialog,
     DialogActions,
     DialogContent,
-    DialogContentText,
     DialogTitle,
-    FormControl,
-    FormControlLabel,
     Grid,
-    IconButton,
-    InputLabel,
-    MenuItem,
-    Paper,
-    Select,
-    Switch,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TablePagination,
-    TableRow,
+    Stack,
     TextField,
     Tooltip,
     Typography
@@ -47,6 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import { assignmentApi, downloadAssignmentPdf, type Assignment, type CloneAssignmentPayload } from '../apis/assignment';
 import { getClassrooms } from '../apis/classroom';
 import CreateAssignmentModal from '../components/classroom/CreateAssignmentModal';
+import { DataTable, PageHeader, PaginationBar, type ActionButton, type TableColumn } from '../components/ui';
 import type { Classroom } from '../interface/classroom.interface';
 import type { AssignmentFormValues } from '../schemas/assignment.schema';
 
@@ -170,7 +157,6 @@ export default function AssignmentPage() {
     const handleTogglePublish = async (assignment: Assignment) => {
         try {
             if (assignment.isPublished) {
-                // Cannot unpublish via API, would need separate endpoint
                 toast('Cannot unpublish assignment via this interface');
                 return;
             } else {
@@ -213,40 +199,210 @@ export default function AssignmentPage() {
         return new Date(dateString).toLocaleDateString('vi-VN');
     };
 
+    // Filter assignments client-side
+    const filteredAssignments = useMemo(
+        () =>
+            assignments.filter((assignment) =>
+                assignment.title.toLowerCase().includes(searchTerm.toLowerCase())
+            ),
+        [assignments, searchTerm]
+    );
+
+    // Calculate pagination for filtered results
+    const totalPages = Math.ceil(total / rowsPerPage);
+    const paginatedAssignments = useMemo(() => {
+        const startIndex = page * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return filteredAssignments.slice(startIndex, endIndex);
+    }, [filteredAssignments, page, rowsPerPage]);
+
+    const columns: TableColumn<Assignment>[] = [
+        {
+            id: 'title',
+            label: 'Title',
+            render: (assignment) => (
+                <Stack spacing={0.5}>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                        {assignment.title}
+                    </Typography>
+                    {assignment.description && (
+                        <Typography variant="body2" color="text.secondary" noWrap>
+                            {assignment.description.substring(0, 100)}
+                            {assignment.description.length > 100 && '...'}
+                        </Typography>
+                    )}
+                </Stack>
+            ),
+        },
+        {
+            id: 'classroom',
+            label: 'Classroom',
+            render: (assignment) => (
+                <Stack spacing={0.5}>
+                    <Typography variant="body2">
+                        {assignment.classroom?.name || 'Unknown'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                        {assignment.classroom?.classCode || 'N/A'}
+                    </Typography>
+                </Stack>
+            ),
+        },
+        {
+            id: 'status',
+            label: 'Status',
+            render: (assignment) => getStatusChip(assignment),
+        },
+        {
+            id: 'dueDate',
+            label: 'Due Date',
+            render: (assignment) => (
+                <Typography variant="body2">
+                    {formatDate(assignment.dueDate)}
+                </Typography>
+            ),
+        },
+        {
+            id: 'points',
+            label: 'Points',
+            render: (assignment) => (
+                <Typography variant="body2">
+                    {assignment.totalPoints || 'N/A'} pts
+                </Typography>
+            ),
+        },
+        {
+            id: 'activities',
+            label: 'Activities',
+            render: (assignment) => (
+                <Typography variant="body2">
+                    {assignment.assignmentActivities?.length || 0} activities
+                </Typography>
+            ),
+        },
+        {
+            id: 'createdAt',
+            label: 'Created',
+            render: (assignment) => (
+                <Typography variant="body2">
+                    {new Date(assignment.createdAt).toLocaleDateString('vi-VN')}
+                </Typography>
+            ),
+        },
+    ];
+
+    const actions: ActionButton<Assignment>[] = [
+        {
+            icon: <VisibilityIcon fontSize="small" />,
+            label: 'View Details',
+            color: 'primary',
+            onClick: (assignment) => {
+                setSelectedAssignment(assignment);
+                setShowViewDialog(true);
+            },
+        },
+        {
+            icon: <FileDownloadIcon fontSize="small" />,
+            label: 'Download PDF',
+            color: 'primary',
+            onClick: handleDownloadPdf,
+        },
+        {
+            icon: <FileCopyIcon fontSize="small" />,
+            label: 'Reuse',
+            color: 'info',
+            onClick: handleOpenReuseDialog,
+        },
+        {
+            icon: <EditIcon fontSize="small" />,
+            label: 'Edit',
+            color: 'warning',
+            onClick: async (assignment) => {
+                try {
+                    const response = await assignmentApi.getAssignmentById(assignment.id);
+                    if (response.data) {
+                        const assignmentData = response.data;
+                        const formValues: AssignmentFormValues = {
+                            title: assignmentData.title,
+                            description: assignmentData.description || '',
+                            instructions: assignmentData.instructions || '',
+                            dueDate: assignmentData.dueDate || '',
+                            totalPoints: assignmentData.totalPoints || 100,
+                            timeLimit: assignmentData.timeLimit || undefined,
+                            maxAttempts: assignmentData.maxAttempts || 1,
+                            isPublished: assignmentData.isPublished || false,
+                            activities: (assignmentData.assignmentActivities || []).map((activity: any) => ({
+                                id: activity.id,
+                                type: activity.type,
+                                title: activity.title,
+                                instructions: activity.instructions,
+                                content: activity.content || {},
+                                points: activity.points || 10,
+                                passingScore: activity.passingScore,
+                                difficulty: activity.difficulty as any,
+                                hints: activity.hints || [],
+                            })),
+                        };
+                        setEditFormValues(formValues);
+                        setEditAssignment(assignmentData);
+                        setIsEditModalOpen(true);
+                    }
+                } catch (err: any) {
+                    console.error('Error loading assignment:', err);
+                    toast.error(err?.response?.data?.message || 'Failed to load assignment');
+                }
+            },
+        },
+        {
+            icon: <PublishIcon fontSize="small" />,
+            label: 'Publish',
+            color: 'success',
+            onClick: handleTogglePublish,
+        },
+        {
+            icon: <DeleteIcon fontSize="small" />,
+            label: 'Delete',
+            color: 'error',
+            onClick: (assignment) => {
+                setSelectedAssignment(assignment);
+                setShowDeleteDialog(true);
+            },
+        },
+    ];
+
     if (loading && assignments.length === 0) {
         return (
-            <Box sx={{ p: 3 }}>
-                <Typography variant="h4" gutterBottom>
-                    Assignment Management
-                </Typography>
-                <Typography>Loading assignments...</Typography>
-            </Box>
+            <Container maxWidth="xl">
+                <Stack spacing={3} sx={{ py: 3 }}>
+                    <PageHeader title="Assignment Management" />
+                    <Typography>Loading assignments...</Typography>
+                </Stack>
+            </Container>
         );
     }
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" gutterBottom>
-                    Assignment Management
-                </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate('/classrooms')}
-                >
-                    Create Assignment
-                </Button>
-            </Box>
+        <Container maxWidth="xl">
+            <Stack spacing={3} sx={{ py: 3 }}>
+                <PageHeader
+                    title="Assignment Management"
+                    actionButton={
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => navigate('/classrooms')}
+                        >
+                            Create Assignment
+                        </Button>
+                    }
+                />
 
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            )}
+                {error && (
+                    <Alert severity="error">
+                        {error}
+                    </Alert>
+                )}
 
-            {/* Search */}
-            <Box mb={2}>
                 <TextField
                     fullWidth
                     label="Search assignments..."
@@ -255,199 +411,39 @@ export default function AssignmentPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     sx={{ maxWidth: 400 }}
                 />
-            </Box>
 
-            {/* Assignments Table */}
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Title</TableCell>
-                            <TableCell>Classroom</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Due Date</TableCell>
-                            <TableCell>Points</TableCell>
-                            <TableCell>Activities</TableCell>
-                            <TableCell>Created</TableCell>
-                            <TableCell align="center">Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {assignments
-                            .filter((assignment) =>
-                                assignment.title.toLowerCase().includes(searchTerm.toLowerCase())
-                            )
-                            .map((assignment) => (
-                                <TableRow key={assignment.id} hover>
-                                    <TableCell>
-                                        <Typography variant="subtitle2" fontWeight="bold">
-                                            {assignment.title}
-                                        </Typography>
-                                        {assignment.description && (
-                                            <Typography variant="body2" color="text.secondary" noWrap>
-                                                {assignment.description.substring(0, 100)}
-                                                {assignment.description.length > 100 && '...'}
-                                            </Typography>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {assignment.classroom?.name || 'Unknown'}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {assignment.classroom?.classCode || 'N/A'}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>{getStatusChip(assignment)}</TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {formatDate(assignment.dueDate)}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {assignment.totalPoints || 'N/A'} pts
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {assignment.assignmentActivities?.length || 0} activities
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {new Date(assignment.createdAt).toLocaleDateString('vi-VN')}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Box display="flex" gap={1} justifyContent="center">
-                                            {/* View Details */}
-                                            <Tooltip title="View Details">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => {
-                                                        setSelectedAssignment(assignment);
-                                                        setShowViewDialog(true);
-                                                    }}
-                                                >
-                                                    <VisibilityIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
+                <DataTable
+                    columns={columns}
+                    data={paginatedAssignments}
+                    isLoading={loading}
+                    actions={actions}
+                    getRowId={(assignment) => assignment.id}
+                    emptyState={{
+                        icon: <AssignmentIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />,
+                        title: 'No Assignments Found',
+                        description: 'Create a new assignment to get started.',
+                        actionButton: (
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => navigate('/classrooms')}
+                            >
+                                Create Your First Assignment
+                            </Button>
+                        ),
+                    }}
+                />
 
-                                            {/* Download PDF */}
-                                            <Tooltip title="Download PDF">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleDownloadPdf(assignment)}
-                                                    disabled={downloading === assignment.id}
-                                                >
-                                                    <FileDownloadIcon
-                                                        fontSize="small"
-                                                        color={downloading === assignment.id ? 'disabled' : 'primary'}
-                                                    />
-                                                </IconButton>
-                                            </Tooltip>
-
-                                            {/* Reuse */}
-                                            <Tooltip title="Reuse in another classroom">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleOpenReuseDialog(assignment)}
-                                                >
-                                                    <FileCopyIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-
-                                            {/* Edit */}
-                                            <Tooltip title="Edit">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={async () => {
-                                                        try {
-                                                            const response = await assignmentApi.getAssignmentById(assignment.id);
-                                                            if (response.data) {
-                                                                const assignmentData = response.data;
-                                                                const formValues: AssignmentFormValues = {
-                                                                    title: assignmentData.title,
-                                                                    description: assignmentData.description || '',
-                                                                    instructions: assignmentData.instructions || '',
-                                                                    dueDate: assignmentData.dueDate || '',
-                                                                    totalPoints: assignmentData.totalPoints || 100,
-                                                                    timeLimit: assignmentData.timeLimit || undefined,
-                                                                    maxAttempts: assignmentData.maxAttempts || 1,
-                                                                    isPublished: assignmentData.isPublished || false,
-                                                                    activities: (assignmentData.assignmentActivities || []).map((activity: any) => ({
-                                                                        id: activity.id,
-                                                                        type: activity.type,
-                                                                        title: activity.title,
-                                                                        instructions: activity.instructions,
-                                                                        content: activity.content || {},
-                                                                        points: activity.points || 10,
-                                                                        passingScore: activity.passingScore,
-                                                                        difficulty: activity.difficulty as any,
-                                                                        hints: activity.hints || [],
-                                                                    })),
-                                                                };
-                                                                setEditFormValues(formValues);
-                                                                setEditAssignment(assignmentData);
-                                                                setIsEditModalOpen(true);
-                                                            }
-                                                        } catch (err: any) {
-                                                            console.error('Error loading assignment:', err);
-                                                            toast.error(err?.response?.data?.message || 'Failed to load assignment');
-                                                        }
-                                                    }}
-                                                >
-                                                    <EditIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-
-                                            {/* Publish/Unpublish */}
-                                            <Tooltip title={assignment.isPublished ? 'Published' : 'Publish'}>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleTogglePublish(assignment)}
-                                                    disabled={assignment.isPublished}
-                                                >
-                                                    {assignment.isPublished ? (
-                                                        <PublishIcon fontSize="small" color="success" />
-                                                    ) : (
-                                                        <UnpublishedIcon fontSize="small" />
-                                                    )}
-                                                </IconButton>
-                                            </Tooltip>
-
-                                            {/* Delete */}
-                                            <Tooltip title="Delete">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => {
-                                                        setSelectedAssignment(assignment);
-                                                        setShowDeleteDialog(true);
-                                                    }}
-                                                    sx={{ color: 'error.main' }}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-
-            {/* Pagination */}
-            <TablePagination
-                rowsPerPageOptions={[5, 10, 25, 50]}
-                component="div"
-                count={total}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-            />
+                {total > 0 && (
+                    <PaginationBar
+                        page={page + 1}
+                        totalPages={totalPages}
+                        totalItems={total}
+                        limit={rowsPerPage}
+                        onPageChange={(newPage) => setPage(newPage - 1)}
+                    />
+                )}
+            </Stack>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
@@ -578,6 +574,7 @@ export default function AssignmentPage() {
                     <Button onClick={() => setShowViewDialog(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
+
             <ReuseAssignmentDialog
                 open={isReuseDialogOpen}
                 assignment={reuseAssignment}
@@ -609,7 +606,7 @@ export default function AssignmentPage() {
                     }}
                 />
             )}
-        </Box>
+        </Container>
     );
 }
 
@@ -667,194 +664,127 @@ function ReuseAssignmentDialog({
         }
     }, [open, assignment, classrooms]);
 
-    const toggleActivity = (activityId: string) => {
-        setSelectedActivityIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(activityId)) {
-                next.delete(activityId);
-            } else {
-                next.add(activityId);
-            }
-            return next;
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!assignment || !selectedClassroomId) return;
+
+        onSubmit({
+            classroomId: selectedClassroomId,
+            title,
+            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+            isPublished,
+            activityIds: Array.from(selectedActivityIds),
         });
     };
 
-    const handleSelectAll = () => {
-        if (!assignment) return;
-        const allIds = new Set(
-            (assignment.assignmentActivities || []).map((activity) => activity.id),
-        );
-        setSelectedActivityIds(allIds);
-    };
-
-    const handleSubmit = () => {
-        if (!assignment) return;
-        if (!selectedClassroomId) {
-            toast.error('Please select a classroom to clone the assignment into');
-            return;
-        }
-
-        const activityIds = Array.from(selectedActivityIds);
-        if (activityIds.length === 0) {
-            toast.error('Select at least one activity to clone');
-            return;
-        }
-
-        const payload: CloneAssignmentPayload = {
-            targetClassroomId: selectedClassroomId,
-            activityIds,
-            title: title.trim() || undefined,
-            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-            isPublished,
-        };
-
-        onSubmit(payload);
-    };
-
-    const activities = assignment?.assignmentActivities || [];
+    if (!assignment) return null;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle>Reuse Assignment</DialogTitle>
-            <DialogContent dividers>
-                {!assignment ? (
-                    <DialogContentText>Select an assignment to reuse.</DialogContentText>
-                ) : (
-                    <Box display="flex" flexDirection="column" gap={2}>
-                        <Box>
-                            <Typography variant="subtitle1" fontWeight={600}>
-                                {assignment.title}
+            <DialogTitle>Reuse Assignment in Another Classroom</DialogTitle>
+            <form onSubmit={handleSubmit}>
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Original: {assignment.title}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                {assignment.description || 'No description'}
-                            </Typography>
-                        </Box>
+                        </Grid>
 
-                        <FormControl fullWidth>
-                            <InputLabel id="reuse-classroom-label">Classroom</InputLabel>
-                            <Select
-                                labelId="reuse-classroom-label"
-                                label="Classroom"
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="New Title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                required
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                select
+                                label="Target Classroom"
                                 value={selectedClassroomId}
-                                onChange={(event) => setSelectedClassroomId(event.target.value)}
-                                disabled={classroomsLoading || classrooms.length === 0}
-                            >
-                                {classroomsLoading && (
-                                    <MenuItem value="">
-                                        <em>Loading...</em>
-                                    </MenuItem>
-                                )}
-                                {classrooms.map((classroom) => (
-                                    <MenuItem key={classroom.id} value={classroom.id}>
-                                        {classroom.name} ({classroom.classCode || 'N/A'})
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                            {classrooms.length === 0 && !classroomsLoading && (
-                                <Typography variant="caption" color="text.secondary">
-                                    You do not have any classrooms available.
-                                </Typography>
-                            )}
-                        </FormControl>
-
-                        <TextField
-                            label="New Title"
-                            value={title}
-                            onChange={(event) => setTitle(event.target.value)}
-                            fullWidth
-                        />
-
-                        <TextField
-                            label="Due Date"
-                            type="datetime-local"
-                            value={dueDate}
-                            onChange={(event) => setDueDate(event.target.value)}
-                            fullWidth
-                            InputLabelProps={{ shrink: true }}
-                        />
-
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={isPublished}
-                                    onChange={(event) => setIsPublished(event.target.checked)}
-                                />
-                            }
-                            label="Publish immediately"
-                        />
-
-                        <Box>
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                                <Typography variant="subtitle2">
-                                    Activities ({selectedActivityIds.size}/{activities.length})
-                                </Typography>
-                                <Button size="small" onClick={handleSelectAll}>
-                                    Select all
-                                </Button>
-                            </Box>
-                            <Box
-                                sx={{
-                                    maxHeight: 260,
-                                    overflowY: 'auto',
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    borderRadius: 1,
-                                    p: 1,
+                                onChange={(e) => setSelectedClassroomId(e.target.value)}
+                                SelectProps={{
+                                    native: true,
                                 }}
+                                required
+                                disabled={classroomsLoading}
                             >
-                                {activities.map((activity) => (
-                                    <Box
-                                        key={activity.id}
-                                        sx={{
-                                            border: '1px solid',
-                                            borderColor: selectedActivityIds.has(activity.id)
-                                                ? 'primary.main'
-                                                : 'divider',
-                                            borderRadius: 1,
-                                            p: 1,
-                                            mb: 1,
-                                        }}
-                                    >
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={selectedActivityIds.has(activity.id)}
-                                                    onChange={() => toggleActivity(activity.id)}
-                                                />
-                                            }
-                                            label={
-                                                <Box>
-                                                    <Typography variant="subtitle2">
-                                                        {activity.title}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        Type: {activity.type} · {activity.points || 0} pts
-                                                    </Typography>
-                                                </Box>
-                                            }
-                                        />
-                                    </Box>
+                                <option value="">Select a classroom</option>
+                                {classrooms.map((classroom) => (
+                                    <option key={classroom.id} value={classroom.id}>
+                                        {classroom.name} ({classroom.classCode})
+                                    </option>
                                 ))}
-                                {activities.length === 0 && (
-                                    <Typography variant="body2" color="text.secondary">
-                                        This assignment has no activities to reuse.
-                                    </Typography>
-                                )}
-                            </Box>
-                        </Box>
-                    </Box>
-                )}
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
-                <Button
-                    onClick={handleSubmit}
-                    variant="contained"
-                    disabled={submitting || !assignment || classrooms.length === 0}
-                >
-                    {submitting ? 'Cloning...' : 'Clone Assignment'}
-                </Button>
-            </DialogActions>
+                            </TextField>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                type="datetime-local"
+                                label="Due Date"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Typography variant="subtitle2" gutterBottom>
+                                Select Activities to Include:
+                            </Typography>
+                            {assignment.assignmentActivities?.map((activity) => (
+                                <Box key={activity.id} sx={{ mb: 1 }}>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedActivityIds.has(activity.id)}
+                                            onChange={(e) => {
+                                                const newSet = new Set(selectedActivityIds);
+                                                if (e.target.checked) {
+                                                    newSet.add(activity.id);
+                                                } else {
+                                                    newSet.delete(activity.id);
+                                                }
+                                                setSelectedActivityIds(newSet);
+                                            }}
+                                        />
+                                        <span style={{ marginLeft: 8 }}>
+                                            {activity.title} ({activity.type}) - {activity.points} pts
+                                        </span>
+                                    </label>
+                                </Box>
+                            ))}
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={isPublished}
+                                    onChange={(e) => setIsPublished(e.target.checked)}
+                                />
+                                <span style={{ marginLeft: 8 }}>Publish immediately</span>
+                            </label>
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={onClose} disabled={submitting}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" variant="contained" disabled={submitting || !selectedClassroomId}>
+                        {submitting ? 'Cloning...' : 'Clone Assignment'}
+                    </Button>
+                </DialogActions>
+            </form>
         </Dialog>
     );
 }

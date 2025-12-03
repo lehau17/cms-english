@@ -4,4 +4,7 @@ export interface RequestPagingDto {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   search?: string;
+  status?: string;
+  gender?: string;
+  phone?: string;
 }

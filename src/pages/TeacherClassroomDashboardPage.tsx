@@ -1,3 +1,5 @@
+import { DataTable, type TableColumn } from '@/components/ui';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { BarChart, BookOpen, Clock, TrendingUp, UserCheck, Zap } from 'lucide-react';
@@ -115,18 +117,63 @@ const Avatar: React.FC<AvatarProps> = ({ src, alt, className = '' }) => (
   <img src={src} alt={alt} className={`h-10 w-10 rounded-full ${className}`} />
 );
 
-// A simple table component structure
-const Table: React.FC<CardProps> = ({ children, className = '' }) => (
-    <div className="w-full overflow-auto">
-        <table className={`w-full caption-bottom text-sm ${className}`}>{children}</table>
-    </div>
-);
-const TableHeader: React.FC<CardProps> = ({ children, className = '' }) => <thead className={`[&_tr]:border-b ${className}`}>{children}</thead>;
-const TableBody: React.FC<CardProps> = ({ children, className = '' }) => <tbody className={`[&_tr:last-child]:border-0 ${className}`}>{children}</tbody>;
-const TableRow: React.FC<CardProps> = ({ children, className = '' }) => <tr className={`border-b transition-colors hover:bg-gray-50 ${className}`}>{children}</tr>;
-const TableHead: React.FC<CardProps> = ({ children, className = '' }) => <th className={`h-12 px-4 text-left align-middle font-medium text-gray-500 ${className}`}>{children}</th>;
-const TableCell: React.FC<CardProps> = ({ children, className = '' }) => <td className={`p-4 align-middle ${className}`}>{children}</td>;
 
+
+// --- TABLE COMPONENT ---
+
+type ChallengingActivity = {
+  id: number;
+  name: string;
+  type: string;
+  avgScore: number;
+  failureRate: number;
+};
+
+const ChallengingActivitiesTable: React.FC<{ activities: ChallengingActivity[] }> = ({ activities }) => {
+  const columns: TableColumn<ChallengingActivity>[] = [
+    {
+      id: 'name',
+      label: 'Hoạt động',
+      render: (activity) => (
+        <Box>
+          <Typography variant="body2" fontWeight={600}>
+            {activity.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {activity.type}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      id: 'avgScore',
+      label: 'Điểm TB',
+      render: (activity) => (
+        <Typography variant="body2">
+          {activity.avgScore}
+        </Typography>
+      ),
+    },
+    {
+      id: 'failureRate',
+      label: 'Tỷ lệ < TB',
+      render: (activity) => (
+        <Typography variant="body2">
+          {activity.failureRate}%
+        </Typography>
+      ),
+    },
+  ];
+
+  return (
+    <DataTable
+      columns={columns}
+      data={activities}
+      isLoading={false}
+      getRowId={(activity) => activity.id.toString()}
+    />
+  );
+};
 
 // --- MAIN COMPONENT ---
 
@@ -266,27 +313,7 @@ const TeacherClassroomDashboardPage: React.FC = () => {
             <CardTitle>Các hoạt động thử thách nhất</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Hoạt động</TableHead>
-                  <TableHead>Điểm TB</TableHead>
-                  <TableHead>Tỷ lệ &lt; TB</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockChallengingActivities.map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell>
-                        <p className="font-medium">{activity.name}</p>
-                        <p className="text-xs text-gray-500">{activity.type}</p>
-                    </TableCell>
-                    <TableCell>{activity.avgScore}</TableCell>
-                    <TableCell>{activity.failureRate}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ChallengingActivitiesTable activities={mockChallengingActivities} />
           </CardContent>
         </Card>
         <Card>
