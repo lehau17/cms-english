@@ -69,3 +69,40 @@ export const downloadCourseTemplate = async (): Promise<Blob> => {
   });
   return response.data;
 };
+
+export interface CourseStats {
+  total: number;
+  published: number;
+  unpublished: number;
+  avgPrice: number;
+}
+
+export const getCourseStats = async (): Promise<CourseStats> => {
+  const response = await axiosInstance.get('/private/v1/courses/stats');
+  return response.data.data; // Backend wraps response in { statusCode, message, data }
+};
+
+// Bulk operations
+export const bulkDeleteCourses = async (ids: string[]): Promise<void> => {
+  await axiosInstance.post('/private/v1/courses/bulk-delete', { ids });
+};
+
+export const bulkPublishCourses = async (ids: string[]): Promise<void> => {
+  await axiosInstance.post('/private/v1/courses/bulk-publish', { ids });
+};
+
+export const bulkUnpublishCourses = async (ids: string[]): Promise<void> => {
+  await axiosInstance.post('/private/v1/courses/bulk-unpublish', { ids });
+};
+
+// Export
+export const exportCourses = async (params: RequestPagingDto & {
+  isPublished?: boolean;
+  difficulty?: string;
+}): Promise<Blob> => {
+  const response = await axiosInstance.get('/private/v1/courses/export', {
+    params,
+    responseType: 'blob',
+  });
+  return response.data;
+};

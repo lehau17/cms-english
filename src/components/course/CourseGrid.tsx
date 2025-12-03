@@ -11,6 +11,8 @@ interface CourseGridProps {
     onDelete: (course: Course) => void;
     formatDate: (dateString: string | Date | null | undefined) => string;
     emptyState?: React.ReactNode;
+    selectedCourses?: (string | number)[];
+    onSelectionChange?: (selected: (string | number)[]) => void;
 }
 
 const CourseGrid: React.FC<CourseGridProps> = ({
@@ -21,7 +23,17 @@ const CourseGrid: React.FC<CourseGridProps> = ({
     onDelete,
     formatDate,
     emptyState,
+    selectedCourses = [],
+    onSelectionChange,
 }) => {
+    const handleSelect = (courseId: string, selected: boolean) => {
+        if (!onSelectionChange) return;
+        if (selected) {
+            onSelectionChange([...selectedCourses, courseId]);
+        } else {
+            onSelectionChange(selectedCourses.filter(id => id !== courseId));
+        }
+    };
     if (isLoading) {
         return (
             <Box display="flex" justifyContent="center" py={6}>
@@ -44,6 +56,8 @@ const CourseGrid: React.FC<CourseGridProps> = ({
                     onEdit={onEdit}
                     onDelete={onDelete}
                     formatDate={formatDate}
+                    isSelected={selectedCourses.includes(course.id)}
+                    onSelect={onSelectionChange ? handleSelect : undefined}
                 />
             ))}
         </div>

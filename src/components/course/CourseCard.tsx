@@ -17,6 +17,8 @@ interface CourseCardProps {
     onEdit: (course: Course) => void;
     onDelete: (course: Course) => void;
     formatDate: (dateString: string | Date | null | undefined) => string;
+    isSelected?: boolean;
+    onSelect?: (courseId: string, selected: boolean) => void;
 }
 
 const CourseCard: React.FC<CourseCardProps> = ({
@@ -25,6 +27,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
     onEdit,
     onDelete,
     formatDate,
+    isSelected = false,
+    onSelect,
 }) => {
     const getDifficultyColor = (difficulty?: string) => {
         switch (difficulty) {
@@ -40,7 +44,19 @@ const CourseCard: React.FC<CourseCardProps> = ({
     };
 
     return (
-        <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-indigo-200 transform hover:-translate-y-1">
+        <div className={`group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border ${isSelected ? 'border-indigo-500 border-2' : 'border-gray-100 hover:border-indigo-200'} transform hover:-translate-y-1 relative`}>
+            {/* Checkbox for selection */}
+            {onSelect && (
+                <div className="absolute top-2 left-2 z-10">
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => onSelect(course.id, e.target.checked)}
+                        className="w-5 h-5 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
             {/* Image/Header Section */}
             <div className="relative h-36 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
                 {course.imageUrl ? (
