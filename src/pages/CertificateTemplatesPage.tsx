@@ -66,7 +66,7 @@ const CertificateTemplatesPage: React.FC = () => {
                     </div>
                 ) : data?.data && data.data.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {data.data.map((template) => (
+                        {data.data.map((template: any) => (
                             <div
                                 key={template.id}
                                 className="bg-white rounded-xl border-2 border-gray-200 hover:border-indigo-300 transition-all duration-200 overflow-hidden group"
@@ -89,8 +89,8 @@ const CertificateTemplatesPage: React.FC = () => {
                                     <div className="flex items-center justify-between mb-4">
                                         <span
                                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${template.isActive
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-100 text-gray-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-100 text-gray-800'
                                                 }`}
                                         >
                                             {template.isActive ? 'Active' : 'Inactive'}

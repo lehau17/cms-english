@@ -13,6 +13,7 @@ import {
     Box,
     Button,
     Card,
+    Checkbox,
     Chip,
     Dialog,
     DialogActions,
@@ -37,17 +38,16 @@ import {
     TableRow,
     TextField,
     Tooltip,
-    Typography,
-    Checkbox
+    Typography
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { assignmentApi, downloadAssignmentPdf, type Assignment, type CloneAssignmentPayload } from '../apis/assignment';
 import { getClassrooms } from '../apis/classroom';
-import type { Classroom } from '../interface/classroom.interface';
 import CreateAssignmentModal from '../components/classroom/CreateAssignmentModal';
+import type { Classroom } from '../interface/classroom.interface';
 import type { AssignmentFormValues } from '../schemas/assignment.schema';
 
 export default function AssignmentPage() {
@@ -376,7 +376,7 @@ export default function AssignmentPage() {
                                                                     timeLimit: assignmentData.timeLimit || undefined,
                                                                     maxAttempts: assignmentData.maxAttempts || 1,
                                                                     isPublished: assignmentData.isPublished || false,
-                                                                    activities: (assignmentData.assignmentActivities || []).map((activity) => ({
+                                                                    activities: (assignmentData.assignmentActivities || []).map((activity: any) => ({
                                                                         id: activity.id,
                                                                         type: activity.type,
                                                                         title: activity.title,
