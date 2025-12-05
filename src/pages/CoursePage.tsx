@@ -9,8 +9,8 @@ import { Add as AddIcon, CloudDownload as CloudDownloadIcon, Delete as DeleteIco
 import { Box, Button, Container, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Stack, Typography } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const CoursePage: React.FC = () => {
     const queryClient = useQueryClient();
