@@ -54,9 +54,9 @@ export const activitySchema = yup.object({
     type: yup.string().oneOf(ACTIVITY_TYPES as unknown as string[]).required('Activity type is required'),
     title: yup.string().required('Activity title is required'),
     instructions: yup.string().optional(),
-    content: yup.mixed().required('Content is required'),
-    points: yup.number().min(1, 'Points must be at least 1').required('Points are required'),
-    passingScore: yup.number().min(0).max(100).optional(),
+    content: yup.mixed().optional().default({}),
+    points: yup.number().min(1, 'Points must be at least 1').default(10),
+    passingScore: yup.number().min(0).max(100).optional().nullable(),
     difficulty: yup.string().oneOf(['beginner', 'elementary', 'intermediate', 'upper_intermediate', 'advanced', 'expert']).optional(),
     hints: yup.array().of(yup.string()).optional(),
 });
@@ -66,16 +66,27 @@ export const assignmentSchema = yup.object({
     title: yup.string().required('Assignment title is required'),
     description: yup.string().optional(),
     instructions: yup.string().optional(),
-    dueDate: yup.string().optional().test('is-iso-date', 'Must be a valid ISO 8601 date', function (value) {
+    startTime: yup.string().optional().test('is-iso-date', 'Must be a valid ISO 8601 date', function (value) {
         if (!value || value === '') return true; // Allow empty
         const date = new Date(value);
         return !isNaN(date.getTime()) && value.includes('T');
     }),
-    totalPoints: yup.number().min(1).optional(),
+    dueDate: yup.string().optional().test('is-iso-date', 'Must be a valid ISO 8601 date', function (value) {
+        if (!value || value === '') return true; // Allow empty
+        const date = new Date(value);
+        return !isNaN(date.getTime()) && value.includes('T');
+    }).test('start-before-due', 'Start time must be before due date', function (value) {
+        const startTime = this.parent.startTime;
+        if (!startTime || !value) return true; // Allow empty
+        const start = new Date(startTime);
+        const due = new Date(value);
+        return start < due;
+    }),
+    totalPoints: yup.number().default(100).optional(),
     timeLimit: yup.number()
         .transform((value, originalValue) => {
-            // Convert empty string or 0 to undefined (no limit)
-            if (originalValue === '' || originalValue === 0 || originalValue === null) return undefined;
+            // Convert empty string, 0, null, or NaN to undefined (no limit)
+            if (originalValue === '' || originalValue === 0 || originalValue === null || Number.isNaN(value)) return undefined;
             return value;
         })
         .min(1, 'Time limit must be at least 1 minute if set')
@@ -91,6 +102,7 @@ export type AssignmentFormValues = {
     title: string;
     description?: string;
     instructions?: string;
+    startTime?: string;
     dueDate?: string;
     totalPoints?: number;
     timeLimit?: number;

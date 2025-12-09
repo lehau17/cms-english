@@ -8,15 +8,17 @@ interface DeleteTeacherModalProps {
   isOpen: boolean;
   onClose: () => void;
   teacher: UserResponse | null;
+  onSuccess?: () => void;
 }
 
-const DeleteTeacherModal: React.FC<DeleteTeacherModalProps> = ({ isOpen, onClose, teacher }) => {
+const DeleteTeacherModal: React.FC<DeleteTeacherModalProps> = ({ isOpen, onClose, teacher, onSuccess }) => {
   const deleteTeacherMutation = useDeleteTeacher();
 
   const handleDelete = () => {
     if (teacher) {
       deleteTeacherMutation.mutate(teacher.id, {
         onSuccess: () => {
+          onSuccess?.();
           onClose();
         },
       });

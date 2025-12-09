@@ -23,6 +23,7 @@ export const ActivityEditor: React.FC<ActivityEditorProps> = ({
         <TypeSpecificFields
             idx={activityIndex}
             type={activityType}
+            control={control}
             register={register}
             setValue={setValue}
             watch={watch}

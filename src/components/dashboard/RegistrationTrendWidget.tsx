@@ -55,6 +55,7 @@ const RegistrationTrendWidget: React.FC = () => {
           data={data}
           xAxisDataKey="date"
           lines={[{ dataKey: "count", name: "Đăng ký", color: chartColors.secondary }]}
+          height={120}
         />
       </Box>
     );

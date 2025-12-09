@@ -7,4 +7,6 @@ export interface RequestPagingDto {
   status?: string;
   gender?: string;
   phone?: string;
+  teacherId?: string;
+  studentId?: string;
 }

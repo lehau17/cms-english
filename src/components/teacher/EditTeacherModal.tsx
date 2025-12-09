@@ -15,6 +15,7 @@ interface EditTeacherModalProps {
     isOpen: boolean;
     onClose: () => void;
     teacher: UserResponse | null;
+    onSuccess?: () => void;
 }
 
 interface EditTeacherFormValues {
@@ -54,7 +55,7 @@ const schema: yup.ObjectSchema<EditTeacherFormValues> = yup.object({
     highlights: yup.array().of(yup.object({ value: yup.string().required() })).default([]),
 });
 
-const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, teacher }) => {
+const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, teacher, onSuccess }) => {
     const queryClient = useQueryClient();
     const { data: teacherData } = useTeacher(teacher?.id || '');
     const updateTeacherMutation = useUpdateTeacher();
@@ -93,6 +94,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, te
             updateTeacherMutation.mutate({ id: teacher.id, data: submitData as any }, {
                 onSuccess: () => {
                     queryClient.invalidateQueries({ queryKey: ['teachers'] });
+                    onSuccess?.();
                     onClose();
                 },
             });

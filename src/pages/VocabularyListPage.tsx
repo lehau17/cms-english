@@ -14,12 +14,12 @@ import {
   VocabularyList,
 } from '@/interface/vocabulary.interface';
 import {
-    Add as PlusIcon,
-    Book as BookIcon,
-    Delete as TrashIcon,
-    Edit as EditIcon,
-    PlaylistAddCheck as ListChecksIcon,
-    Sort as SortAscendingIcon
+  Add as PlusIcon,
+  Book as BookIcon,
+  Delete as TrashIcon,
+  Edit as EditIcon,
+  PlaylistAddCheck as ListChecksIcon,
+  Sort as SortAscendingIcon
 } from '@mui/icons-material';
 import { Box, Button, Chip, Container, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -235,11 +235,11 @@ const VocabularyListPage: React.FC = () => {
   const getDifficultyChip = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
       case DifficultyLevel.BEGINNER:
-        return <Chip label="Beginner" color="success" size="small" />;
+        return <Chip label="Cơ bản" color="success" size="small" />;
       case DifficultyLevel.INTERMEDIATE:
-        return <Chip label="Intermediate" color="info" size="small" />;
+        return <Chip label="Trung cấp" color="info" size="small" />;
       case DifficultyLevel.ADVANCED:
-        return <Chip label="Advanced" color="secondary" size="small" />;
+        return <Chip label="Nâng cao" color="secondary" size="small" />;
       default:
         return <Chip label={difficulty} size="small" />;
     }
@@ -313,7 +313,7 @@ const VocabularyListPage: React.FC = () => {
     <Container maxWidth="xl">
       <Stack spacing={3} sx={{ py: 3 }}>
         <PageHeader
-          title="Vocabulary Management"
+          title="Quản lý từ vựng"
           description="Quản lý danh sách từ vựng, unit và các từ cho học viên."
           createButtonLabel="Tạo danh sách mới"
           onCreateClick={handleOpenCreate}
@@ -385,7 +385,7 @@ const VocabularyListPage: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Difficulty *</label>
+              <label className="text-sm font-medium text-slate-700">Độ khó *</label>
               <select
                 value={formState.difficulty}
                 onChange={(event) =>
@@ -407,7 +407,7 @@ const VocabularyListPage: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Category</label>
+              <label className="text-sm font-medium text-slate-700">Danh mục</label>
               <input
                 value={formState.category || ''}
                 onChange={(event) =>
@@ -417,7 +417,7 @@ const VocabularyListPage: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">CEFR Level</label>
+              <label className="text-sm font-medium text-slate-700">Trình độ CEFR</label>
               <input
                 value={formState.level || ''}
                 onChange={(event) =>
@@ -442,7 +442,7 @@ const VocabularyListPage: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Language</label>
+              <label className="text-sm font-medium text-slate-700">Ngôn ngữ</label>
               <select
                 value={formState.language}
                 onChange={(event) =>
@@ -461,7 +461,7 @@ const VocabularyListPage: React.FC = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Public list?</label>
+              <label className="text-sm font-medium text-slate-700">Công khai?</label>
               <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-2">
                 <label className="flex items-center gap-2 text-sm text-slate-600">
                   <input
@@ -480,7 +480,7 @@ const VocabularyListPage: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Thumbnail URL</label>
+              <label className="text-sm font-medium text-slate-700">URL hình thu nhỏ</label>
               <input
                 value={formState.thumbnailUrl || ''}
                 onChange={(event) =>
@@ -490,7 +490,7 @@ const VocabularyListPage: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Banner URL</label>
+              <label className="text-sm font-medium text-slate-700">URL ảnh bìa</label>
               <input
                 value={formState.bannerUrl || ''}
                 onChange={(event) =>
@@ -535,7 +535,7 @@ const VocabularyListPage: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Difficulty *</label>
+              <label className="text-sm font-medium text-slate-700">Độ khó *</label>
               <select
                 value={formState.difficulty}
                 onChange={(event) =>
@@ -569,7 +569,7 @@ const VocabularyListPage: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Category</label>
+              <label className="text-sm font-medium text-slate-700">Danh mục</label>
               <input
                 value={formState.category || ''}
                 onChange={(event) =>
@@ -579,7 +579,7 @@ const VocabularyListPage: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">CEFR Level</label>
+              <label className="text-sm font-medium text-slate-700">Trình độ CEFR</label>
               <input
                 value={formState.level || ''}
                 onChange={(event) =>
@@ -592,7 +592,7 @@ const VocabularyListPage: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Language</label>
+              <label className="text-sm font-medium text-slate-700">Ngôn ngữ</label>
               <select
                 value={formState.language}
                 onChange={(event) =>
@@ -611,7 +611,7 @@ const VocabularyListPage: React.FC = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Public list?</label>
+              <label className="text-sm font-medium text-slate-700">Công khai?</label>
               <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-2">
                 <label className="flex items-center gap-2 text-sm text-slate-600">
                   <input
@@ -622,7 +622,7 @@ const VocabularyListPage: React.FC = () => {
                     }
                     className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                   />
-                  Public
+                  Công khai
                 </label>
               </div>
             </div>
@@ -630,7 +630,7 @@ const VocabularyListPage: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Thumbnail URL</label>
+              <label className="text-sm font-medium text-slate-700">URL hình thu nhỏ</label>
               <input
                 value={formState.thumbnailUrl || ''}
                 onChange={(event) =>
@@ -640,7 +640,7 @@ const VocabularyListPage: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Banner URL</label>
+              <label className="text-sm font-medium text-slate-700">URL ảnh bìa</label>
               <input
                 value={formState.bannerUrl || ''}
                 onChange={(event) =>

@@ -51,9 +51,9 @@ export const deleteActivity = async (id: string): Promise<void> => {
 export const generateActivitiesWithAI = async (
   data: GenerateActivitiesRequest
 ): Promise<GenerateActivitiesResponse> => {
-  const response = await axiosInstance.post<GenerateActivitiesResponse>(
+  const response = await axiosInstance.post<{ statusCode: number; message: string; data: GenerateActivitiesResponse }>(
     "/private/v1/admin/activities/ai-generate",
     data
   );
-  return response.data;
+  return response.data.data;
 };

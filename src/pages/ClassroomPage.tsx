@@ -93,10 +93,10 @@ const ClassroomPage: React.FC = () => {
 
     const getStatusChip = (status: ClassroomStatus) => {
         const statusConfig = {
-            [ClassroomStatus.upcoming]: { color: 'info' as const, label: 'Upcoming' },
-            [ClassroomStatus.ongoing]: { color: 'success' as const, label: 'Ongoing' },
-            [ClassroomStatus.completed]: { color: 'default' as const, label: 'Completed' },
-            [ClassroomStatus.cancelled]: { color: 'error' as const, label: 'Cancelled' },
+            [ClassroomStatus.upcoming]: { color: 'info' as const, label: 'Sắp diễn ra' },
+            [ClassroomStatus.ongoing]: { color: 'success' as const, label: 'Đang diễn ra' },
+            [ClassroomStatus.completed]: { color: 'default' as const, label: 'Đã hoàn thành' },
+            [ClassroomStatus.cancelled]: { color: 'error' as const, label: 'Đã hủy' },
         };
         const config = statusConfig[status] || statusConfig[ClassroomStatus.upcoming];
         return <Chip label={config.label} color={config.color} size="small" />;
@@ -113,10 +113,10 @@ const ClassroomPage: React.FC = () => {
     const handleStatusChange = async (classroomId: string, newStatus: ClassroomStatus) => {
         try {
             await updateStatusMutation.mutateAsync({ classroomId, status: newStatus });
-            toast.success('Classroom status updated successfully!');
+            toast.success('Cập nhật trạng thái lớp học thành công!');
             handleStatusMenuClose();
         } catch (error: any) {
-            toast.error(`Failed to update status: ${error?.response?.data?.message || error.message}`);
+            toast.error(`Cập nhật trạng thái thất bại: ${error?.response?.data?.message || error.message}`);
         }
     };
 
@@ -126,7 +126,7 @@ const ClassroomPage: React.FC = () => {
     const columns: TableColumn<Classroom>[] = [
         {
             id: 'name',
-            label: 'Classroom',
+            label: 'Lớp học',
             render: (classroom) => (
                 <Stack spacing={0.5}>
                     <Typography variant="body2" fontWeight={600}>
@@ -140,7 +140,7 @@ const ClassroomPage: React.FC = () => {
         },
         {
             id: 'teacher',
-            label: 'Teacher',
+            label: 'Giáo viên',
             render: (classroom) => (
                 <Stack direction="row" spacing={1} alignItems="center">
                     <PersonIcon fontSize="small" color="action" />
@@ -152,7 +152,7 @@ const ClassroomPage: React.FC = () => {
         },
         {
             id: 'status',
-            label: 'Status',
+            label: 'Trạng thái',
             render: (classroom) => (
                 <Stack direction="row" spacing={1} alignItems="center">
                     {getStatusChip(classroom.status)}
@@ -167,7 +167,7 @@ const ClassroomPage: React.FC = () => {
         },
         {
             id: 'enrollment',
-            label: 'Enrollment',
+            label: 'Sĩ số',
             render: (classroom) => (
                 <Stack direction="row" spacing={1} alignItems="center">
                     <GroupIcon fontSize="small" color="action" />
@@ -179,7 +179,7 @@ const ClassroomPage: React.FC = () => {
         },
         {
             id: 'createdAt',
-            label: 'Created At',
+            label: 'Ngày tạo',
             render: (classroom) => (
                 <Typography variant="body2" color="text.secondary">
                     {formatDate(classroom.createdAt)}
@@ -191,19 +191,19 @@ const ClassroomPage: React.FC = () => {
     const actions: ActionButton<Classroom>[] = [
         {
             icon: <VisibilityIcon fontSize="small" />,
-            label: 'View Details',
+            label: 'Xem chi tiết',
             color: 'primary',
             onClick: handleView,
         },
         {
             icon: <EditIcon fontSize="small" />,
-            label: 'Edit Classroom',
+            label: 'Chỉnh sửa lớp học',
             color: 'success',
             onClick: handleEdit,
         },
         {
             icon: <DeleteIcon fontSize="small" />,
-            label: 'Delete Classroom',
+            label: 'Xóa lớp học',
             color: 'error',
             onClick: handleDelete,
         },
@@ -217,16 +217,16 @@ const ClassroomPage: React.FC = () => {
         <Container maxWidth="xl">
             <Stack spacing={3} sx={{ py: 3 }}>
                 <PageHeader
-                    title="Classroom Management"
-                    description="Oversee all classrooms and their activities."
-                    createButtonLabel="Create Classroom"
+                    title="Quản lý lớp học"
+                    description="Quản lý tất cả lớp học và hoạt động."
+                    createButtonLabel="Tạo lớp học"
                     onCreateClick={handleCreate}
                 />
 
                 <SearchFilterBar
                     searchValue={request.search || ''}
                     onSearchChange={setSearch}
-                    searchPlaceholder="Search by classroom name..."
+                    searchPlaceholder="Tìm kiếm theo tên lớp học..."
                     limitValue={request.limit || 10}
                     onLimitChange={setLimit}
                     isLoading={isLoading}
@@ -240,15 +240,15 @@ const ClassroomPage: React.FC = () => {
                     getRowId={(classroom) => classroom.id}
                     emptyState={{
                         icon: <GroupIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />,
-                        title: 'No Classrooms Found',
-                        description: 'Create a new classroom to get started.',
+                        title: 'Không tìm thấy lớp học nào',
+                        description: 'Tạo lớp học mới để bắt đầu.',
                         actionButton: (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
                                 onClick={handleCreate}
                             >
-                                Create Your First Classroom
+                                Tạo lớp học đầu tiên
                             </Button>
                         ),
                     }}
@@ -272,7 +272,7 @@ const ClassroomPage: React.FC = () => {
             >
                 <MenuItem disabled>
                     <Typography variant="caption" fontWeight={600}>
-                        Change Status
+                        Thay đổi trạng thái
                     </Typography>
                 </MenuItem>
                 {Object.values(ClassroomStatus).map((status) => (
@@ -281,7 +281,10 @@ const ClassroomPage: React.FC = () => {
                         onClick={() => statusMenuAnchor && handleStatusChange(statusMenuAnchor.classroomId, status)}
                         disabled={updateStatusMutation.isPending || currentClassroom?.status === status}
                     >
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {status === ClassroomStatus.upcoming ? 'Sắp diễn ra' :
+                            status === ClassroomStatus.ongoing ? 'Đang diễn ra' :
+                                status === ClassroomStatus.completed ? 'Đã hoàn thành' :
+                                    status === ClassroomStatus.cancelled ? 'Đã hủy' : status}
                     </MenuItem>
                 ))}
             </Menu>

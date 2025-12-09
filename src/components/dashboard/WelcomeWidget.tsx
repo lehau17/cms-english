@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Grid,
   Stack,
   Typography,
   useTheme,
@@ -64,85 +65,86 @@ const WelcomeWidget: React.FC = () => {
       sx={{
         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         color: "white",
-        height: "100%",
-        minHeight: 200,
+        boxShadow: theme.shadows[10],
+        overflow: "visible", // Allow overflow for creative designs if needed later
       }}
     >
-      <CardContent sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Header */}
-        <Box sx={{ mb: 2 }}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-            <Typography variant="h5" fontWeight={700}>
+      <CardContent sx={{ p: { xs: 2.5, md: 4 }, display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { md: "center" }, gap: 3 }}>
+        {/* Header Section */}
+        <Box sx={{ flex: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: "-0.5px" }}>
               {getGreeting()}, {user?.displayName || user?.firstName || "Admin"}!
             </Typography>
             <Chip
-              label={new Date().toLocaleDateString("vi-VN", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
+              label="Beta"
               size="small"
               sx={{
                 bgcolor: alpha("#fff", 0.2),
                 color: "white",
-                fontWeight: 500,
+                fontWeight: 600,
+                height: 24,
               }}
             />
           </Stack>
-          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            Chào mừng bạn quay trở lại hệ thống quản lý học tiếng Anh
+          <Typography variant="body1" sx={{ opacity: 0.9, maxWidth: 600, lineHeight: 1.6, mb: 2 }}>
+            Chào mừng trở lại. Hôm nay là {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
           </Typography>
-        </Box>
 
-        {/* Quick Actions */}
-        <Box sx={{ mt: "auto" }}>
-          <Typography variant="caption" sx={{ opacity: 0.8, mb: 1.5, display: "block" }}>
-            Thao tác nhanh
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            {quickActions.map((action) => (
-              <Button
-                key={action.label}
-                variant="contained"
-                size="small"
-                startIcon={<action.icon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate(action.path)}
-                sx={{
-                  bgcolor: alpha("#fff", 0.15),
-                  color: "white",
-                  textTransform: "none",
-                  fontWeight: 500,
-                  px: 2,
-                  py: 0.75,
-                  "&:hover": {
-                    bgcolor: alpha("#fff", 0.25),
-                  },
-                }}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </Stack>
-        </Box>
-
-        {/* CTA */}
-        <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${alpha("#fff", 0.2)}` }}>
           <Button
-            variant="text"
-            endIcon={<ArrowForward />}
+            variant="outlined"
             onClick={() => navigate("/reports")}
             sx={{
               color: "white",
-              textTransform: "none",
-              p: 0,
+              borderColor: alpha("#fff", 0.3),
               "&:hover": {
-                bgcolor: "transparent",
-                textDecoration: "underline",
+                borderColor: "white",
+                bgcolor: alpha("#fff", 0.05),
               },
             }}
           >
-            Xem báo cáo chi tiết
+            Xem báo cáo tổng quan
           </Button>
+        </Box>
+
+        {/* Quick Actions Panel */}
+        <Box sx={{
+          minWidth: { md: 280, lg: 320 },
+          p: 2,
+          bgcolor: alpha("#fff", 0.1),
+          borderRadius: 2,
+          backdropFilter: "blur(10px)"
+        }}>
+          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5, opacity: 0.9 }}>
+            Thao tác nhanh
+          </Typography>
+          <Grid container spacing={1}>
+            {quickActions.map((action) => (
+              <Grid item xs={6} key={action.label}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="small"
+                  startIcon={<action.icon sx={{ fontSize: 18 }} />}
+                  onClick={() => navigate(action.path)}
+                  sx={{
+                    justifyContent: "flex-start",
+                    bgcolor: alpha("#fff", 0.15),
+                    color: "white",
+                    textTransform: "none",
+                    fontWeight: 500,
+                    boxShadow: "none",
+                    "&:hover": {
+                      bgcolor: alpha("#fff", 0.25),
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  {action.label}
+                </Button>
+              </Grid>
+            ))}
+          </Grid>
         </Box>
       </CardContent>
     </Card>

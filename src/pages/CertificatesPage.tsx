@@ -68,10 +68,10 @@ const CertificatesPage: React.FC = () => {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            toast.success('Certificate downloaded successfully');
+            toast.success('Tải chứng chỉ thành công');
         } catch (error: any) {
             console.error('Download certificate error:', error);
-            toast.error(error?.response?.data?.message || 'Failed to download certificate');
+            toast.error(error?.response?.data?.message || 'Tải chứng chỉ thất bại');
         }
     };
 
@@ -162,7 +162,7 @@ const CertificatesPage: React.FC = () => {
         {
             icon: <DownloadIcon fontSize="small" />,
             label: 'Tải xuống',
-            color: 'default',
+            color: 'primary',
             onClick: (certificate) => handleDownloadCertificate(certificate.id, certificate.certificateNumber),
         },
     ];

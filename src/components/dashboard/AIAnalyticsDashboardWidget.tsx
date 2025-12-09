@@ -151,8 +151,8 @@ export default function AIAnalyticsDashboardWidget() {
                             {/* Top Insights */}
                             {analytics.insights.length > 0 && (
                                 <Box>
-                                    <Typography variant="subtitle2" gutterBottom>
-                                        💡 Nhận xét
+                                    <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <LightbulbOutlined fontSize="small" /> Nhận xét
                                     </Typography>
                                     <List dense>
                                         {analytics.insights.slice(0, 2).map((insight, index) => (

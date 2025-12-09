@@ -1,4 +1,5 @@
 import { DifficultyLevel } from '@/interface/enums'
+import { RocketLaunch, Lightbulb } from '@mui/icons-material'
 import { Sparkles, Upload } from 'lucide-react'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
@@ -129,8 +130,8 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                   type="button"
                   onClick={() => setTermTabMode('ai-generate')}
                   className={`flex-1 rounded-t-lg px-4 py-2 text-sm font-semibold transition ${termTabMode === 'ai-generate'
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                 >
                   <Sparkles className="mr-2 inline h-4 w-4" />
@@ -140,8 +141,8 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                   type="button"
                   onClick={() => setTermTabMode('manual-input')}
                   className={`flex-1 rounded-t-lg px-4 py-2 text-sm font-semibold transition ${termTabMode === 'manual-input'
-                      ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                 >
                   Tự Nhập Từ
@@ -155,8 +156,8 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
               <div className="space-y-4">
                 {/* Bulk Generation UI */}
                 <div className="rounded-xl border-2 border-green-200 bg-green-50 p-4">
-                  <p className="mb-3 text-sm font-semibold text-green-900">
-                    🚀 Tạo nhiều từ vựng cùng lúc (AI tự động gen tất cả):
+                  <p className="mb-3 text-sm font-semibold text-green-900 flex items-center gap-1">
+                    <RocketLaunch fontSize="small" /> Tạo nhiều từ vựng cùng lúc (AI tự động gen tất cả):
                   </p>
                   <div className="flex items-center gap-3">
                     <label className="text-sm font-medium text-green-800">Số lượng:</label>
@@ -178,8 +179,8 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                       {isLoadingTermSuggestions ? 'Đang tạo...' : `AI Tạo ${bulkCount} Từ Cùng Lúc`}
                     </button>
                   </div>
-                  <p className="mt-2 text-xs text-green-700">
-                    💡 AI sẽ tạo {bulkCount} từ vựng hoàn chỉnh (định nghĩa, dịch, phát âm, audio...). Có thể mất 30s-2 phút tuỳ số lượng.
+                  <p className="mt-2 text-xs text-green-700 flex items-center gap-1">
+                    <Lightbulb fontSize="small" /> AI sẽ tạo {bulkCount} từ vựng hoàn chỉnh (định nghĩa, dịch, phát âm, audio...). Có thể mất 30s-2 phút tuỳ số lượng.
                   </p>
                 </div>
 
@@ -217,15 +218,15 @@ const TermModalWithAI: React.FC<TermModalWithAIProps> = ({
                           onClick={() => onSelectTermSuggestion(index)}
                           disabled={isAutoCompleting}
                           className={`w-full rounded-lg border-2 p-3 text-left transition disabled:opacity-50 ${selectedTermSuggestionIndex === index
-                              ? 'border-purple-500 bg-purple-100'
-                              : 'border-purple-200 bg-white hover:border-purple-300'
+                            ? 'border-purple-500 bg-purple-100'
+                            : 'border-purple-200 bg-white hover:border-purple-300'
                             }`}
                         >
                           <div className="flex items-start gap-3">
                             <div
                               className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${selectedTermSuggestionIndex === index
-                                  ? 'bg-purple-500 text-white'
-                                  : 'bg-purple-200 text-purple-600'
+                                ? 'bg-purple-500 text-white'
+                                : 'bg-purple-200 text-purple-600'
                                 }`}
                             >
                               {index + 1}

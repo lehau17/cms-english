@@ -15,8 +15,10 @@ import {
 } from '@mui/icons-material';
 import { Button, Chip, Container, Stack, Typography } from '@mui/material';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const TeacherPage: React.FC = () => {
+    const navigate = useNavigate();
     const {
         data: teacherData,
         isLoading,
@@ -36,8 +38,8 @@ const TeacherPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
     const handleView = (teacher: UserResponse) => {
-        setSelectedTeacher(teacher);
-        setIsViewModalOpen(true);
+        // Navigate to teacher detail page instead of opening modal
+        navigate(`/teachers/${teacher.id}`);
     };
 
     const handleEdit = (teacher: UserResponse) => {
@@ -83,7 +85,7 @@ const TeacherPage: React.FC = () => {
     const columns: TableColumn<UserResponse>[] = [
         {
             id: 'displayName',
-            label: 'Name',
+            label: 'Tên',
             render: (teacher) => (
                 <Stack spacing={0.5}>
                     <Typography variant="body2" fontWeight={600}>
@@ -106,7 +108,7 @@ const TeacherPage: React.FC = () => {
         },
         {
             id: 'phone',
-            label: 'Phone',
+            label: 'Số điện thoại',
             render: (teacher) => (
                 <Typography variant="body2" color="text.secondary">
                     {teacher.phone || 'N/A'}
@@ -115,10 +117,10 @@ const TeacherPage: React.FC = () => {
         },
         {
             id: 'status',
-            label: 'Status',
+            label: 'Trạng thái',
             render: (teacher) => (
                 <Chip
-                    label={teacher.status === 'active' ? 'Active' : 'Inactive'}
+                    label={teacher.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
                     color={teacher.status === 'active' ? 'success' : 'error'}
                     size="small"
                 />
@@ -126,7 +128,7 @@ const TeacherPage: React.FC = () => {
         },
         {
             id: 'createdAt',
-            label: 'Created At',
+            label: 'Ngày tạo',
             render: (teacher) => (
                 <Typography variant="body2" color="text.secondary">
                     {formatDate(teacher.createdAt)}
@@ -138,19 +140,19 @@ const TeacherPage: React.FC = () => {
     const actions: ActionButton<UserResponse>[] = [
         {
             icon: <VisibilityIcon fontSize="small" />,
-            label: 'View Details',
+            label: 'Xem chi tiết',
             color: 'primary',
             onClick: handleView,
         },
         {
             icon: <EditIcon fontSize="small" />,
-            label: 'Edit Teacher',
+            label: 'Chỉnh sửa giáo viên',
             color: 'success',
             onClick: handleEdit,
         },
         {
             icon: <DeleteIcon fontSize="small" />,
-            label: 'Delete Teacher',
+            label: 'Xóa giáo viên',
             color: 'error',
             onClick: handleDelete,
         },
@@ -160,16 +162,16 @@ const TeacherPage: React.FC = () => {
         <Container maxWidth="xl">
             <Stack spacing={3} sx={{ py: 3 }}>
                 <PageHeader
-                    title="Teacher Management"
-                    description="Oversee all teachers and their activities."
-                    createButtonLabel="Create Teacher"
+                    title="Quản lý giáo viên"
+                    description="Quản lý tất cả giáo viên và hoạt động giảng dạy."
+                    createButtonLabel="Tạo giáo viên"
                     onCreateClick={handleCreate}
                 />
 
                 <SearchFilterBar
                     searchValue={request.search || ''}
                     onSearchChange={setSearch}
-                    searchPlaceholder="Search by name, email..."
+                    searchPlaceholder="Tìm kiếm theo tên, email..."
                     limitValue={request.limit || 10}
                     onLimitChange={setLimit}
                     isLoading={isLoading}
@@ -183,15 +185,15 @@ const TeacherPage: React.FC = () => {
                     getRowId={(teacher) => teacher.id}
                     emptyState={{
                         icon: <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />,
-                        title: 'No Teachers Found',
-                        description: 'Create a new teacher to get started.',
+                        title: 'Không tìm thấy giáo viên nào',
+                        description: 'Tạo giáo viên mới để bắt đầu.',
                         actionButton: (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
                                 onClick={handleCreate}
                             >
-                                Create Your First Teacher
+                                Tạo giáo viên đầu tiên
                             </Button>
                         ),
                     }}

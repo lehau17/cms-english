@@ -1,14 +1,14 @@
 import axiosInstance from '@/config/axiosConfig';
 import {
-    AttendanceRecord,
-    BulkAttendanceRequest,
-    ClassroomAttendanceStats,
-    MarkAllAbsentResponse,
-    MarkAttendanceRequest,
-    SessionAttendanceSummary,
-    StudentAttendanceHistory,
-    StudentHistoryFilter,
-    UnmarkedStudent,
+  AttendanceRecord,
+  BulkAttendanceRequest,
+  ClassroomAttendanceStats,
+  MarkAllAbsentResponse,
+  MarkAttendanceRequest,
+  SessionAttendanceSummary,
+  StudentAttendanceHistory,
+  StudentHistoryFilter,
+  UnmarkedStudent,
 } from '@/interface/attendance.interface';
 import { ApiResponse } from '@/interface/base-response.interface';
 
@@ -164,10 +164,82 @@ export const getStudentHistory = async (
   if (filter?.status) params.append('status', filter.status);
 
   const queryString = params.toString();
-  const url = `${BASE_URL}/classrooms/${classroomId}/students/${studentId}/attendance${
-    queryString ? `?${queryString}` : ''
-  }`;
+  const url = `${BASE_URL}/classrooms/${classroomId}/students/${studentId}/attendance${queryString ? `?${queryString}` : ''
+    }`;
 
   const response = await axiosInstance.get<ApiResponse<StudentAttendanceHistory>>(url);
+  return response.data.data;
+};
+
+// ==================== MAKEUP ATTENDANCE REQUESTS ====================
+
+import {
+  MakeupAttendanceRequest,
+  PaginatedMakeupRequests,
+  ReviewMakeupRequestDto,
+  MakeupRequestFilter,
+} from '@/interface/makeup-request.interface';
+
+/**
+ * Get makeup requests for a session
+ */
+export const getSessionMakeupRequests = async (
+  sessionId: string,
+  filter?: MakeupRequestFilter
+): Promise<PaginatedMakeupRequests> => {
+  const params = new URLSearchParams();
+  if (filter?.page) params.append('page', String(filter.page));
+  if (filter?.limit) params.append('limit', String(filter.limit));
+  if (filter?.status) params.append('status', filter.status);
+
+  const queryString = params.toString();
+  const url = `${BASE_URL}/sessions/${sessionId}/makeup-requests${queryString ? `?${queryString}` : ''}`;
+
+  const response = await axiosInstance.get<ApiResponse<PaginatedMakeupRequests>>(url);
+  return response.data.data;
+};
+
+/**
+ * Get makeup requests for a classroom
+ */
+export const getClassroomMakeupRequests = async (
+  classroomId: string,
+  filter?: MakeupRequestFilter
+): Promise<PaginatedMakeupRequests> => {
+  const params = new URLSearchParams();
+  if (filter?.page) params.append('page', String(filter.page));
+  if (filter?.limit) params.append('limit', String(filter.limit));
+  if (filter?.status) params.append('status', filter.status);
+
+  const queryString = params.toString();
+  const url = `${BASE_URL}/classrooms/${classroomId}/makeup-requests${queryString ? `?${queryString}` : ''}`;
+
+  const response = await axiosInstance.get<ApiResponse<PaginatedMakeupRequests>>(url);
+  return response.data.data;
+};
+
+/**
+ * Review (approve/reject) a makeup request
+ */
+export const reviewMakeupRequest = async (
+  requestId: string,
+  data: ReviewMakeupRequestDto
+): Promise<MakeupAttendanceRequest> => {
+  const response = await axiosInstance.put<ApiResponse<MakeupAttendanceRequest>>(
+    `${BASE_URL}/makeup-requests/${requestId}/review`,
+    data
+  );
+  return response.data.data;
+};
+
+/**
+ * Get makeup request by ID
+ */
+export const getMakeupRequestById = async (
+  requestId: string
+): Promise<MakeupAttendanceRequest> => {
+  const response = await axiosInstance.get<ApiResponse<MakeupAttendanceRequest>>(
+    `${BASE_URL}/makeup-requests/${requestId}`
+  );
   return response.data.data;
 };

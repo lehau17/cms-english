@@ -12,6 +12,7 @@ import {
     User,
     X
 } from 'lucide-react';
+import { Check, Close, Warning } from '@mui/icons-material';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
@@ -152,8 +153,8 @@ const GradeSubmissionModal: React.FC<GradeSubmissionModalProps> = ({
                         <strong>Câu trả lời:</strong> {activity.selectedAnswer || activity.answer || 'Chưa trả lời'}
                     </p>
                     {activity.isCorrect !== undefined && (
-                        <p className={activity.isCorrect ? 'text-green-600' : 'text-red-600'}>
-                            {activity.isCorrect ? '✓ Đúng' : '✗ Sai'}
+                        <p className={`flex items-center gap-1 ${activity.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                            {activity.isCorrect ? <><Check fontSize="small" /> Đúng</> : <><Close fontSize="small" /> Sai</>}
                         </p>
                     )}
                 </div>
@@ -247,9 +248,9 @@ const GradeSubmissionModal: React.FC<GradeSubmissionModalProps> = ({
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                             {submission.isLate ? (
-                                <span className="text-red-600 font-medium">⚠️ Nộp trễ</span>
+                                <span className="text-red-600 font-medium flex items-center gap-1"><Warning fontSize="small" /> Nộp trễ</span>
                             ) : (
-                                <span className="text-green-600 font-medium">✓ Đúng hạn</span>
+                                <span className="text-green-600 font-medium flex items-center gap-1"><Check fontSize="small" /> Đúng hạn</span>
                             )}
                         </div>
                     </div>

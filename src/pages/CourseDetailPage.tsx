@@ -1,6 +1,7 @@
 import { getCourseById } from '@/apis/course'; // Hàm gọi API lấy chi tiết khóa học theo id
 import { Course } from '@/interface/course.interface'; // Kiểu dữ liệu Course
 import { Lesson } from '@/interface/lesson.interface'; // Kiểu dữ liệu Lesson
+import { getActivityIcon } from '@/utils/activityIcons';
 import { useQuery } from '@tanstack/react-query'; // Hook useQuery để fetch dữ liệu
 import {
     ArrowLeft,
@@ -50,18 +51,8 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
         }
     };
 
-    const getActivityTypeIcon = (type: string) => { // Trả về icon (dạng text) theo loại hoạt động
-        switch (type?.toLowerCase()) {
-            case 'listening': return '🎧';
-            case 'speaking': return '🎤';
-            case 'reading': return '📖';
-            case 'writing': return '✍️';
-            case 'vocabulary': return '📚';
-            case 'grammar': return '📝';
-            case 'quiz': return '❓';
-            case 'pronunciation': return '🗣️';
-            default: return '📄';
-        }
+    const getActivityTypeIcon = (type: string) => { // Get MUI icon for activity type
+        return getActivityIcon(type, { fontSize: 'medium' });
     };
 
     const getActivityTypeBadgeColor = (type: string) => { // Trả về class màu badge theo loại hoạt động
@@ -93,13 +84,13 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
     if (!course) { // Nếu không tìm thấy course
         return (
             <div className="flex flex-col justify-center items-center min-h-screen">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Course Not Found</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy khóa học</h2>
                 <button
                     onClick={() => navigate('/courses')} // Quay lại danh sách khóa học
                     className="flex items-center text-indigo-600 hover:text-indigo-800"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Courses
+                    Quay lại danh sách khóa học
                 </button>
             </div>
         );
@@ -131,13 +122,13 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                         className="flex items-center text-white bg-black bg-opacity-30 hover:bg-opacity-50 backdrop-blur-sm px-4 py-2 rounded-lg transition-all mb-4"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Courses
+                        Quay lại danh sách khóa học
                     </button>
                     <span className={`inline-flex px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm ${course.isPublished
                         ? 'bg-green-500 bg-opacity-90 text-white'
                         : 'bg-yellow-500 bg-opacity-90 text-white'
                         }`}>
-                        {course.isPublished ? 'Published' : 'Draft'} {/* Trạng thái published/draft */}
+                        {course.isPublished ? 'Đã xuất bản' : 'Bản nháp'} {/* Trạng thái published/draft */}
                     </span>
                 </div>
 
@@ -148,7 +139,7 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                         className="flex items-center bg-white bg-opacity-90 hover:bg-opacity-100 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-lg transition-all"
                     >
                         <Edit className="w-4 h-4 mr-2" />
-                        Edit Course
+                        Chỉnh sửa khóa học
                     </button>
                 </div>
 
@@ -161,11 +152,11 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                         </span>
                         <span className="flex items-center">
                             <Clock className="w-4 h-4 mr-1" />
-                            {course.totalDuration || 0} min {/* Tổng thời lượng khóa học */}
+                            {course.totalDuration || 0} phút {/* Tổng thời lượng khóa học */}
                         </span>
                         <span className="flex items-center">
                             <BookOpen className="w-4 h-4 mr-1" />
-                            {course.totalLessons || 0} lessons {/* Tổng số lesson */}
+                            {course.totalLessons || 0} bài học {/* Tổng số lesson */}
                         </span>
                         {course.instructor && ( // Thông tin giảng viên nếu có
                             <span className="flex items-center">
@@ -184,19 +175,19 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                     <div className="lg:col-span-2 space-y-6">
                         {/* Description */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4">Description</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4">Mô tả</h2>
                             <p className="text-gray-700 leading-relaxed">
-                                {course.description || 'No description provided.'} {/* Mô tả khóa học */}
+                                {course.description || 'Chưa có mô tả.'} {/* Mô tả khóa học */}
                             </p>
                         </div>
 
                         {/* Lessons & Activities */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-semibold text-gray-900">Course Content</h2>
+                                <h2 className="text-xl font-semibold text-gray-900">Nội dung khóa học</h2>
                                 <span className="text-sm text-gray-600">
                                     {/* Tổng số bài học và tổng số hoạt động */}
-                                    {course.lessons?.length || 0} Lessons · {course.lessons?.reduce((sum, lesson) => sum + (lesson.activities?.length || 0), 0) || 0} Activities
+                                    {course.lessons?.length || 0} Bài học · {course.lessons?.reduce((sum, lesson) => sum + (lesson.activities?.length || 0), 0) || 0} Hoạt động
                                 </span>
                             </div>
 
@@ -227,15 +218,15 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                                                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                                                         <span className="flex items-center">
                                                             <FileText className="w-4 h-4 mr-1" />
-                                                            {lesson.activities?.length || 0} activities {/* Số hoạt động trong lesson */}
+                                                            {lesson.activities?.length || 0} hoạt động {/* Số hoạt động trong lesson */}
                                                         </span>
                                                         <span className="flex items-center">
                                                             <Clock className="w-4 h-4 mr-1" />
-                                                            {lesson.estimatedTime || 0} min {/* Thời gian ước tính */}
+                                                            {lesson.estimatedTime || 0} phút {/* Thời gian ước tính */}
                                                         </span>
                                                         {lesson.isLocked && ( // Nếu lesson bị khóa
                                                             <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
-                                                                Locked
+                                                                Đã khóa
                                                             </span>
                                                         )}
                                                     </div>
@@ -275,12 +266,12 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                                                                     {activity.points !== undefined && ( // Điểm của activity (nếu có)
                                                                         <span className="flex items-center">
                                                                             <Star className="w-3 h-3 mr-1 text-yellow-500" />
-                                                                            {activity.points} pts
+                                                                            {activity.points} điểm
                                                                         </span>
                                                                     )}
                                                                     {activity.passingScore !== undefined && ( // Điểm đạt yêu cầu (nếu có)
                                                                         <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                                                                            Pass: {activity.passingScore}%
+                                                                            Đạt: {activity.passingScore}%
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -289,7 +280,7 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                                                     ) : ( // Nếu lesson chưa có activity
                                                         <div className="text-center py-8 text-gray-500">
                                                             <ListChecks className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                                                            <p className="text-sm">No activities in this lesson</p>
+                                                            <p className="text-sm">Chưa có hoạt động nào trong bài học này</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -300,7 +291,7 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                             ) : ( // Nếu course không có lesson nào
                                 <div className="text-center py-12 text-gray-500">
                                     <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                                    <p>No lessons available for this course</p>
+                                    <p>Chưa có bài học nào cho khóa học này</p>
                                 </div>
                             )}
                         </div>
@@ -310,12 +301,12 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                     <div className="space-y-6">
                         {/* Stats Cards */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistics</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Thống kê</h2>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                                     <div className="flex items-center">
                                         <BookOpen className="w-5 h-5 text-blue-600 mr-2" />
-                                        <span className="text-sm font-medium text-gray-700">Lessons</span>
+                                        <span className="text-sm font-medium text-gray-700">Bài học</span>
                                     </div>
                                     <span className="text-xl font-bold text-blue-600">{course.totalLessons || 0}</span> {/* Tổng lesson */}
                                 </div>
@@ -323,15 +314,15 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                                     <div className="flex items-center">
                                         <Clock className="w-5 h-5 text-green-600 mr-2" />
-                                        <span className="text-sm font-medium text-gray-700">Duration</span>
+                                        <span className="text-sm font-medium text-gray-700">Thời lượng</span>
                                     </div>
-                                    <span className="text-xl font-bold text-green-600">{course.totalDuration || 0}m</span> {/* Tổng thời lượng */}
+                                    <span className="text-xl font-bold text-green-600">{course.totalDuration || 0}phút</span> {/* Tổng thời lượng */}
                                 </div>
 
                                 <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                                     <div className="flex items-center">
                                         <Star className="w-5 h-5 text-purple-600 mr-2" />
-                                        <span className="text-sm font-medium text-gray-700">Price</span>
+                                        <span className="text-sm font-medium text-gray-700">Giá</span>
                                     </div>
                                     <span className="text-xl font-bold text-purple-600">${course.price || 0}</span> {/* Giá khóa học */}
                                 </div>
@@ -343,10 +334,10 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                                         ) : (
                                             <XCircle className="w-5 h-5 text-yellow-600 mr-2" />
                                         )}
-                                        <span className="text-sm font-medium text-gray-700">Status</span>
+                                        <span className="text-sm font-medium text-gray-700">Trạng thái</span>
                                     </div>
                                     <span className={`text-sm font-semibold ${course.isPublished ? 'text-green-600' : 'text-yellow-600'}`}>
-                                        {course.isPublished ? 'Published' : 'Draft'} {/* Trạng thái xuất bản */}
+                                        {course.isPublished ? 'Đã xuất bản' : 'Bản nháp'} {/* Trạng thái xuất bản */}
                                     </span>
                                 </div>
                             </div>
@@ -355,7 +346,7 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                         {/* Instructor */}
                         {course.instructor && ( // Chỉ hiển thị nếu có thông tin giảng viên
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Instructor</h2>
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Giáo viên</h2>
                                 <div className="flex items-center space-x-4">
                                     <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-gray-200">
                                         <img
@@ -383,7 +374,7 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                                             {course.instructor.firstName} {course.instructor.lastName} {/* Tên giảng viên */}
                                         </h3>
                                         <p className="text-sm text-gray-600 truncate">{course.instructor.email}</p> {/* Email giảng viên */}
-                                        <p className="text-xs text-gray-500">Course Instructor</p>
+                                        <p className="text-xs text-gray-500">Giáo viên phụ trách</p>
                                     </div>
                                 </div>
                             </div>
@@ -392,7 +383,7 @@ const CourseDetailPage: React.FC = () => { // Component trang chi tiết khóa h
                         {/* Tags */}
                         {course.tags && course.tags.length > 0 && ( // Hiển thị tags nếu có
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Tags</h2>
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Thẻ</h2>
                                 <div className="flex flex-wrap gap-2">
                                     {course.tags.map((tag, index) => (
                                         <span

@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 // import GoogleTranslateDemo from "./components/GoogleTranslateDemo";
 import RoleBasedDashboard from "./components/RoleBasedDashboard";
 import ApiReportPage from "./pages/ApiReportPage";
+import StudentDetailPage from './pages/StudentDetailPage';
 import AssignmentPage from "./pages/AssignmentPage";
 import CertificatesPage from "./pages/CertificatesPage";
 import CertificateTemplatePreviewPage from "./pages/CertificateTemplatePreviewPage";
@@ -14,6 +15,7 @@ import ClassroomPage from "./pages/ClassroomPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CoursePage from "./pages/CoursePage";
 import CreateAssignmentPage from "./pages/CreateAssignmentPage";
+import EditAssignmentPage from "./pages/EditAssignmentPage";
 import CreateCertificateTemplatePage from "./pages/CreateCertificateTemplatePage";
 import CreateCoursePage from "./pages/CreateCoursePage";
 import DashboardPage from "./pages/DashboardPage";
@@ -39,6 +41,7 @@ import StudentSchedulePage from "./pages/StudentSchedulePage";
 import TeacherClassroomDashboardPage from "./pages/TeacherClassroomDashboardPage";
 import TeacherDashboardPage from "./pages/TeacherDashboardPage";
 import TeacherPage from "./pages/TeacherPage";
+import TeacherDetailPage from "./pages/TeacherDetailPage";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage";
 import VocabularyDetailPage from "./pages/VocabularyDetailPage";
 import VocabularyListPage from "./pages/VocabularyListPage";
@@ -56,8 +59,10 @@ const router = createBrowserRouter([
                     { path: "/dashboard", element: <DashboardPage /> },
                     { path: "/teacher-dashboard", element: <TeacherDashboardPage /> },
                     { path: "/students", element: <StudentPage /> },
+                    { path: "/students/:id", element: <StudentDetailPage /> },
                     { path: "/students/:studentId/schedule", element: <StudentSchedulePage /> },
                     { path: "/teachers", element: <TeacherPage /> },
+                    { path: "/teachers/:id", element: <TeacherDetailPage /> },
                     { path: "/teacher/dashboard/:classroomId", element: <TeacherClassroomDashboardPage /> },
                     { path: "/teachers/:teacherId/schedule", element: <TeacherSchedulePage /> },
                     { path: "/parents", element: <ParentPage /> },
@@ -76,6 +81,7 @@ const router = createBrowserRouter([
                     { path: "/courses/edit/:id", element: <EditCoursePage /> },
                     { path: "/assignments", element: <AssignmentPage /> },
                     { path: "/classrooms/:classroomId/create-assignment", element: <CreateAssignmentPage /> },
+                    { path: "/classrooms/:classroomId/edit-assignment/:assignmentId", element: <EditAssignmentPage /> },
                     { path: "/podcasts", element: <PodcastPage /> },
                     { path: "/podcasts/create", element: <CreatePodcastPage /> },
                     { path: "/podcasts/edit/:id", element: <EditPodcastPage /> },

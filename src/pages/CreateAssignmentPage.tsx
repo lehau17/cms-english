@@ -18,12 +18,14 @@ import {
   Container,
   Divider,
   FormControl,
+  FormControlLabel,
   Grid,
   IconButton,
   InputLabel,
   MenuItem,
   Paper,
   Select,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -72,8 +74,9 @@ export default function CreateAssignmentPage() {
       title: '',
       description: '',
       instructions: '',
+      startTime: '',
       dueDate: '',
-      totalPoints: 100,
+      // totalPoints removed - backend will set to 100
       timeLimit: undefined, // Don't default to 0
       maxAttempts: 1,
       isPublished: false,
@@ -162,10 +165,9 @@ export default function CreateAssignmentPage() {
         break;
       case 'pronunciation':
         (base as any).content = {
-          phrase: '',
+          phrases: [{ text: '', sampleUrl: '' }],
           tips: [''],
           phonetics: '',
-          sampleUrl: '',
         };
         break;
       case 'speaking':
@@ -252,8 +254,9 @@ export default function CreateAssignmentPage() {
         title: data.title.trim(),
         description: data.description?.trim() || undefined,
         instructions: data.instructions?.trim() || undefined,
+        startTime: data.startTime || undefined,
         dueDate: data.dueDate || undefined,
-        totalPoints: data.totalPoints || 100,
+        // totalPoints removed - backend will set to 100
         // Only send timeLimit if it's a valid positive integer
         timeLimit: data.timeLimit && data.timeLimit > 0 ? Math.floor(data.timeLimit) : undefined,
         maxAttempts: data.maxAttempts && data.maxAttempts > 0 ? Math.floor(data.maxAttempts) : 1,
@@ -281,8 +284,11 @@ export default function CreateAssignmentPage() {
       if (response.data && response.data.id) {
         setCreatedAssignmentId(response.data.id);
         toast.success('Assignment created successfully!');
+        // Navigate back to classroom after successful creation
+        navigate(`/classrooms/${classroomId}`);
       } else {
         toast.success('Assignment created successfully!');
+        navigate(`/classrooms/${classroomId}`);
       }
     } catch (error: any) {
       console.error('Create assignment error:', error);
@@ -314,7 +320,15 @@ export default function CreateAssignmentPage() {
           toast.error('Invalid data. Please check your input.');
         }
       } else if (error?.response?.data?.message) {
-        toast.error(error.response.data.message);
+        const message = error.response.data.message;
+        // Handle when message is an array (validation errors) or object
+        if (Array.isArray(message)) {
+          toast.error('Validation error. Please check your input.');
+        } else if (typeof message === 'object') {
+          toast.error('Server error. Please try again.');
+        } else {
+          toast.error(String(message));
+        }
       } else {
         toast.error('Failed to create assignment. Please try again.');
       }
@@ -420,15 +434,14 @@ export default function CreateAssignmentPage() {
                     />
                   </Grid>
                   <Grid item xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      label="Total Points"
-                      type="number"
-                      {...register('totalPoints', { valueAsNumber: true })}
-                      error={!!errors.totalPoints}
-                      helperText={errors.totalPoints?.message}
-                      placeholder="100"
-                    />
+                    <div>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        Total Points
+                      </Typography>
+                      <Typography variant="h6" color="text.secondary">
+                        100
+                      </Typography>
+                    </div>
                   </Grid>
                   <Grid item xs={12}>
                     <TextField
@@ -453,9 +466,22 @@ export default function CreateAssignmentPage() {
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
+                      label="Start Time"
+                      type="datetime-local"
+                      {...register('startTime')}
+                      error={!!errors.startTime}
+                      helperText={errors.startTime?.message}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
                       label="Due Date"
                       type="datetime-local"
                       {...register('dueDate')}
+                      error={!!errors.dueDate}
+                      helperText={errors.dueDate?.message}
                       InputLabelProps={{ shrink: true }}
                     />
                   </Grid>
@@ -481,6 +507,17 @@ export default function CreateAssignmentPage() {
                       helperText={errors.maxAttempts?.message || "Minimum: 1 attempt"}
                       placeholder="1"
                       inputProps={{ min: 1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          {...register('isPublished')}
+                          color="success"
+                        />
+                      }
+                      label="Xuất bản ngay"
                     />
                   </Grid>
                 </Grid>
@@ -617,20 +654,7 @@ export default function CreateAssignmentPage() {
                                   placeholder="10"
                                 />
                               </Grid>
-                              <Grid item xs={12} md={2}>
-                                <TextField
-                                  fullWidth
-                                  label="Passing Score"
-                                  type="number"
-                                  min={0}
-                                  max={100}
-                                  {...register(`activities.${index}.passingScore`, { valueAsNumber: true })}
-                                  size="small"
-                                  placeholder="70"
-                                  helperText="Score to pass (0-100)"
-                                />
-                              </Grid>
-                              <Grid item xs={12} md={2}>
+                              <Grid item xs={12} md={3}>
                                 <FormControl fullWidth size="small">
                                   <InputLabel>Difficulty</InputLabel>
                                   <Controller

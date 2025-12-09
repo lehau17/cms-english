@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { ClassroomAttendanceStats } from './ClassroomAttendanceStats';
+import { MakeupRequestsTab } from './MakeupRequestsTab';
 import { SessionAttendancePanel } from './SessionAttendancePanel';
 
 interface AttendanceDialogProps {
@@ -25,7 +26,7 @@ interface AttendanceDialogProps {
   sessionStatus?: string;
 }
 
-type TabValue = 'session' | 'classroom';
+type TabValue = 'session' | 'classroom' | 'makeup_requests';
 
 export const AttendanceDialog = ({
   open,
@@ -52,7 +53,7 @@ export const AttendanceDialog = ({
       <DialogTitle sx={{ pb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h6">Diem danh</Typography>
+            <Typography variant="h6">Điểm danh</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
               <Typography variant="body2" color="text.secondary">
                 {sessionTitle}
@@ -81,8 +82,9 @@ export const AttendanceDialog = ({
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab label="Buoi hoc hien tai" value="session" />
-          <Tab label="Thong ke lop" value="classroom" />
+          <Tab label="Buổi học hiện tại" value="session" />
+          <Tab label="Thống kê lớp" value="classroom" />
+          <Tab label="Yêu cầu bù" value="makeup_requests" />
         </Tabs>
       </Box>
 
@@ -98,9 +100,14 @@ export const AttendanceDialog = ({
         {activeTab === 'classroom' && classroomStats && (
           <ClassroomAttendanceStats stats={classroomStats} loading={loadingStats} />
         )}
+
+        {activeTab === 'makeup_requests' && (
+          <MakeupRequestsTab sessionId={sessionId} classroomId={classroomId} />
+        )}
       </DialogContent>
     </Dialog>
   );
 };
 
 export default AttendanceDialog;
+

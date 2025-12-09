@@ -31,6 +31,8 @@ import {
     Timer,
     Assignment,
     EmojiEvents,
+    SmartToy,
+    TrackChanges,
 } from '@mui/icons-material';
 import { getStudentAnalytics } from '../apis/analytics';
 import { AnalyticsPeriod } from '../interface/analytics.interface';
@@ -105,8 +107,8 @@ export default function StudentAnalyticsPage() {
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Box>
-                    <Typography variant="h4" gutterBottom>
-                        🤖 AI Analytics Dashboard
+                    <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SmartToy /> AI Analytics Dashboard
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
                         Phân tích học tập của {analytics.studentName}
@@ -179,8 +181,8 @@ export default function StudentAnalyticsPage() {
                 <Grid item xs={12} md={6}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                💡 Nhận xét chi tiết
+                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <LightbulbOutlined color="primary" /> Nhận xét chi tiết
                             </Typography>
                             <Divider sx={{ my: 2 }} />
                             <List>
@@ -226,8 +228,8 @@ export default function StudentAnalyticsPage() {
                 <Grid item xs={12} md={6}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                🎯 Khuyến nghị cải thiện
+                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TrackChanges color="primary" /> Khuyến nghị cải thiện
                             </Typography>
                             <Divider sx={{ my: 2 }} />
                             <Box>

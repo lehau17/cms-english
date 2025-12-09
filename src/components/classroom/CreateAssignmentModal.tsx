@@ -268,8 +268,8 @@ function ReuseAssignmentDialog({
                         type="button"
                         onClick={() => setSelectedAssignmentId(assignment.id)}
                         className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${isActive
-                            ? 'border-indigo-500 bg-indigo-50 shadow-sm'
-                            : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                          ? 'border-indigo-500 bg-indigo-50 shadow-sm'
+                          : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
                           }`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -331,8 +331,8 @@ function ReuseAssignmentDialog({
                             <label
                               key={activity.id}
                               className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-2 text-sm transition ${checked
-                                  ? 'border-indigo-500 bg-indigo-50'
-                                  : 'border-gray-200 hover:border-indigo-200 hover:bg-gray-50'
+                                ? 'border-indigo-500 bg-indigo-50'
+                                : 'border-gray-200 hover:border-indigo-200 hover:bg-gray-50'
                                 }`}
                             >
                               <input
@@ -469,7 +469,7 @@ export default function CreateAssignmentModal({
           description: '',
           instructions: '',
           isPublished: false,
-          totalPoints: 100,
+          // totalPoints removed - backend will set to 100
           maxAttempts: 1,
           timeLimit: undefined,
           activities: [],
@@ -560,9 +560,7 @@ export default function CreateAssignmentModal({
     if (importPreview.assignment?.instructions) {
       setValue('instructions', importPreview.assignment.instructions)
     }
-    if (importPreview.assignment?.totalPoints) {
-      setValue('totalPoints', importPreview.assignment.totalPoints)
-    }
+    // totalPoints removed - backend will set to 100
     if (importPreview.assignment?.timeLimit) {
       setValue('timeLimit', importPreview.assignment.timeLimit)
     }
@@ -590,8 +588,9 @@ export default function CreateAssignmentModal({
         title: payload.title?.trim(),
         description: payload.description?.trim() || undefined,
         instructions: payload.instructions?.trim() || undefined,
+        startTime: payload.startTime || undefined,
         dueDate: payload.dueDate || undefined,
-        totalPoints: payload.totalPoints || 100,
+        // totalPoints removed - backend will set to 100
         // Only send timeLimit if it's a valid positive integer
         timeLimit: payload.timeLimit && payload.timeLimit > 0 ? Math.floor(payload.timeLimit) : undefined,
         maxAttempts: payload.maxAttempts && payload.maxAttempts > 0 ? Math.floor(payload.maxAttempts) : 1,
@@ -891,17 +890,18 @@ export default function CreateAssignmentModal({
                   {...register('instructions')}
                 />
               </Labeled>
+              <Labeled label="Thời gian bắt đầu">
+                <TextInput type="datetime-local" {...register('startTime')} />
+              </Labeled>
               <Labeled label="Hạn nộp">
                 <TextInput type="datetime-local" {...register('dueDate')} />
               </Labeled>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Labeled label="Tổng điểm">
-                <TextInput
-                  type="number"
-                  min={0}
-                  {...register('totalPoints', { valueAsNumber: true })}
-                />
+                <div className="text-sm">
+                  <span className="font-semibold">100</span>
+                </div>
               </Labeled>
               <Labeled label="Giới hạn thời gian (phút)">
                 <TextInput
@@ -1003,16 +1003,6 @@ export default function CreateAssignmentModal({
                             })}
                           />
                         </Labeled>
-                        <Labeled label="Qua bài khi ≥ điểm">
-                          <TextInput
-                            type="number"
-                            min={0}
-                            {...register(
-                              `activities.${idx}.passingScore` as const,
-                              { valueAsNumber: true }
-                            )}
-                          />
-                        </Labeled>
                         <Labeled label="Hướng dẫn">
                           <TextArea
                             rows={2}
@@ -1028,6 +1018,7 @@ export default function CreateAssignmentModal({
                       <TypeSpecificFields
                         idx={idx}
                         type={type}
+                        control={control}
                         register={register}
                         setValue={setValue}
                         watch={watch}

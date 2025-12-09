@@ -118,36 +118,36 @@ const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; chi
 };
 
 const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Create New Room">
+  <Modal isOpen={isOpen} onClose={onClose} title="Tạo phòng mới">
     <div className="p-6">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Room Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Tên phòng</label>
           <input
             type="text"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter room name"
+            placeholder="Nhập tên phòng"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Room Code</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Mã phòng</label>
           <input
             type="text"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="e.g., A101, B205"
+            placeholder="ví dụ: A101, B205"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vị trí</label>
             <input
               type="text"
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Building A, Floor 1"
+              placeholder="Tòa nhà A, Tầng 1"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Capacity</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sức chứa</label>
             <input
               type="number"
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -161,13 +161,13 @@ const CreateRoomModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
           onClick={onClose}
           className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          Cancel
+          Hủy
         </button>
         <button
           onClick={onClose}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          Create Room
+          Tạo phòng
         </button>
       </div>
     </div>
@@ -179,37 +179,37 @@ const ViewRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Room
   onClose,
   room
 }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Room Details">
+  <Modal isOpen={isOpen} onClose={onClose} title="Chi tiết phòng">
     {room && (
       <div className="p-6">
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Room Name</label>
+              <label className="text-sm font-medium text-gray-500">Tên phòng</label>
               <p className="text-lg font-semibold text-gray-900">{room.name}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Room Code</label>
+              <label className="text-sm font-medium text-gray-500">Mã phòng</label>
               <p className="text-lg font-semibold text-gray-900">{room.code}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Location</label>
-              <p className="text-gray-900">{room.location || 'Not specified'}</p>
+              <label className="text-sm font-medium text-gray-500">Vị trí</label>
+              <p className="text-gray-900">{room.location || 'Chưa xác định'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Capacity</label>
-              <p className="text-gray-900">{room.capacity} people</p>
+              <label className="text-sm font-medium text-gray-500">Sức chứa</label>
+              <p className="text-gray-900">{room.capacity} người</p>
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-500">Description</label>
+            <label className="text-sm font-medium text-gray-500">Mô tả</label>
             <p className="text-gray-900 mt-1">{room.description}</p>
           </div>
 
           {room.equipment && (
             <div>
-              <label className="text-sm font-medium text-gray-500 mb-2 block">Equipment</label>
+              <label className="text-sm font-medium text-gray-500 mb-2 block">Thiết bị</label>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(room.equipment).map(([key, value]: [any, any]) => (
                   value && (
@@ -231,7 +231,7 @@ const ViewRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Room
             onClick={onClose}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Close
+            Đóng
           </button>
         </div>
       </div>
@@ -244,12 +244,12 @@ const EditRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Room
   onClose,
   room
 }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Edit Room">
+  <Modal isOpen={isOpen} onClose={onClose} title="Chỉnh sửa phòng">
     {room && (
       <div className="p-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Room Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tên phòng</label>
             <input
               type="text"
               defaultValue={room.name}
@@ -257,7 +257,7 @@ const EditRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Room
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Room Code</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mã phòng</label>
             <input
               type="text"
               defaultValue={room.code}
@@ -266,7 +266,7 @@ const EditRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Room
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Vị trí</label>
               <input
                 type="text"
                 defaultValue={room.location}
@@ -274,7 +274,7 @@ const EditRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Room
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Capacity</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sức chứa</label>
               <input
                 type="number"
                 defaultValue={room.capacity}
@@ -288,13 +288,13 @@ const EditRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Room
             onClick={onClose}
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Cancel
+            Hủy
           </button>
           <button
             onClick={onClose}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Update Room
+            Cập nhật phòng
           </button>
         </div>
       </div>
@@ -307,16 +307,16 @@ const DeleteRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Ro
   onClose,
   room
 }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Delete Room">
+  <Modal isOpen={isOpen} onClose={onClose} title="Xóa phòng">
     {room && (
       <div className="p-6">
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
             <Trash2 className="h-6 w-6 text-red-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Room</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Xóa phòng</h3>
           <p className="text-sm text-gray-500 mb-4">
-            Are you sure you want to delete "{room.name}" ({room.code})? This action cannot be undone.
+            Bạn có chắc chắn muốn xóa "{room.name}" ({room.code}) không? Hành động này không thể hoàn tác.
           </p>
         </div>
         <div className="flex justify-center space-x-3">
@@ -324,13 +324,13 @@ const DeleteRoomModal: React.FC<{ isOpen: boolean; onClose: () => void; room: Ro
             onClick={onClose}
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Cancel
+            Hủy
           </button>
           <button
             onClick={onClose}
             className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Delete
+            Xóa
           </button>
         </div>
       </div>
@@ -397,7 +397,7 @@ const RoomManagementPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string | Date | null | undefined): string => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return 'Không có';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -430,15 +430,15 @@ const RoomManagementPage: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Room Management</h1>
-            <p className="text-gray-600">Manage all rooms and their facilities.</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý phòng học</h1>
+            <p className="text-gray-600">Quản lý tất cả phòng học và cơ sở vật chất.</p>
           </div>
           <button
             onClick={handleCreate}
             className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <Plus className="w-5 h-5" />
-            <span>Create Room</span>
+            <span>Tạo phòng mới</span>
           </button>
         </div>
 
@@ -449,7 +449,7 @@ const RoomManagementPage: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search by room name, code, or location..."
+                  placeholder="Tìm kiếm theo tên phòng, mã hoặc vị trí..."
                   value={request.search || ''}
                   onChange={(e) => handleSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
@@ -457,7 +457,7 @@ const RoomManagementPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Show:</label>
+              <label className="text-sm font-medium text-gray-700">Hiển thị:</label>
               <select
                 value={request.limit}
                 onChange={(e) => handleLimitChange(parseInt(e.target.value))}
@@ -484,13 +484,13 @@ const RoomManagementPage: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Capacity</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Equipment</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created At</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phòng</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Vị trí</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Sức chứa</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Thiết bị</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Trạng thái</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ngày tạo</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -498,18 +498,18 @@ const RoomManagementPage: React.FC = () => {
                     <tr key={room.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="font-semibold text-gray-900">{room.name}</div>
-                        <div className="text-sm text-gray-500">Code: {room.code}</div>
+                        <div className="text-sm text-gray-500">Mã: {room.code}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm">{room.location || 'Not specified'}</span>
+                          <span className="text-sm">{room.location || 'Chưa xác định'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <Users className="w-4 h-4 text-gray-400" />
-                          <span>{room.capacity} people</span>
+                          <span>{room.capacity} người</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -518,7 +518,7 @@ const RoomManagementPage: React.FC = () => {
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${room.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
-                          {room.isActive ? 'Active' : 'Inactive'}
+                          {room.isActive ? 'Hoạt động' : 'Không hoạt động'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">{formatDate(room.createdAt)}</td>
@@ -527,21 +527,21 @@ const RoomManagementPage: React.FC = () => {
                           <button
                             onClick={() => handleView(room)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="View Details"
+                            title="Xem chi tiết"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(room)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Edit Room"
+                            title="Chỉnh sửa phòng"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(room)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete Room"
+                            title="Xóa phòng"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -557,14 +557,14 @@ const RoomManagementPage: React.FC = () => {
           {!isLoading && rooms.length === 0 && (
             <div className="text-center py-12">
               <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">No Rooms Found</h3>
-              <p className="text-gray-600 mb-4">Create a new room to get started.</p>
+              <h3 className="text-xl font-medium text-gray-900 mb-2">Không tìm thấy phòng nào</h3>
+              <p className="text-gray-600 mb-4">Tạo phòng mới để bắt đầu.</p>
               <button
                 onClick={handleCreate}
                 className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <Plus className="w-4 h-4" />
-                <span>Create Your First Room</span>
+                <span>Tạo phòng đầu tiên của bạn</span>
               </button>
             </div>
           )}
@@ -573,7 +573,7 @@ const RoomManagementPage: React.FC = () => {
         {!isLoading && pagination && pagination.totalPages > 1 && (
           <div className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
             <div className="text-sm text-gray-600">
-              Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalItems || 0)} of {pagination.totalItems || 0} results
+              Hiển thị {((pagination.page - 1) * pagination.limit) + 1} đến {Math.min(pagination.page * pagination.limit, pagination.totalItems || 0)} trong số {pagination.totalItems || 0} kết quả
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -582,7 +582,7 @@ const RoomManagementPage: React.FC = () => {
                 className="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:text-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
+                Trước
               </button>
               <div className="flex space-x-1">
                 {[...Array(pagination.totalPages || 0)].map((_, index) => (
@@ -603,7 +603,7 @@ const RoomManagementPage: React.FC = () => {
                 disabled={!pagination.hasNextPage}
                 className="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:text-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed"
               >
-                Next
+                Tiếp
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             </div>

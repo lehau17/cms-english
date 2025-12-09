@@ -16,11 +16,12 @@ interface LineChartProps {
   data: any[];
   lines: { dataKey: string; name: string; color: string }[];
   xAxisDataKey: string;
+  height?: number;
 }
 
-const LineChartWrapper: React.FC<LineChartProps> = ({ data, lines, xAxisDataKey }) => {
+const LineChartWrapper: React.FC<LineChartProps> = ({ data, lines, xAxisDataKey, height = 300 }) => {
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
         <XAxis dataKey={xAxisDataKey} tick={chartStyle.axis.tick} />

@@ -4,6 +4,7 @@ import { useStudents } from '@/hooks/useStudent';
 import { Classroom } from '@/interface/classroom.interface';
 import { Student } from '@/interface/student.interface';
 import { AlertCircle, CheckCircle, Download, FileSpreadsheet, Search, Upload, UserPlus, Users, X } from 'lucide-react';
+import { CheckCircleOutlined, CancelOutlined, Warning } from '@mui/icons-material';
 import React, { useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import Button from '../ui/Button';
@@ -67,10 +68,10 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                     classroomId: classroom.id,
                     studentIds: selectedStudentIds
                 });
-                toast.success(`Added ${selectedStudentIds.length} students successfully`);
+                toast.success(`Đã thêm ${selectedStudentIds.length} học viên thành công`);
                 onClose();
             } catch (error: any) {
-                toast.error(error.response?.data?.message || 'Failed to add students');
+                toast.error(error.response?.data?.message || 'Thêm học viên thất bại');
             }
         }
     };
@@ -94,11 +95,11 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
             );
 
             setImportResult(response.data.data);
-            toast.success('Students imported successfully!');
+            toast.success('Import học viên thành công!');
             refetch(); // Refresh student list
         } catch (error: any) {
             console.error('Import error:', error);
-            toast.error(error.response?.data?.message || 'Failed to import students');
+            toast.error(error.response?.data?.message || 'Import học viên thất bại');
         } finally {
             setIsImporting(false);
         }
@@ -115,7 +116,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
             if (validTypes.includes(file.type)) {
                 handleImportFromExcel(file);
             } else {
-                toast.error('Please select a valid Excel file (.xlsx or .xls)');
+                toast.error('Vui lòng chọn file Excel hợp lệ (.xlsx hoặc .xls)');
             }
         }
     };
@@ -150,8 +151,8 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                             <Users className="w-6 h-6 text-blue-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h3 id="modal-title" className="text-xl font-semibold text-gray-800 break-words">Add Students to Classroom</h3>
-                            <p id="modal-desc" className="text-sm text-gray-600 break-words">{`Add students to ${classroom?.name}`}</p>
+                            <h3 id="modal-title" className="text-xl font-semibold text-gray-800 break-words">Thêm học viên vào lớp học</h3>
+                            <p id="modal-desc" className="text-sm text-gray-600 break-words">{`Thêm học viên vào lớp ${classroom?.name}`}</p>
                         </div>
                     </div>
                     <button
@@ -177,7 +178,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                     }`}
                             >
                                 <UserPlus className="w-4 h-4" />
-                                Select Students
+                                Chọn học viên
                             </button>
                             <button
                                 onClick={() => setActiveTab('import')}
@@ -187,7 +188,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                     }`}
                             >
                                 <Upload className="w-4 h-4" />
-                                Import from Excel
+                                Import từ Excel
                             </button>
                         </div>
 
@@ -198,7 +199,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     <input
                                         type="text"
-                                        placeholder="Search students by name, username, or email..."
+                                        placeholder="Tìm kiếm học viên theo tên, username hoặc email..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -216,10 +217,10 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                 {/* Stats */}
                                 <div className="flex items-center justify-between text-sm text-gray-600">
                                     <span>
-                                        {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} found
+                                        Tìm thấy {filteredStudents.length} học viên
                                     </span>
                                     <span>
-                                        {selectedStudentIds.length} selected
+                                        Đã chọn {selectedStudentIds.length}
                                     </span>
                                 </div>
 
@@ -238,15 +239,15 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                                                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                                             />
                                                             <span className="text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                                                Select All
+                                                                Chọn tất cả
                                                             </span>
                                                         </div>
                                                     </th>
                                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                                        Student Info
+                                                        Thông tin học viên
                                                     </th>
                                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                                        Username
+                                                        Tài khoản
                                                     </th>
                                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                                                         Email
@@ -259,7 +260,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                                         <td colSpan={4} className="text-center py-8">
                                                             <div className="flex items-center justify-center">
                                                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                                                                <span className="ml-2 text-gray-600">Loading students...</span>
+                                                                <span className="ml-2 text-gray-600">Đang tải danh sách học viên...</span>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -269,7 +270,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                                             <div className="flex flex-col items-center">
                                                                 <Users className="w-12 h-12 text-gray-300 mb-2" />
                                                                 <span className="text-gray-600">
-                                                                    {searchQuery ? 'No students found matching your search' : 'No students available'}
+                                                                    {searchQuery ? 'Không tìm thấy học viên phù hợp' : 'Chưa có học viên nào'}
                                                                 </span>
                                                             </div>
                                                         </td>
@@ -303,7 +304,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                                                         <p className="text-sm font-medium text-gray-900">
                                                                             {student.username}
                                                                         </p>
-                                                                        <p className="text-xs text-gray-500">Student</p>
+                                                                        <p className="text-xs text-gray-500">Học viên</p>
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -327,13 +328,13 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                         {selectedStudentIds.length > 0 && (
                                             <span className="flex items-center gap-1">
                                                 <CheckCircle className="w-4 h-4 text-green-500" />
-                                                {selectedStudentIds.length} student{selectedStudentIds.length !== 1 ? 's' : ''} selected
+                                                {selectedStudentIds.length} học viên đã chọn
                                             </span>
                                         )}
                                     </div>
                                     <div className="flex space-x-3">
                                         <Button type="button" variant="secondary" onClick={onClose}>
-                                            Cancel
+                                            Hủy
                                         </Button>
                                         <Button
                                             type="button"
@@ -342,7 +343,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                             disabled={selectedStudentIds.length === 0}
                                         >
                                             <UserPlus className="w-4 h-4 mr-2" />
-                                            Add {selectedStudentIds.length} Student{selectedStudentIds.length !== 1 ? 's' : ''}
+                                            Thêm {selectedStudentIds.length} học viên
                                         </Button>
                                     </div>
                                 </div>
@@ -354,9 +355,9 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                     <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                                         <FileSpreadsheet className="w-8 h-8 text-green-600" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Import Students from Excel</h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Import học viên từ Excel</h3>
                                     <p className="text-gray-600 mb-6">
-                                        Upload an Excel file with student information to add multiple students at once
+                                        Tải lên file Excel chứa thông tin học viên để thêm nhiều học viên cùng lúc
                                     </p>
                                 </div>
 
@@ -365,16 +366,16 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                     <div className="flex items-start">
                                         <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
                                         <div className="flex-1">
-                                            <h4 className="text-sm font-medium text-blue-800 mb-1">Template Required</h4>
+                                            <h4 className="text-sm font-medium text-blue-800 mb-1">Yêu cầu Template</h4>
                                             <p className="text-sm text-blue-700 mb-2">
-                                                Download our template to ensure your data is formatted correctly
+                                                Tải xuống mẫu của chúng tôi để đảm bảo dữ liệu đúng định dạng
                                             </p>
                                             <button
                                                 onClick={downloadTemplate}
                                                 className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
                                             >
                                                 <Download className="w-4 h-4" />
-                                                Download Template
+                                                Tải xuống mẫu
                                             </button>
                                         </div>
                                     </div>
@@ -385,15 +386,15 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                     <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                     <div className="space-y-2">
                                         <p className="text-lg font-medium text-gray-700">
-                                            Drop your Excel file here, or{' '}
+                                            Kéo thả file Excel vào đây, hoặc{' '}
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
                                                 className="text-blue-600 hover:text-blue-700 font-semibold"
                                             >
-                                                browse
+                                                duyệt file
                                             </button>
                                         </p>
-                                        <p className="text-sm text-gray-500">Supports .xlsx and .xls files</p>
+                                        <p className="text-sm text-gray-500">Hỗ trợ định dạng .xlsx và .xls</p>
                                     </div>
                                     <input
                                         ref={fileInputRef}
@@ -409,7 +410,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                         <div className="flex items-center">
                                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600 mr-3"></div>
-                                            <span className="text-yellow-800 font-medium">Importing students...</span>
+                                            <span className="text-yellow-800 font-medium">Đang import học viên...</span>
                                         </div>
                                     </div>
                                 )}
@@ -420,14 +421,14 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                         <div className="flex items-start">
                                             <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3" />
                                             <div className="flex-1">
-                                                <h4 className="text-sm font-medium text-green-800 mb-1">Import Successful!</h4>
+                                                <h4 className="text-sm font-medium text-green-800 mb-1">Import thành công!</h4>
                                                 <div className="text-sm text-green-700 space-y-1">
-                                                    <p>✅ {importResult.successful || 0} students imported successfully</p>
+                                                    <p className="flex items-center gap-1"><CheckCircleOutlined fontSize="small" /> {importResult.successful || 0} học viên được import thành công</p>
                                                     {importResult.failed > 0 && (
-                                                        <p>❌ {importResult.failed} students failed to import</p>
+                                                        <p className="flex items-center gap-1"><CancelOutlined fontSize="small" /> {importResult.failed} học viên import thất bại</p>
                                                     )}
                                                     {importResult.duplicates > 0 && (
-                                                        <p>⚠️ {importResult.duplicates} duplicates skipped</p>
+                                                        <p className="flex items-center gap-1"><Warning fontSize="small" /> {importResult.duplicates} bản ghi trùng lặp đã bỏ qua</p>
                                                     )}
                                                 </div>
                                             </div>
@@ -438,7 +439,7 @@ const AddStudentToClassModal: React.FC<AddStudentToClassModalProps> = ({ isOpen,
                                 {/* Action Buttons */}
                                 <div className="flex justify-end space-x-3 pt-4 border-t">
                                     <Button type="button" variant="secondary" onClick={onClose}>
-                                        {importResult ? 'Done' : 'Cancel'}
+                                        {importResult ? 'Hoàn tất' : 'Hủy'}
                                     </Button>
                                 </div>
                             </div>

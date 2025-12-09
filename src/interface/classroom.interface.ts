@@ -22,8 +22,12 @@ export interface Classroom {
     updatedAt: Date;
     expiresAt: Date | null;
     status: ClassroomStatus;
-    teacher?: UserResponse
-    students: UserResponse[]
+    teacher?: UserResponse;
+    students: UserResponse[];
+    course?: { title: string };
+    _count?: { students: number };
+    periodStart: Date;
+    periodEnd: Date;
 }
 
 

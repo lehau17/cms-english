@@ -51,12 +51,14 @@ export const SessionAttendancePanel = ({
   const {
     data: summary,
     isLoading: loadingSummary,
+    error: summaryError,
     refetch: refetchSummary,
   } = useSessionSummary(sessionId);
 
   const {
     data: unmarkedStudents,
     isLoading: loadingUnmarked,
+    error: unmarkedError,
     refetch: refetchUnmarked,
   } = useUnmarkedStudents(sessionId);
 
@@ -69,6 +71,7 @@ export const SessionAttendancePanel = ({
   const deleteAttendanceMutation = useDeleteAttendance(sessionId);
 
   const isLoading = loadingSummary || loadingUnmarked;
+  const hasError = summaryError || unmarkedError;
   const isMutating =
     markAttendanceMutation.isPending ||
     bulkMarkMutation.isPending ||
@@ -76,6 +79,15 @@ export const SessionAttendancePanel = ({
     quickCheckOutMutation.isPending ||
     markAllAbsentMutation.isPending ||
     deleteAttendanceMutation.isPending;
+
+  // Log error for debugging
+  if (summaryError) {
+    console.error('Attendance API Error:', {
+      sessionId,
+      error: summaryError,
+      message: summaryError instanceof Error ? summaryError.message : 'Unknown error',
+    });
+  }
 
   const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -184,6 +196,51 @@ export const SessionAttendancePanel = ({
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Error state
+  if (hasError) {
+    const errorMessage = summaryError instanceof Error
+      ? summaryError.message
+      : unmarkedError instanceof Error
+        ? unmarkedError.message
+        : 'Khong the tai thong tin diem danh. Vui long thu lai sau.';
+
+    const statusCode = (summaryError as any)?.response?.status || (unmarkedError as any)?.response?.status;
+    const isServerError = statusCode >= 500;
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              startIcon={<RefreshIcon />}
+              onClick={handleRefresh}
+              size="small"
+              color="inherit"
+            >
+              Thu lai
+            </Button>
+          }
+        >
+          <Typography variant="h6" gutterBottom>
+            Loi khi tai thong tin diem danh
+          </Typography>
+          <Typography variant="body2">
+            {isServerError
+              ? 'May chu dang gap su co. Vui long thu lai sau hoac lien he quan tri vien.'
+              : errorMessage}
+          </Typography>
+          {process.env.NODE_ENV === 'development' && (
+            <Typography variant="caption" sx={{ display: 'block', mt: 1, fontFamily: 'monospace' }}>
+              Session ID: {sessionId}
+              {statusCode && ` | Status: ${statusCode}`}
+            </Typography>
+          )}
+        </Alert>
       </Box>
     );
   }

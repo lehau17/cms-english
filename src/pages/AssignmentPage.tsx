@@ -76,8 +76,8 @@ export default function AssignmentPage() {
             }
         } catch (err: any) {
             console.error('Error loading assignments:', err);
-            setError(err?.response?.data?.message || 'Failed to load assignments');
-            toast.error('Failed to load assignments');
+            setError(err?.response?.data?.message || 'Tải danh sách bài tập thất bại');
+            toast.error('Tải danh sách bài tập thất bại');
         } finally {
             setLoading(false);
         }
@@ -114,12 +114,12 @@ export default function AssignmentPage() {
         try {
             setIsCloning(true);
             await assignmentApi.cloneAssignment(reuseAssignment.id, payload);
-            toast.success('Assignment cloned successfully');
+            toast.success('Sao chép bài tập thành công');
             handleCloseReuseDialog();
             loadAssignments();
         } catch (err: any) {
             console.error('Clone assignment error:', err);
-            toast.error(err?.response?.data?.message || 'Failed to clone assignment');
+            toast.error(err?.response?.data?.message || 'Sao chép bài tập thất bại');
         } finally {
             setIsCloning(false);
         }
@@ -143,13 +143,13 @@ export default function AssignmentPage() {
 
         try {
             await assignmentApi.deleteAssignment(selectedAssignment.id);
-            toast.success('Assignment deleted successfully');
+            toast.success('Xóa bài tập thành công');
             setShowDeleteDialog(false);
             setSelectedAssignment(null);
             loadAssignments();
         } catch (err: any) {
             console.error('Error deleting assignment:', err);
-            toast.error(err?.response?.data?.message || 'Failed to delete assignment');
+            toast.error(err?.response?.data?.message || 'Xóa bài tập thất bại');
         }
     };
 
@@ -157,16 +157,16 @@ export default function AssignmentPage() {
     const handleTogglePublish = async (assignment: Assignment) => {
         try {
             if (assignment.isPublished) {
-                toast('Cannot unpublish assignment via this interface');
+                toast('Không thể hủy xuất bản bài tập qua giao diện này');
                 return;
             } else {
                 await assignmentApi.publishAssignment(assignment.id);
-                toast.success('Assignment published successfully');
+                toast.success('Xuất bản bài tập thành công');
                 loadAssignments();
             }
         } catch (err: any) {
             console.error('Error toggling publish status:', err);
-            toast.error(err?.response?.data?.message || 'Failed to update assignment');
+            toast.error(err?.response?.data?.message || 'Cập nhật bài tập thất bại');
         }
     };
 
@@ -175,10 +175,10 @@ export default function AssignmentPage() {
         try {
             setDownloading(assignment.id);
             await downloadAssignmentPdf(assignment.id, assignment.title);
-            toast.success('PDF downloaded successfully');
+            toast.success('Tải PDF thành công');
         } catch (err: any) {
             console.error('Error downloading PDF:', err);
-            toast.error(err.message || 'Failed to download PDF');
+            toast.error(err.message || 'Tải PDF thất bại');
         } finally {
             setDownloading(null);
         }
@@ -187,15 +187,15 @@ export default function AssignmentPage() {
     // Get status chip
     const getStatusChip = (assignment: Assignment) => {
         if (assignment.isPublished) {
-            return <Chip label="Published" color="success" size="small" />;
+            return <Chip label="Đã xuất bản" color="success" size="small" />;
         } else {
-            return <Chip label="Draft" color="default" size="small" />;
+            return <Chip label="Bản nháp" color="default" size="small" />;
         }
     };
 
     // Format date
     const formatDate = (dateString?: string) => {
-        if (!dateString) return 'No due date';
+        if (!dateString) return 'Không có hạn nộp';
         return new Date(dateString).toLocaleDateString('vi-VN');
     };
 
@@ -219,7 +219,7 @@ export default function AssignmentPage() {
     const columns: TableColumn<Assignment>[] = [
         {
             id: 'title',
-            label: 'Title',
+            label: 'Tiêu đề',
             render: (assignment) => (
                 <Stack spacing={0.5}>
                     <Typography variant="subtitle2" fontWeight="bold">
@@ -236,11 +236,11 @@ export default function AssignmentPage() {
         },
         {
             id: 'classroom',
-            label: 'Classroom',
+            label: 'Lớp học',
             render: (assignment) => (
                 <Stack spacing={0.5}>
                     <Typography variant="body2">
-                        {assignment.classroom?.name || 'Unknown'}
+                        {assignment.classroom?.name || 'Không xác định'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                         {assignment.classroom?.classCode || 'N/A'}
@@ -250,12 +250,12 @@ export default function AssignmentPage() {
         },
         {
             id: 'status',
-            label: 'Status',
+            label: 'Trạng thái',
             render: (assignment) => getStatusChip(assignment),
         },
         {
             id: 'dueDate',
-            label: 'Due Date',
+            label: 'Hạn nộp',
             render: (assignment) => (
                 <Typography variant="body2">
                     {formatDate(assignment.dueDate)}
@@ -264,7 +264,7 @@ export default function AssignmentPage() {
         },
         {
             id: 'points',
-            label: 'Points',
+            label: 'Điểm',
             render: (assignment) => (
                 <Typography variant="body2">
                     {assignment.totalPoints || 'N/A'} pts
@@ -273,16 +273,16 @@ export default function AssignmentPage() {
         },
         {
             id: 'activities',
-            label: 'Activities',
+            label: 'Hoạt động',
             render: (assignment) => (
                 <Typography variant="body2">
-                    {assignment.assignmentActivities?.length || 0} activities
+                    {assignment.assignmentActivities?.length || 0} hoạt động
                 </Typography>
             ),
         },
         {
             id: 'createdAt',
-            label: 'Created',
+            label: 'Ngày tạo',
             render: (assignment) => (
                 <Typography variant="body2">
                     {new Date(assignment.createdAt).toLocaleDateString('vi-VN')}
@@ -294,7 +294,7 @@ export default function AssignmentPage() {
     const actions: ActionButton<Assignment>[] = [
         {
             icon: <VisibilityIcon fontSize="small" />,
-            label: 'View Details',
+            label: 'Xem chi tiết',
             color: 'primary',
             onClick: (assignment) => {
                 setSelectedAssignment(assignment);
@@ -303,19 +303,19 @@ export default function AssignmentPage() {
         },
         {
             icon: <FileDownloadIcon fontSize="small" />,
-            label: 'Download PDF',
+            label: 'Tải PDF',
             color: 'primary',
             onClick: handleDownloadPdf,
         },
         {
             icon: <FileCopyIcon fontSize="small" />,
-            label: 'Reuse',
+            label: 'Sử dụng lại',
             color: 'info',
             onClick: handleOpenReuseDialog,
         },
         {
             icon: <EditIcon fontSize="small" />,
-            label: 'Edit',
+            label: 'Chỉnh sửa',
             color: 'warning',
             onClick: async (assignment) => {
                 try {
@@ -349,19 +349,19 @@ export default function AssignmentPage() {
                     }
                 } catch (err: any) {
                     console.error('Error loading assignment:', err);
-                    toast.error(err?.response?.data?.message || 'Failed to load assignment');
+                    toast.error(err?.response?.data?.message || 'Tải bài tập thất bại');
                 }
             },
         },
         {
             icon: <PublishIcon fontSize="small" />,
-            label: 'Publish',
+            label: 'Xuất bản',
             color: 'success',
             onClick: handleTogglePublish,
         },
         {
             icon: <DeleteIcon fontSize="small" />,
-            label: 'Delete',
+            label: 'Xóa',
             color: 'error',
             onClick: (assignment) => {
                 setSelectedAssignment(assignment);
@@ -374,8 +374,8 @@ export default function AssignmentPage() {
         return (
             <Container maxWidth="xl">
                 <Stack spacing={3} sx={{ py: 3 }}>
-                    <PageHeader title="Assignment Management" />
-                    <Typography>Loading assignments...</Typography>
+                    <PageHeader title="Quản lý bài tập" />
+                    <Typography>Đang tải bài tập...</Typography>
                 </Stack>
             </Container>
         );
@@ -385,14 +385,14 @@ export default function AssignmentPage() {
         <Container maxWidth="xl">
             <Stack spacing={3} sx={{ py: 3 }}>
                 <PageHeader
-                    title="Assignment Management"
+                    title="Quản lý bài tập"
                     actionButton={
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
                             onClick={() => navigate('/classrooms')}
                         >
-                            Create Assignment
+                            Tạo bài tập
                         </Button>
                     }
                 />
@@ -405,7 +405,7 @@ export default function AssignmentPage() {
 
                 <TextField
                     fullWidth
-                    label="Search assignments..."
+                    label="Tìm kiếm bài tập..."
                     variant="outlined"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -420,15 +420,15 @@ export default function AssignmentPage() {
                     getRowId={(assignment) => assignment.id}
                     emptyState={{
                         icon: <AssignmentIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />,
-                        title: 'No Assignments Found',
-                        description: 'Create a new assignment to get started.',
+                        title: 'Không tìm thấy bài tập nào',
+                        description: 'Tạo một bài tập mới để bắt đầu.',
                         actionButton: (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
                                 onClick={() => navigate('/classrooms')}
                             >
-                                Create Your First Assignment
+                                Tạo bài tập đầu tiên
                             </Button>
                         ),
                     }}
@@ -447,17 +447,17 @@ export default function AssignmentPage() {
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-                <DialogTitle>Delete Assignment</DialogTitle>
+                <DialogTitle>Xóa bài tập</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Are you sure you want to delete the assignment "{selectedAssignment?.title}"?
-                        This action cannot be undone.
+                        Bạn có chắc chắn muốn xóa bài tập "{selectedAssignment?.title}"?
+                        Hành động này không thể hoàn tác.
                     </Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+                    <Button onClick={() => setShowDeleteDialog(false)}>Hủy</Button>
                     <Button onClick={handleDeleteAssignment} color="error" variant="contained">
-                        Delete
+                        Xóa
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -470,7 +470,7 @@ export default function AssignmentPage() {
                 fullWidth
             >
                 <DialogTitle>
-                    Assignment Details
+                    Chi tiết bài tập
                     <Box display="flex" gap={1} mt={1}>
                         {selectedAssignment && getStatusChip(selectedAssignment)}
                     </Box>
@@ -487,7 +487,7 @@ export default function AssignmentPage() {
                             {selectedAssignment.description && (
                                 <Grid item xs={12}>
                                     <Typography variant="subtitle2" color="text.secondary">
-                                        Description:
+                                        Mô tả:
                                     </Typography>
                                     <Typography variant="body2">
                                         {selectedAssignment.description}
@@ -498,7 +498,7 @@ export default function AssignmentPage() {
                             {selectedAssignment.instructions && (
                                 <Grid item xs={12}>
                                     <Typography variant="subtitle2" color="text.secondary">
-                                        Instructions:
+                                        Hướng dẫn:
                                     </Typography>
                                     <Typography variant="body2">
                                         {selectedAssignment.instructions}
@@ -508,7 +508,7 @@ export default function AssignmentPage() {
 
                             <Grid item xs={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Classroom:
+                                    Lớp học:
                                 </Typography>
                                 <Typography variant="body2">
                                     {selectedAssignment.classroom?.name} ({selectedAssignment.classroom?.classCode})
@@ -517,7 +517,7 @@ export default function AssignmentPage() {
 
                             <Grid item xs={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Due Date:
+                                    Hạn nộp:
                                 </Typography>
                                 <Typography variant="body2">
                                     {formatDate(selectedAssignment.dueDate)}
@@ -526,7 +526,7 @@ export default function AssignmentPage() {
 
                             <Grid item xs={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Total Points:
+                                    Tổng điểm:
                                 </Typography>
                                 <Typography variant="body2">
                                     {selectedAssignment.totalPoints || 'N/A'} points
@@ -535,19 +535,19 @@ export default function AssignmentPage() {
 
                             <Grid item xs={6}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Time Limit:
+                                    Thời gian làm bài:
                                 </Typography>
                                 <Typography variant="body2">
-                                    {selectedAssignment.timeLimit ? `${selectedAssignment.timeLimit} minutes` : 'No limit'}
+                                    {selectedAssignment.timeLimit ? `${selectedAssignment.timeLimit} phút` : 'Không giới hạn'}
                                 </Typography>
                             </Grid>
 
                             <Grid item xs={12}>
                                 <Typography variant="subtitle2" color="text.secondary">
-                                    Activities:
+                                    Hoạt động:
                                 </Typography>
                                 <Typography variant="body2">
-                                    {selectedAssignment.assignmentActivities?.length || 0} activities
+                                    {selectedAssignment.assignmentActivities?.length || 0} hoạt động
                                 </Typography>
                                 {selectedAssignment.assignmentActivities?.map((activity, index) => (
                                     <Card key={activity.id} variant="outlined" sx={{ mt: 1, p: 2 }}>
@@ -555,7 +555,7 @@ export default function AssignmentPage() {
                                             {index + 1}. {activity.title} ({activity.type})
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Points: {activity.points} | Difficulty: {activity.difficulty || 'N/A'}
+                                            Điểm: {activity.points} | Độ khó: {activity.difficulty || 'N/A'}
                                         </Typography>
                                     </Card>
                                 ))}
@@ -569,9 +569,9 @@ export default function AssignmentPage() {
                         startIcon={<FileDownloadIcon />}
                         disabled={downloading === selectedAssignment?.id}
                     >
-                        Download PDF
+                        Tải PDF
                     </Button>
-                    <Button onClick={() => setShowViewDialog(false)}>Close</Button>
+                    <Button onClick={() => setShowViewDialog(false)}>Đóng</Button>
                 </DialogActions>
             </Dialog>
 
@@ -681,20 +681,20 @@ function ReuseAssignmentDialog({
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle>Reuse Assignment in Another Classroom</DialogTitle>
+            <DialogTitle>Sử dụng lại bài tập cho lớp khác</DialogTitle>
             <form onSubmit={handleSubmit}>
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
-                                Original: {assignment.title}
+                                Bài tập gốc: {assignment.title}
                             </Typography>
                         </Grid>
 
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                label="New Title"
+                                label="Tiêu đề mới"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 required
@@ -705,7 +705,7 @@ function ReuseAssignmentDialog({
                             <TextField
                                 fullWidth
                                 select
-                                label="Target Classroom"
+                                label="Lớp học mục tiêu"
                                 value={selectedClassroomId}
                                 onChange={(e) => setSelectedClassroomId(e.target.value)}
                                 SelectProps={{
@@ -714,7 +714,7 @@ function ReuseAssignmentDialog({
                                 required
                                 disabled={classroomsLoading}
                             >
-                                <option value="">Select a classroom</option>
+                                <option value="">Chọn một lớp học</option>
                                 {classrooms.map((classroom) => (
                                     <option key={classroom.id} value={classroom.id}>
                                         {classroom.name} ({classroom.classCode})
@@ -727,7 +727,7 @@ function ReuseAssignmentDialog({
                             <TextField
                                 fullWidth
                                 type="datetime-local"
-                                label="Due Date"
+                                label="Hạn nộp"
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
                                 InputLabelProps={{
@@ -738,7 +738,7 @@ function ReuseAssignmentDialog({
 
                         <Grid item xs={12}>
                             <Typography variant="subtitle2" gutterBottom>
-                                Select Activities to Include:
+                                Chọn các hoạt động bao gồm:
                             </Typography>
                             {assignment.assignmentActivities?.map((activity) => (
                                 <Box key={activity.id} sx={{ mb: 1 }}>
@@ -771,17 +771,17 @@ function ReuseAssignmentDialog({
                                     checked={isPublished}
                                     onChange={(e) => setIsPublished(e.target.checked)}
                                 />
-                                <span style={{ marginLeft: 8 }}>Publish immediately</span>
+                                <span style={{ marginLeft: 8 }}>Xuất bản ngay</span>
                             </label>
                         </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onClose} disabled={submitting}>
-                        Cancel
+                        Hủy
                     </Button>
                     <Button type="submit" variant="contained" disabled={submitting || !selectedClassroomId}>
-                        {submitting ? 'Cloning...' : 'Clone Assignment'}
+                        {submitting ? 'Đang sao chép...' : 'Sao chép bài tập'}
                     </Button>
                 </DialogActions>
             </form>

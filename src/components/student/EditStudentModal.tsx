@@ -16,6 +16,7 @@ interface EditStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
   student: Student | null;
+  onSuccess?: () => void;
 }
 
 interface EditStudentFormValues {
@@ -48,7 +49,7 @@ const schema = yup.object({
   gender: yup.string().oneOf(['male', 'female']),
 });
 
-const EditStudentModal: React.FC<EditStudentModalProps> = ({ isOpen, onClose, student }) => {
+const EditStudentModal: React.FC<EditStudentModalProps> = ({ isOpen, onClose, student, onSuccess }) => {
   const queryClient = useQueryClient();
   const { data: studentData } = useStudent(student?.id || '');
   const updateStudentMutation = useUpdateStudent();
@@ -90,6 +91,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ isOpen, onClose, st
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['students'] });
           toast.success('Student updated successfully');
+          onSuccess?.();
           onClose();
         },
         onError: (error: any) => {

@@ -1,7 +1,8 @@
 import { CreateCourseDto, SessionActivityDto } from "@/interface/course.interface";
-import { ChevronDown, ChevronUp, Clock, Plus, Search, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Plus, Search, Shuffle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Control, FieldErrors, Path, useFieldArray, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import toast from "react-hot-toast";
 
 interface ActivityOption {
     id: string;
@@ -151,6 +152,38 @@ const SessionSchedules = ({ control, register, errors, setValue, watch }: Sessio
         return null;
     };
 
+    // Tự động phân phối đều activities cho các sessions (Round-Robin)
+    const autoArrangeActivities = () => {
+        if (activityOptions.length === 0) {
+            toast.error('Chưa có hoạt động nào. Vui lòng tạo bài học trước.');
+            return;
+        }
+
+        if (fields.length === 0) {
+            toast.error('Chưa có buổi học nào.');
+            return;
+        }
+
+        // Round-robin distribution
+        const sessionsCount = fields.length;
+        const sessionActivities: SessionActivityDto[][] = Array(sessionsCount).fill(null).map(() => []);
+
+        activityOptions.forEach((activity, index) => {
+            const sessionIndex = index % sessionsCount;
+            sessionActivities[sessionIndex].push({
+                activityId: activity.id,
+                orderNo: sessionActivities[sessionIndex].length + 1
+            });
+        });
+
+        // Update each session
+        sessionActivities.forEach((activities, sessionIndex) => {
+            setValue(`sessionSchedules.${sessionIndex}.activities`, activities);
+        });
+
+        toast.success(`Đã phân phối ${activityOptions.length} hoạt động cho ${sessionsCount} buổi học!`);
+    };
+
     return (
         <div className="bg-white p-6 rounded border border-gray-200 mt-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
@@ -176,6 +209,18 @@ const SessionSchedules = ({ control, register, errors, setValue, watch }: Sessio
                 {errors.plannedSessions && (
                     <p className="text-red-500 text-sm mt-1">{errors.plannedSessions.message}</p>
                 )}
+            </div>
+
+            <div className="flex items-center justify-between mb-6">
+                <h4 className="font-medium text-gray-700">Danh sách buổi học</h4>
+                <button
+                    type="button"
+                    onClick={autoArrangeActivities}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                >
+                    <Shuffle className="w-4 h-4" />
+                    Tự động sắp xếp
+                </button>
             </div>
 
             <div className="grid grid-cols-1 gap-6">

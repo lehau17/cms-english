@@ -3,7 +3,7 @@ import type { Activity } from "@/interface/activity.interface";
 import { CreateCourseDto } from "@/interface/course.interface";
 import { ActivityType, DifficultyLevel } from "@/interface/enums";
 import { useMutation } from "@tanstack/react-query";
-import { Brain, Image, Music, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Brain, Image, Music, Plus, Sparkles, Trash2, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   type Control,
@@ -16,6 +16,7 @@ import {
 } from "react-hook-form";
 import toast from "react-hot-toast";
 import { AIActivityGeneratorModal } from "./AIActivityGeneratorModal";
+import { useGenerateAudio } from "@/hooks/useGenerateAudio";
 const asPath = (s: string) => s as Path<CreateCourseDto>;
 
 
@@ -52,7 +53,12 @@ function UploadField({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sử dụng watch với callback để theo dõi giá trị
-  const currentValue = watch(name);
+  const rawValue = watch(name);
+
+  // Normalize value - handle both string and object {url, filePath} formats from AI-generated activities
+  const currentValue = typeof rawValue === 'object' && rawValue?.url
+    ? rawValue.url
+    : (typeof rawValue === 'string' ? rawValue : '');
 
   const uploadMutation = useMutation({
     mutationFn: uploadFile,
@@ -123,8 +129,17 @@ function UploadField({
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-16 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Music className="w-8 h-8 text-blue-600" />
+                <div className="w-full bg-blue-50 rounded-lg p-3">
+                  <audio
+                    controls
+                    className="w-full h-8"
+                    src={currentValue}
+                    onError={(e) => {
+                      console.error('Audio failed to load:', currentValue);
+                    }}
+                  >
+                    Your browser does not support the audio element.
+                  </audio>
                 </div>
               )}
             </div>
@@ -199,7 +214,7 @@ const defaultContentByType = (type: ActivityType) => {
         ]
       };
     case ActivityType.PRONUNCIATION:
-      return { phrase: "", tips: [""], sampleUrl: "" };
+      return { phrases: [{ text: "", sampleUrl: "" }], tips: [""], phonetics: "" };
     case ActivityType.SPEAKING:
       return { prompt: "", minSeconds: 15, tips: [""] };
     case ActivityType.MINI_GAME:
@@ -306,6 +321,91 @@ function VocabItemsEditor({
         className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
       >
         + Add vocab item
+      </button>
+    </div>
+  );
+}
+
+
+function PronunciationPhrasesEditor({
+  basePath, control, register, setValue, watch
+}: {
+  basePath: string;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<any>;
+  setValue: UseFormSetValue<any>;
+  watch: UseFormWatch<any>;
+}) {
+  const name = `${basePath}.phrases`;
+  const { fields, append, remove } = useFieldArray({ control, name: name as any });
+  const generateAudio = useGenerateAudio();
+
+  const handleGenerateAudio = async (index: number) => {
+    const text = watch(`${name}.${index}.text`);
+    if (!text || text.trim() === '') {
+      toast.error('Vui lòng nhập phrase text trước');
+      return;
+    }
+
+    try {
+      const result = await generateAudio.mutateAsync({ text, language: 'en' });
+      setValue(`${name}.${index}.sampleUrl`, result.url, { shouldDirty: true });
+    } catch (error) {
+      // Error is handled by useGenerateAudio hook
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <label className="block text-xs font-medium text-gray-600">Phrases to Practice *</label>
+
+      {fields.map((f, i) => (
+        <div key={f.id} className="p-3 border rounded-lg bg-white space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-sm text-purple-800">Phrase #{i + 1}</div>
+            <button type="button" onClick={() => remove(i)} className="text-red-500">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          <input
+            {...register(`${name}.${i}.text` as const)}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            placeholder="Phrase text (e.g., 'I see a lion.')"
+          />
+
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <UploadField
+                name={`${name}.${i}.sampleUrl`}
+                label="Sample Audio"
+                accept="audio/*"
+                placeholder="Upload or generate audio"
+                register={register}
+                setValue={setValue}
+                watch={watch}
+                type="audio"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => handleGenerateAudio(i)}
+              disabled={generateAudio.isPending}
+              className="px-3 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 disabled:opacity-50 flex items-center gap-1 text-sm whitespace-nowrap"
+            >
+              <Wand2 className="w-4 h-4" />
+              {generateAudio.isPending ? 'Đang tạo...' : 'Gen AI'}
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={() => append({ text: "", sampleUrl: "" })}
+        className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
+      >
+        + Add phrase
       </button>
     </div>
   );
@@ -457,10 +557,12 @@ function ListeningQuestionsEditor({
   basePath,
   control,
   register,
+  watch,
 }: {
   basePath: string;
   control: Control<CreateCourseDto>;
   register: UseFormRegister<any>;
+  watch: UseFormWatch<any>;
 }) {
   const { fields, append, remove } = useFieldArray({ control, name: basePath as any });
 
@@ -501,6 +603,7 @@ function ListeningQuestionsEditor({
               basePath={`${basePath}.${questionIndex}`}
               control={control}
               register={register}
+              watch={watch}
             />
           </div>
         </div>
@@ -527,13 +630,16 @@ function ListeningQuestionOptionsEditor({
   basePath,
   control,
   register,
+  watch,
 }: {
   basePath: string;
   control: Control<CreateCourseDto>;
   register: UseFormRegister<any>;
+  watch: UseFormWatch<any>;
 }) {
   const optionsName = `${basePath}.options`;
   const { fields, append, remove } = useFieldArray({ control, name: optionsName as any });
+  const currentCorrectIndex = watch(`${basePath}.correctIndex`);
 
   return (
     <div className="space-y-2">
@@ -550,6 +656,7 @@ function ListeningQuestionOptionsEditor({
               <input
                 type="radio"
                 value={optionIndex}
+                checked={currentCorrectIndex === optionIndex}
                 {...register(`${basePath}.correctIndex` as const, { valueAsNumber: true })}
               />
               Correct
@@ -675,6 +782,7 @@ function ActivityContentFields({
             basePath={`${basePath}.content.questions`}
             control={control}
             register={register}
+            watch={watch}
           />
         </>,
         "Quiz"
@@ -713,6 +821,7 @@ function ActivityContentFields({
             basePath={`${basePath}.content.questions`}
             control={control}
             register={register}
+            watch={watch}
           />
         </>,
         "Listening"
@@ -721,20 +830,23 @@ function ActivityContentFields({
     case ActivityType.PRONUNCIATION:
       return section(
         <>
-          <input {...register(`${basePath}.content.phrase` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Target phrase *" />
-          <div className="grid md:grid-cols-2 gap-3">
-            <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
-            <UploadField
-              key={`pronunciation-audio-${lessonIndex}-${activityIndex}`}
-              name={`${basePath}.content.sampleUrl`}
-              label="Sample Audio"
-              accept="audio/*"
-              placeholder="Upload sample pronunciation"
-              register={register}
-              setValue={setValue}
-              watch={watch}
-              type="audio"
+          <PronunciationPhrasesEditor
+            basePath={`${basePath}.content`}
+            control={control}
+            register={register}
+            setValue={setValue}
+            watch={watch}
+          />
+          <div className="mt-4">
+            <label className="block text-xs font-medium text-gray-600 mb-1">Phonetics</label>
+            <input
+              {...register(`${basePath}.content.phonetics` as const)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              placeholder="Phonetics (e.g., /aɪ siː ə ˈlaɪən/)"
             />
+          </div>
+          <div className="mt-4">
+            <StringArrayField name={`${basePath}.content.tips`} control={control} label="Tips" placeholder="Tip" register={register} />
           </div>
         </>,
         "Pronunciation"
@@ -787,6 +899,7 @@ function ActivityContentFields({
             basePath={`${basePath}.content.questions`}
             control={control}
             register={register}
+            watch={watch}
           />
         </>,
         "Reading"
@@ -828,6 +941,7 @@ function ActivityContentFields({
             basePath={`${basePath}.content.exercises`}
             control={control}
             register={register}
+            watch={watch}
           />
         </>,
         "Grammar"
@@ -1045,20 +1159,30 @@ const LessonActivities = ({
 
   const handleActivitiesGenerated = (generatedActivities: Activity[]) => {
     // Append all generated activities to the activities field array
-    generatedActivities.forEach((activity) => {
+    const startOrderNo = fields.length;
+    generatedActivities.forEach((activity, index) => {
       append({
         type: activity.type as ActivityType,
-        orderNo: fields.length + 1,
+        orderNo: startOrderNo + index + 1,
         title: activity.title,
         difficulty: activity.difficulty as DifficultyLevel,
         points: activity.points || 10,
         instructions: activity.instructions,
-        passingScore: activity.passingScore,
+        passingScore: activity.passingScore ?? 70,
         content: activity.content,
       } as any);
     });
 
     toast.success(`Đã thêm ${generatedActivities.length} hoạt động từ AI!`);
+  };
+
+  // Handler mở AI modal với validation - bắt buộc có lesson title
+  const handleOpenAIModal = () => {
+    if (!lessonTitle || lessonTitle.trim() === '') {
+      toast.error('Vui lòng nhập tiêu đề bài học trước khi tạo hoạt động bằng AI');
+      return;
+    }
+    setShowAIModal(true);
   };
 
   return (
@@ -1158,7 +1282,7 @@ const LessonActivities = ({
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => setShowAIModal(true)}
+          onClick={handleOpenAIModal}
           className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded font-medium transition-all flex items-center border-none text-sm shadow-sm"
         >
           <Sparkles className="w-4 h-4 mr-2" />
@@ -1173,6 +1297,7 @@ const LessonActivities = ({
               title: "",
               difficulty: DifficultyLevel.BEGINNER,
               points: 10,
+              passingScore: 70,
               content: defaultContentByType(ActivityType.QUIZ),
             } as any)
           }

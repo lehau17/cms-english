@@ -76,9 +76,15 @@ const AssignParentModal: React.FC<AssignParentModalProps> = ({
     );
   };
 
+  // Get IDs of already-assigned children
+  const assignedChildIds = new Set(parent.children?.map(child => child.id) || []);
+
   const filteredUnassignedStudents = unassignedStudents.filter(student =>
-    student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    // Exclude already assigned students
+    !assignedChildIds.has(student.id) &&
+    // Apply search filter
+    (student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (!isOpen) return null;

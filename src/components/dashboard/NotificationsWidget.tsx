@@ -156,23 +156,28 @@ const NotificationsWidget: React.FC = () => {
   };
 
   return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column" }}>
+    <Card sx={{ height: "auto", maxHeight: 400, display: "flex", flexDirection: "column" }}>
+      <CardContent sx={{ p: 2, pb: 1 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h6" fontWeight={600}>
-            Thông báo
-          </Typography>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Notifications color="action" fontSize="small" />
+            <Typography variant="subtitle1" fontWeight={600}>
+              Thông báo
+            </Typography>
+          </Stack>
           {processedNotifications.length > 0 && (
             <Chip
-              label={processedNotifications.length}
+              label={`${processedNotifications.length} mới`}
               size="small"
               color="error"
-              sx={{ height: 20, fontSize: "0.7rem" }}
+              sx={{ height: 20, fontSize: "0.7rem", fontWeight: 600 }}
             />
           )}
         </Stack>
-        <Box flex={1}>{renderContent()}</Box>
       </CardContent>
+      <Box sx={{ overflowY: "auto", px: 2, pb: 2, flex: 1 }}>
+        {renderContent()}
+      </Box>
     </Card>
   );
 };

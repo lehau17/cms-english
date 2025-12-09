@@ -37,18 +37,18 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
     const handleResetPassword = async () => {
         if (!student?.id) return;
         if (!newPassword || newPassword.length < 6) {
-            toast.error('Password must be at least 6 characters');
+            toast.error('Mật khẩu phải có ít nhất 6 ký tự');
             return;
         }
 
         setIsResettingPassword(true);
         try {
             await resetStudentPassword(student.id, newPassword);
-            toast.success('Password reset successfully');
+            toast.success('Đặt lại mật khẩu thành công');
             setShowResetPasswordForm(false);
             setNewPassword('');
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'Failed to reset password');
+            toast.error(error?.response?.data?.message || 'Đặt lại mật khẩu thất bại');
         } finally {
             setIsResettingPassword(false);
         }
@@ -76,8 +76,8 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Student Details"
-            description={`Viewing details for ${getStudentDisplayName(student)}`}
+            title="Chi tiết học viên"
+            description={`Xem chi tiết cho ${getStudentDisplayName(student)}`}
             icon={<Eye className="w-6 h-6 text-blue-600" />}
         >
             {isLoading ? (
@@ -101,16 +101,16 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
                     )}
 
                     <dl>
-                        {renderDetail('Username', studentData.data.username)}
-                        {renderDetail('First Name', studentData.data.firstName)}
-                        {renderDetail('Last Name', studentData.data.lastName)}
+                        {renderDetail('Tên đăng nhập', studentData.data.username)}
+                        {renderDetail('Họ', studentData.data.firstName)}
+                        {renderDetail('Tên', studentData.data.lastName)}
                         {renderDetail('Email', studentData.data.email)}
-                        {renderDetail('Phone', studentData.data.phone)}
-                        {renderDetail('Gender', studentData.data.gender)}
-                        {renderDetail('Status', studentData.data.status)}
-                        {renderDetail('Role', studentData.data.role)}
-                        {renderDetail('Created At', new Date(studentData.data.createdAt).toLocaleString())}
-                        {renderDetail('Updated At', new Date(studentData.data.updatedAt).toLocaleString())}
+                        {renderDetail('Số điện thoại', studentData.data.phone)}
+                        {renderDetail('Giới tính', studentData.data.gender)}
+                        {renderDetail('Trạng thái', studentData.data.status)}
+                        {renderDetail('Vai trò', studentData.data.role)}
+                        {renderDetail('Ngày tạo', new Date(studentData.data.createdAt).toLocaleString())}
+                        {renderDetail('Ngày cập nhật', new Date(studentData.data.updatedAt).toLocaleString())}
                     </dl>
 
                     {/* Action Buttons */}
@@ -120,14 +120,14 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
                             className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
                         >
                             <Calendar className="w-5 h-5" />
-                            <span>View Schedule</span>
+                            <span>Xem lịch học</span>
                         </button>
                         <button
                             onClick={handleViewAnalytics}
                             className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
                         >
                             <BarChart3 className="w-5 h-5" />
-                            <span>View Analytics</span>
+                            <span>Xem thống kê</span>
                         </button>
                         {!showResetPasswordForm ? (
                             <button
@@ -135,7 +135,7 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
                                 className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
                             >
                                 <Key className="w-5 h-5" />
-                                <span>Reset Password</span>
+                                <span>Đặt lại mật khẩu</span>
                             </button>
                         ) : (
                             <div className="space-y-2">
@@ -143,7 +143,7 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder="Enter new password (min 6 characters)"
+                                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                 />
                                 <div className="flex space-x-2">
@@ -153,11 +153,11 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
                                         className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {isResettingPassword ? (
-                                            <span>Resetting...</span>
+                                            <span>Đang xử lý...</span>
                                         ) : (
                                             <>
                                                 <Key className="w-4 h-4" />
-                                                <span>Confirm Reset</span>
+                                                <span>Xác nhận đặt lại</span>
                                             </>
                                         )}
                                     </button>
@@ -168,7 +168,7 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
                                         }}
                                         className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                                     >
-                                        Cancel
+                                        Hủy
                                     </button>
                                 </div>
                             </div>
@@ -176,7 +176,7 @@ const ViewStudentModal: React.FC<ViewStudentModalProps> = ({ isOpen, onClose, st
                     </div>
                 </>
             ) : (
-                <p>Could not load student details.</p>
+                <p>Không thể tải thông tin học viên.</p>
             )}
         </Modal>
     );

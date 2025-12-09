@@ -14,37 +14,38 @@ const DashboardPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
       <Grid container spacing={3}>
-        {/* Row 1: Welcome Banner + Notifications */}
-        <Grid item xs={12} lg={8}>
+        {/* Section 1: Header & Quick Actions */}
+        <Grid item xs={12}>
           <WelcomeWidget />
         </Grid>
-        <Grid item xs={12} lg={4}>
-          <NotificationsWidget />
-        </Grid>
 
-        {/* Row 2: Key Stats Cards (6 main metrics) */}
+        {/* Section 2: Key Metrics Overview */}
         <Grid item xs={12}>
           <StatsOverviewWidget />
         </Grid>
 
-        {/* Row 3: Charts - Revenue & Course Distribution */}
+        {/* Section 3: Main Content Area */}
+        {/* Left Column: Primary Data & Charts (66% width) */}
         <Grid item xs={12} lg={8}>
-          <RevenueTrendWidget />
-        </Grid>
-        <Grid item xs={12} lg={4}>
-          <CourseDistributionWidget />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <RevenueTrendWidget />
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TopCoursesWidget />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <RecentStudentsWidget />
+              </Grid>
+            </Grid>
+          </Box>
         </Grid>
 
-        {/* Row 4: Lists - Top Courses, Recent Students, Upcoming Classes */}
-        <Grid item xs={12} md={6} lg={4}>
-          <TopCoursesWidget />
-        </Grid>
-        <Grid item xs={12} md={6} lg={4}>
-          <RecentStudentsWidget />
-        </Grid>
+        {/* Right Column: Secondary Info & Sidebars (33% width) */}
         <Grid item xs={12} lg={4}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <NotificationsWidget />
             <UpcomingClassesWidget />
+            <CourseDistributionWidget />
             <RegistrationTrendWidget />
           </Box>
         </Grid>

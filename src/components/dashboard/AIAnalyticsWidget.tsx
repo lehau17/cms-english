@@ -19,6 +19,7 @@ import {
     CheckCircleOutline,
     ErrorOutline,
     InfoOutlined,
+    SmartToy,
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getStudentAnalytics } from '../../apis/analytics';
@@ -43,8 +44,8 @@ export default function AIAnalyticsWidget({
         return (
             <Card>
                 <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                        🤖 AI Analytics
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SmartToy /> AI Analytics
                     </Typography>
                     <Alert severity="info">
                         Chọn một học viên để xem phân tích AI
@@ -70,8 +71,8 @@ export default function AIAnalyticsWidget({
         return (
             <Card>
                 <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                        🤖 AI Analytics
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SmartToy /> AI Analytics
                     </Typography>
                     <Alert severity="error">
                         Không thể tải phân tích AI. Vui lòng thử lại sau.
@@ -111,8 +112,8 @@ export default function AIAnalyticsWidget({
                 <Stack spacing={2}>
                     {/* Header */}
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6">
-                            🤖 AI Analytics: {analytics.studentName}
+                        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <SmartToy fontSize="small" /> AI Analytics: {analytics.studentName}
                         </Typography>
                         <Chip
                             label={`${analytics.averageScore != null ? analytics.averageScore.toFixed(1) : '0.0'} điểm`}

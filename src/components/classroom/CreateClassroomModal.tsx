@@ -12,6 +12,7 @@ import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import FormField from '../forms/FormField';
 import IntegratedScheduleModal from '../schedule/IntegratedScheduleModal';
+import { LibraryBooks, Notes, Schedule, BarChart, Lightbulb, Check, Timer } from '@mui/icons-material';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 
@@ -41,13 +42,13 @@ interface CreateClassroomFormValues {
 }
 
 const schema = yup.object({
-    name: yup.string().required('Classroom name is required'),
-    description: yup.string().required('Description is required'),
-    maxStudents: yup.number().positive('Max students must be positive').required('Max students is required'),
-    teacherId: yup.string().required('Teacher is required'),
-    courseId: yup.string().required('Course is required'),
+    name: yup.string().required('Vui lòng nhập tên lớp học'),
+    description: yup.string().required('Vui lòng nhập mô tả'),
+    maxStudents: yup.number().positive('Số học viên tối đa phải là số dương').required('Vui lòng nhập số học viên tối đa'),
+    teacherId: yup.string().required('Vui lòng chọn giáo viên'),
+    courseId: yup.string().required('Vui lòng chọn khóa học'),
     isActive: yup.boolean().default(true),
-    periodStart: yup.string().required('Start date is required'),
+    periodStart: yup.string().required('Vui lòng chọn ngày bắt đầu'),
     periodEnd: yup.string().notRequired(), // Auto-calculated, not required
     autoCalculateDates: yup.boolean().default(true), // Always true
     slots: yup.array().of(
@@ -56,7 +57,7 @@ const schema = yup.object({
             startMinuteOfDay: yup.number().min(0).max(1439).required(),
             endMinuteOfDay: yup.number().min(0).max(1439).required()
         })
-    ).required('At least one time slot is required').min(1, 'At least one time slot is required')
+    ).required('Vui lòng chọn ít nhất một khung giờ').min(1, 'Vui lòng chọn ít nhất một khung giờ')
 });
 
 
@@ -195,19 +196,19 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
     };
 
     const weekdayLabels = {
-        [Weekday.MON]: 'Monday',
-        [Weekday.TUE]: 'Tuesday',
-        [Weekday.WED]: 'Wednesday',
-        [Weekday.THU]: 'Thursday',
-        [Weekday.FRI]: 'Friday',
-        [Weekday.SAT]: 'Saturday',
-        [Weekday.SUN]: 'Sunday',
+        [Weekday.MON]: 'Thứ 2',
+        [Weekday.TUE]: 'Thứ 3',
+        [Weekday.WED]: 'Thứ 4',
+        [Weekday.THU]: 'Thứ 5',
+        [Weekday.FRI]: 'Thứ 6',
+        [Weekday.SAT]: 'Thứ 7',
+        [Weekday.SUN]: 'Chủ nhật',
     };
 
     const onSubmit = (data: CreateClassroomFormValues) => {
         // Validate teacherId explicitly
         if (!data.teacherId || data.teacherId.trim() === '') {
-            alert('Please select a teacher');
+            alert('Vui lòng chọn giáo viên');
             return;
         }
 
@@ -243,8 +244,8 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Create New Classroom"
-            description="Add a new classroom to the system"
+            title="Tạo lớp học mới"
+            description="Thêm lớp học mới vào hệ thống"
             icon={<Plus className="w-6 h-6 text-purple-600" />}
         >
             <FormProvider {...methods}>
@@ -254,7 +255,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1.5">
                             <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">1</span>
-                            Course *
+                            Khóa học *
                         </label>
                         <select
                             {...register('courseId', {
@@ -269,7 +270,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
                             disabled={isLoadingCourses}
                         >
-                            <option value="">{isLoadingCourses ? 'Loading courses...' : 'Select a course'}</option>
+                            <option value="">{isLoadingCourses ? 'Đang tải khóa học...' : 'Chọn khóa học'}</option>
                             {coursesData?.data?.data?.map((course) => (
                                 <option key={course.id} value={course.id}>
                                     {course.title}
@@ -282,22 +283,22 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                     {/* Course Info Preview */}
                     {selectedCourseId && coursesData?.data?.data && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <h4 className="text-sm font-medium text-blue-800 mb-2">Course Information</h4>
+                            <h4 className="text-sm font-medium text-blue-800 mb-2">Thông tin khóa học</h4>
                             {(() => {
                                 const selectedCourse = coursesData.data.data.find(c => c.id === selectedCourseId);
                                 if (!selectedCourse) return null;
 
                                 return (
                                     <div className="space-y-1 text-sm text-blue-700">
-                                        <div>📚 <strong>Title:</strong> {selectedCourse.title}</div>
-                                        <div>⏱️ <strong>Planned Sessions:</strong> {selectedCourse.plannedSessions || 'Not specified'}</div>
-                                        <div>📝 <strong>Total Lessons:</strong> {selectedCourse.totalLessons || 0}</div>
-                                        <div>⏰ <strong>Duration:</strong> {selectedCourse.totalDuration ? `${Math.round(selectedCourse.totalDuration / 60)} hours` : 'Not specified'}</div>
-                                        <div>📊 <strong>Difficulty:</strong> {selectedCourse.difficulty}</div>
+                                        <div className="flex items-center gap-1"><LibraryBooks fontSize="small" /> <strong>Tiêu đề:</strong> {selectedCourse.title}</div>
+                                        <div className="flex items-center gap-1"><Timer fontSize="small" /> <strong>Số buổi dự kiến:</strong> {selectedCourse.plannedSessions || 'Không xác định'}</div>
+                                        <div className="flex items-center gap-1"><Notes fontSize="small" /> <strong>Tổng số bài học:</strong> {selectedCourse.totalLessons || 0}</div>
+                                        <div className="flex items-center gap-1"><Schedule fontSize="small" /> <strong>Thời lượng:</strong> {selectedCourse.totalDuration ? `${Math.round(selectedCourse.totalDuration / 60)} giờ` : 'Không xác định'}</div>
+                                        <div className="flex items-center gap-1"><BarChart fontSize="small" /> <strong>Độ khó:</strong> {selectedCourse.difficulty}</div>
                                         {selectedCourse.plannedSessions && (
-                                            <div className="mt-2 p-2 bg-blue-100 rounded text-xs">
-                                                💡 <strong>Note:</strong> This course has {selectedCourse.plannedSessions} planned sessions.
-                                                The classroom will automatically organize activities according to the course's session schedule.
+                                            <div className="mt-2 p-2 bg-blue-100 rounded text-xs flex items-start gap-1">
+                                                <Lightbulb fontSize="small" /> <strong>Lưu ý:</strong> Khóa học này có {selectedCourse.plannedSessions} buổi học dự kiến.
+                                                Lớp học sẽ tự động sắp xếp hoạt động theo lịch trình của khóa học.
                                             </div>
                                         )}
                                     </div>
@@ -335,7 +336,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                         {errors.teacherId && <p className="text-red-500 text-sm mt-1">{errors.teacherId.message}</p>}
                         {/* Debug info */}
                         {selectedTeacherValue && (
-                            <p className="text-xs text-green-600 mt-1">✓ Selected: {selectedTeacherValue}</p>
+                            <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><Check fontSize="small" /> Selected: {selectedTeacherValue}</p>
                         )}
 
                         {/* Schedule Button - Only show after teacher is selected */}
@@ -371,7 +372,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                     {fields.length > 0 && (
                         <div className="space-y-3">
                             <h4 className="text-sm font-medium text-gray-700">
-                                <span className="inline-block w-6 h-6 rounded-full bg-green-100 text-green-600 text-xs font-bold mr-2 text-center leading-6">✓</span>
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 mr-2"><Check fontSize="small" /></span>
                                 Selected Schedule
                             </h4>
                             <div className="space-y-2">
@@ -410,7 +411,7 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                     <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1.5">
                             <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">4</span>
-                            End Date (Auto-calculated)
+                            Ngày kết thúc (Tự động tính)
                         </label>
                         {selectedPeriodEnd ? (
                             <input
@@ -422,35 +423,34 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
                             />
                         ) : (
                             <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg text-gray-400 flex items-center justify-center h-10">
-                                {!selectedCourseId && '← Select course first'}
-                                {selectedCourseId && !selectedPeriodStart && '← Select start date'}
-                                {selectedCourseId && selectedPeriodStart && fields.length === 0 && '← Select schedule slots'}
-                                {selectedCourseId && selectedPeriodStart && fields.length > 0 && 'Calculating...'}
+                                {!selectedCourseId && '← Chọn khóa học trước'}
+                                {selectedCourseId && !selectedPeriodStart && '← Chọn ngày bắt đầu'}
+                                {selectedCourseId && selectedPeriodStart && fields.length === 0 && '← Chọn khung giờ học'}
+                                {selectedCourseId && selectedPeriodStart && fields.length > 0 && 'Đang tính toán...'}
                             </div>
                         )}
                     </div>
 
-                    {/* Step 6: Classroom Details */}
                     <div className="pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-medium text-gray-700 mb-3">
                             <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">5</span>
-                            Classroom Details
+                            Chi tiết lớp học
                         </h4>
                         <div className="space-y-3">
-                            <FormField name="name" label="Classroom Name *" placeholder="Enter classroom name" />
-                            <FormField name="description" label="Description" placeholder="Enter classroom description" />
+                            <FormField name="name" label="Tên lớp học *" placeholder="Nhập tên lớp học" />
+                            <FormField name="description" label="Mô tả *" placeholder="Nhập mô tả lớp học" />
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <FormField name="maxStudents" label="Max Students" type="number" placeholder="30" />
+                                <FormField name="maxStudents" label="Số học viên tối đa" type="number" placeholder="30" />
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Status</label>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Trạng thái</label>
                                     <div className="flex items-center h-10">
                                         <input
                                             type="checkbox"
                                             {...register('isActive')}
                                             className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
                                         />
-                                        <span className="ml-3 text-sm font-medium text-gray-700">Active</span>
+                                        <span className="ml-3 text-sm font-medium text-gray-700">Hoạt động</span>
                                     </div>
                                 </div>
                             </div>
@@ -459,9 +459,9 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
 
                     <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
                         <div className="flex justify-end space-x-3">
-                            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+                            <Button type="button" variant="secondary" onClick={onClose}>Hủy</Button>
                             <Button type="submit" isLoading={createMutation.isPending}>
-                                <span>Create Classroom</span>
+                                <span>Tạo lớp học</span>
                             </Button>
                         </div>
                     </div>

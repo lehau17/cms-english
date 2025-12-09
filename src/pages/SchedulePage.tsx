@@ -1,6 +1,7 @@
 import { getClassrooms, getSystemSchedule, SystemScheduleParams, SystemScheduleResponse, SystemScheduleSession } from '@/apis/classroom';
 import { getTeachers } from '@/apis/teacher';
 import { UserResponse } from '@/interface/user.interface';
+import { WbTwilight, WbSunny, NightsStay } from '@mui/icons-material';
 import {
   BookOpen,
   Calendar,
@@ -175,9 +176,9 @@ const SchedulePage: React.FC = () => {
   };
 
   const timeSlots = [
-    { key: 'morning', label: '🌅 Sáng (6h-12h)', hours: [6, 7, 8, 9, 10, 11] },
-    { key: 'afternoon', label: '☀️ Chiều (12h-18h)', hours: [12, 13, 14, 15, 16, 17] },
-    { key: 'evening', label: '🌙 Tối (18h-22h)', hours: [18, 19, 20, 21] },
+    { key: 'morning', label: 'Sáng (6h-12h)', hours: [6, 7, 8, 9, 10, 11], icon: <WbTwilight fontSize="small" sx={{ mr: 0.5 }} /> },
+    { key: 'afternoon', label: 'Chiều (12h-18h)', hours: [12, 13, 14, 15, 16, 17], icon: <WbSunny fontSize="small" sx={{ mr: 0.5 }} /> },
+    { key: 'evening', label: 'Tối (18h-22h)', hours: [18, 19, 20, 21], icon: <NightsStay fontSize="small" sx={{ mr: 0.5 }} /> },
   ];
 
   const renderWeekTimeGrid = (days: any[]) => {
@@ -188,7 +189,7 @@ const SchedulePage: React.FC = () => {
             {/* Slot Header */}
             <div className="grid grid-cols-8">
               <div className="p-4 bg-gray-50 border-r border-gray-200">
-                <div className="text-xs font-semibold text-gray-700">{slot.label}</div>
+                <div className="text-xs font-semibold text-gray-700 flex items-center">{slot.icon}{slot.label}</div>
               </div>
 
               {/* Day Cells */}

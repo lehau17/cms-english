@@ -2,6 +2,7 @@ import { importCoursesFromExcel, ImportCoursesResponse } from '@/apis/course';
 import { useDownloadCourseTemplate } from '@/hooks/useCourse';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, Download, FileText, RefreshCw, Trash2, Upload, X } from 'lucide-react';
+import { LibraryBooks, CheckCircleOutlined, CancelOutlined } from '@mui/icons-material';
 import React, { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -231,8 +232,8 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
                 <div className="relative z-10 inline-block w-full max-w-5xl px-6 py-8 overflow-hidden text-left align-bottom transition-all transform bg-white shadow-xl rounded-2xl sm:my-8 sm:align-middle">
                     {/* Header */}
                     <div className="flex items-center justify-between gap-3 mb-6">
-                        <h3 className="text-2xl font-bold text-gray-900 flex-1 min-w-0 break-words">
-                            📚 Import Courses from Excel
+                        <h3 className="text-2xl font-bold text-gray-900 flex-1 min-w-0 break-words flex items-center gap-2">
+                            <LibraryBooks /> Import khóa học từ Excel
                         </h3>
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <button
@@ -242,7 +243,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
                                 title="Download template Excel để import"
                             >
                                 <Download className="w-4 h-4 mr-2" />
-                                {downloadTemplateMutation.isPending ? 'Downloading...' : 'Template'}
+                                {downloadTemplateMutation.isPending ? 'Đang tải...' : 'Mẫu Excel'}
                             </button>
                             <button
                                 onClick={handleClose}
@@ -390,7 +391,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
 
                             {importResults.results.some(r => r.success) && (
                                 <div className="text-sm text-green-700 bg-green-100 rounded-lg p-3">
-                                    <p className="font-medium mb-1">✅ Đã tạo thành công:</p>
+                                    <p className="font-medium mb-1 flex items-center gap-1"><CheckCircleOutlined fontSize="small" /> Đã tạo thành công:</p>
                                     {importResults.results
                                         .filter(r => r.success)
                                         .map((result, index) => {
@@ -408,7 +409,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
 
                             {importResults.results.some(r => !r.success) && (
                                 <div className="text-sm text-red-700 bg-red-100 rounded-lg p-3 mt-3">
-                                    <p className="font-medium mb-1">❌ Lỗi:</p>
+                                    <p className="font-medium mb-1 flex items-center gap-1"><CancelOutlined fontSize="small" /> Lỗi:</p>
                                     {importResults.results
                                         .filter(r => !r.success)
                                         .map((result, index) => (
@@ -430,7 +431,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
                                 className="px-6 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
                             >
                                 <RefreshCw className="w-4 h-4 inline mr-2" />
-                                Retry Failed
+                                Thử lại
                             </button>
                         )}
 
@@ -458,7 +459,7 @@ const ImportCoursesModal: React.FC<ImportCoursesModalProps> = ({ isOpen, onClose
                             ) : (
                                 <>
                                     <Upload className="w-4 h-4 inline mr-2" />
-                                    Import {selectedFiles.length} Files
+                                    Import {selectedFiles.length} File
                                 </>
                             )}
                         </button>

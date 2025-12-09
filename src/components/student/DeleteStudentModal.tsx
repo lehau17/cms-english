@@ -9,9 +9,10 @@ interface DeleteStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
   student: Student | null;
+  onSuccess?: () => void;
 }
 
-const DeleteStudentModal: React.FC<DeleteStudentModalProps> = ({ isOpen, onClose, student }) => {
+const DeleteStudentModal: React.FC<DeleteStudentModalProps> = ({ isOpen, onClose, student, onSuccess }) => {
   const deleteStudentMutation = useDeleteStudent();
 
   const handleDelete = () => {
@@ -19,6 +20,7 @@ const DeleteStudentModal: React.FC<DeleteStudentModalProps> = ({ isOpen, onClose
       deleteStudentMutation.mutate(student.id, {
         onSuccess: () => {
           toast.success('Student deleted successfully');
+          onSuccess?.();
           onClose();
         },
         onError: (error: any) => {

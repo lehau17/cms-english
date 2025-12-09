@@ -1,6 +1,7 @@
 import { Assignment, AssignmentType } from '@/apis/assignment';
-import { AlertCircle, BookOpen, ChevronDown, ChevronUp, FileText, Target, X } from 'lucide-react';
+import { AlertCircle, BookOpen, ChevronDown, ChevronUp, Edit, FileText, Target, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ActivityContentRenderer from './ActivityContentRenderer';
 
 interface AssignmentDetailModalProps {
@@ -14,6 +15,7 @@ const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
     onClose,
     assignment
 }) => {
+    const navigate = useNavigate();
     const [expandedActivities, setExpandedActivities] = useState<Set<string>>(new Set());
 
     if (!isOpen || !assignment) return null;
@@ -100,12 +102,24 @@ const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
                             </span>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="flex-shrink-0 p-2 hover:bg-gray-700 rounded transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                onClose();
+                                navigate(`/classrooms/${assignment.classroomId}/edit-assignment/${assignment.id}`);
+                            }}
+                            className="flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 rounded text-sm font-medium transition-colors"
+                        >
+                            <Edit className="w-4 h-4" />
+                            <span>Chỉnh sửa</span>
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="flex-shrink-0 p-2 hover:bg-gray-700 rounded transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Body */}

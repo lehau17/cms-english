@@ -56,6 +56,18 @@ const activityContentSchema = z.any().superRefine((data, ctx) => {
     }
 });
 
+const sessionActivitySchema = z.object({
+    activityId: z.string(),
+    orderNo: z.number().min(1),
+});
+
+const sessionScheduleSchema = z.object({
+    sessionNumber: z.number().min(1),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    activities: z.array(sessionActivitySchema),
+});
+
 const courseSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
@@ -63,6 +75,8 @@ const courseSchema = z.object({
     difficulty: z.nativeEnum(DifficultyLevel),
     isPublished: z.boolean().optional(),
     imageUrl: z.string().optional(),
+    plannedSessions: z.number().min(1).optional(),
+    sessionSchedules: z.array(sessionScheduleSchema).optional(),
     lessons: z.array(z.object({
         title: z.string().min(1, "Lesson title is required"),
         description: z.string().optional(),
@@ -160,6 +174,52 @@ const CreateCoursePage = () => {
         { number: 4, title: 'Review & Submit', icon: Eye, color: 'text-orange-600' },
     ];
 
+    // ==================== STEP VALIDATION ====================
+    // Validate step 1: Course Info (bắt buộc có title)
+    const validateStep1 = (): boolean => {
+        const title = watch('title');
+        if (!title || title.trim() === '') {
+            toast.error('Vui lòng nhập tên khóa học');
+            return false;
+        }
+        return true;
+    };
+
+    // Validate step 2: Lessons (bắt buộc có ít nhất 1 lesson với title)
+    const validateStep2 = (): boolean => {
+        const lessons = watch('lessons') || [];
+        if (lessons.length === 0) {
+            toast.error('Vui lòng thêm ít nhất 1 bài học');
+            return false;
+        }
+        for (let i = 0; i < lessons.length; i++) {
+            if (!lessons[i]?.title || lessons[i]?.title.trim() === '') {
+                toast.error(`Bài học #${i + 1} chưa có tiêu đề`);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // Handler for Next button với validation
+    const handleNextStep = () => {
+        let isValid = false;
+        switch (currentStep) {
+            case 1:
+                isValid = validateStep1();
+                break;
+            case 2:
+                isValid = validateStep2();
+                break;
+            default:
+                isValid = true;
+        }
+        if (isValid) {
+            setCurrentStep(Math.min(4, currentStep + 1));
+        }
+    };
+
+
     // Hàm chuyển đổi tempId thành activityId theo format L1A2
     const convertTempActivityIds = (sessionSchedules: any[]) => {
         if (!sessionSchedules) return sessionSchedules;
@@ -203,12 +263,27 @@ const CreateCoursePage = () => {
     };
 
     const onSubmit = (data: CreateCourseDto) => {
+        // Debug log để kiểm tra dữ liệu trước khi gửi
+        console.log('Form data before processing:', JSON.stringify(data, null, 2));
+
         // Sanitize activities content before submit
-        const convertedSessionSchedules = data.sessionSchedules ? convertTempActivityIds(data.sessionSchedules) : undefined;
+        const convertedSessionSchedules = data.sessionSchedules
+            ? convertTempActivityIds(data.sessionSchedules)
+                // Lọc bỏ các session có activities rỗng (BE yêu cầu ít nhất 1 activity)
+                .filter(session => session.activities && session.activities.length > 0)
+                // Sanitize: convert empty strings to undefined (BE có @IsNotEmpty() validation)
+                .map(session => ({
+                    ...session,
+                    title: session.title?.trim() || undefined,
+                    description: session.description?.trim() || undefined,
+                }))
+            : undefined;
 
         const payload: CreateCourseDto = {
             ...data,
-            sessionSchedules: convertedSessionSchedules,
+            plannedSessions: data.plannedSessions || 8, // Đảm bảo có giá trị mặc định
+            // Chỉ gửi sessionSchedules nếu có ít nhất 1 session hợp lệ
+            sessionSchedules: convertedSessionSchedules && convertedSessionSchedules.length > 0 ? convertedSessionSchedules : undefined,
             lessons: (data.lessons || []).map((lesson) => ({
                 ...lesson,
                 activities: (lesson.activities || []).map((act) => {
@@ -263,6 +338,9 @@ const CreateCoursePage = () => {
                 }),
             })),
         }
+
+        // Debug log để kiểm tra payload cuối cùng
+        console.log('Final payload being sent:', JSON.stringify(payload, null, 2));
 
         mutate(payload)
     };
@@ -711,7 +789,7 @@ const CreateCoursePage = () => {
                                 {currentStep < 4 ? (
                                     <button
                                         type="button"
-                                        onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
+                                        onClick={handleNextStep}
                                         className={`flex items-center px-6 py-3 rounded font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white`}
                                     >
                                         Next
