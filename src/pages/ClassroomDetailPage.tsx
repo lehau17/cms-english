@@ -4,6 +4,7 @@ import { getClassroomSessions } from '@/apis/classroom';
 import { exportClassroomGradebook, getClassroomDetail, getClassroomGradebook } from '@/apis/classroom-detail';
 import type { RescheduleRequest } from '@/apis/reschedule';
 import { AttendanceDialog } from '@/components/attendance/AttendanceDialog';
+import { BlockingConfiguration, BlockedStudentsList } from '@/components/attendance';
 import AssignmentDetailModal from '@/components/classroom/AssignmentDetailModal';
 import { RescheduleRequestModal } from '@/components/classroom/RescheduleRequestModal';
 import SubmissionListModal from '@/components/classroom/SubmissionListModal';
@@ -1034,158 +1035,51 @@ const ClassroomDetailPage: React.FC = () => {
         )}
 
         {activeTab === 'attendance' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Quản lý điểm danh</h2>
-
-            {course?.sessionSchedules && course.sessionSchedules.length > 0 ? (
-              <div className="space-y-4">
-                {course.sessionSchedules.map((session: any) => (
-                  <div
-                    key={session.id}
-                    onClick={() => {
-                      setSelectedSession({
-                        id: session.id,
-                        title: session.title || `Session ${session.sessionNumber}`,
-                        status: session.status,
-                      });
-                      setIsAttendanceDialogOpen(true);
-                    }}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {session.title || `Session ${session.sessionNumber}`}
-                          </h3>
-                          {session.status && (
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === 'ongoing'
-                              ? 'bg-green-100 text-green-800'
-                              : session.status === 'completed'
-                                ? 'bg-gray-100 text-gray-800'
-                                : 'bg-blue-100 text-blue-800'
-                              }`}>
-                              {session.status}
-                            </span>
-                          )}
-                        </div>
-                        {session.description && (
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                            {session.description}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <span className="flex items-center">
-                            <Hash className="w-4 h-4 mr-1" />
-                            Session #{session.sessionNumber}
-                          </span>
-                          {session.activities && session.activities.length > 0 && (
-                            <span className="flex items-center">
-                              <FileText className="w-4 h-4 mr-1" />
-                              {session.activities.length} activities
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 text-indigo-600" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          <div className="space-y-6">
+            {/* Blocking Management Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Quản lý chặn học</h2>
+              <div className="space-y-6">
+                <BlockingConfiguration classroomId={id || ''} />
+                <div className="mt-6">
+                  <BlockedStudentsList classroomId={id || ''} />
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p>No sessions scheduled</p>
-              </div>
-            )}
-
-            {selectedSession && (
-              <AttendanceDialog
-                open={isAttendanceDialogOpen}
-                onClose={() => {
-                  setIsAttendanceDialogOpen(false);
-                  setSelectedSession(null);
-                }}
-                sessionId={selectedSession.id}
-                sessionTitle={selectedSession.title}
-                classroomId={id || ''}
-                classroomName={classroom.name}
-                sessionStatus={selectedSession.status}
-              />
-            )}
-          </div>
-        )}
-
-        {activeTab === 'sessions' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Danh sách buổi học</h2>
-              <span className="text-sm text-gray-600">
-                {classroomSessions?.length || 0} buổi học
-              </span>
             </div>
 
-            {classroomSessions && classroomSessions.length > 0 ? (
-              <div className="space-y-4">
-                {classroomSessions.map((session) => {
-                  const isTeacher = user?.id === classroom?.teacher?.id;
-                  const sessionDate = new Date(session.startTime);
-                  const isPast = sessionDate < new Date();
-                  const isUpcoming = !isPast && session.status === 'scheduled';
+            {/* Attendance Management Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Quản lý điểm danh</h2>
 
-                  // Get request for this session from map
-                  const request = isTeacher && isUpcoming
-                    ? requestsMap.get(session.id)
-                    : undefined;
-
-                  const getStatusBadge = (status: string) => {
-                    switch (status) {
-                      case 'pending':
-                        return { label: 'Chờ duyệt', className: 'bg-yellow-100 text-yellow-800' };
-                      case 'approved':
-                        return { label: 'Đã duyệt', className: 'bg-green-100 text-green-800' };
-                      case 'rejected':
-                        return { label: 'Đã từ chối', className: 'bg-red-100 text-red-800' };
-                      case 'cancelled':
-                        return { label: 'Đã hủy', className: 'bg-gray-100 text-gray-800' };
-                      default:
-                        return null;
-                    }
-                  };
-
-                  const statusBadge = request ? getStatusBadge(request.status) : null;
-                  const canEdit = request && request.status === 'pending';
-
-                  return (
+              {course?.sessionSchedules && course.sessionSchedules.length > 0 ? (
+                <div className="space-y-4">
+                  {course.sessionSchedules.map((session: any) => (
                     <div
                       key={session.id}
-                      className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all"
+                      onClick={() => {
+                        setSelectedSession({
+                          id: session.id,
+                          title: session.title || `Session ${session.sessionNumber}`,
+                          status: session.status,
+                        });
+                        setIsAttendanceDialogOpen(true);
+                      }}
+                      className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              {session.title}
+                              {session.title || `Session ${session.sessionNumber}`}
                             </h3>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === 'completed'
-                                ? 'bg-gray-100 text-gray-800'
-                                : session.status === 'in_progress'
-                                  ? 'bg-green-100 text-green-800'
+                            {session.status && (
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === 'ongoing'
+                                ? 'bg-green-100 text-green-800'
+                                : session.status === 'completed'
+                                  ? 'bg-gray-100 text-gray-800'
                                   : 'bg-blue-100 text-blue-800'
-                                }`}
-                            >
-                              {session.status === 'completed'
-                                ? 'Đã hoàn thành'
-                                : session.status === 'in_progress'
-                                  ? 'Đang diễn ra'
-                                  : 'Sắp diễn ra'}
-                            </span>
-                            {statusBadge && (
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.className}`}>
-                                {statusBadge.label}
+                                }`}>
+                                {session.status}
                               </span>
                             )}
                           </div>
@@ -1196,173 +1090,293 @@ const ClassroomDetailPage: React.FC = () => {
                           )}
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span className="flex items-center">
-                              <Clock className="w-4 h-4 mr-1" />
-                              {new Date(session.startTime).toLocaleString('vi-VN')} -{' '}
-                              {new Date(session.endTime).toLocaleString('vi-VN', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              <Hash className="w-4 h-4 mr-1" />
+                              Session #{session.sessionNumber}
                             </span>
-                            {request && (
-                              <span className="text-xs text-gray-500">
-                                Yêu cầu: {new Date(request.newStartTime).toLocaleString('vi-VN')}
+                            {session.activities && session.activities.length > 0 && (
+                              <span className="flex items-center">
+                                <FileText className="w-4 h-4 mr-1" />
+                                {session.activities.length} activities
                               </span>
                             )}
                           </div>
-                          {request && request.status === 'rejected' && request.reviewNote && (
-                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
-                              <span className="font-medium text-red-800">Lý do từ chối: </span>
-                              <span className="text-red-700">{request.reviewNote}</span>
-                            </div>
-                          )}
                         </div>
-                        {isTeacher && isUpcoming && (
-                          <div className="flex items-center space-x-2">
-                            {canEdit ? (
-                              (() => {
-                                const isSessionOnExamDay = isExamDate(
-                                  session.startTime,
-                                  examAssignments,
-                                );
-                                const editButton = (
-                                  <button
-                                    onClick={() => {
-                                      setSelectedSessionForReschedule({
-                                        id: session.id,
-                                        title: session.title,
-                                        startTime: new Date(session.startTime),
-                                        endTime: new Date(session.endTime),
-                                        existingRequest: request,
-                                      });
-                                      setIsRescheduleModalOpen(true);
-                                    }}
-                                    disabled={isSessionOnExamDay}
-                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
-                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                                      }`}
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                    <span>Chỉnh sửa</span>
-                                  </button>
-                                );
-                                return isSessionOnExamDay ? (
-                                  <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
-                                    <span>{editButton}</span>
-                                  </Tooltip>
-                                ) : (
-                                  editButton
-                                );
-                              })()
-                            ) : !request ? (
-                              (() => {
-                                const isSessionOnExamDay = isExamDate(
-                                  session.startTime,
-                                  examAssignments,
-                                );
-                                const rescheduleButton = (
-                                  <button
-                                    onClick={() => {
-                                      setSelectedSessionForReschedule({
-                                        id: session.id,
-                                        title: session.title,
-                                        startTime: new Date(session.startTime),
-                                        endTime: new Date(session.endTime),
-                                      });
-                                      setIsRescheduleModalOpen(true);
-                                    }}
-                                    disabled={isSessionOnExamDay}
-                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
-                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                      : 'bg-orange-600 text-white hover:bg-orange-700'
-                                      }`}
-                                  >
-                                    <Calendar className="w-4 h-4" />
-                                    <span>Dời lịch</span>
-                                  </button>
-                                );
-                                return isSessionOnExamDay ? (
-                                  <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
-                                    <span>{rescheduleButton}</span>
-                                  </Tooltip>
-                                ) : (
-                                  rescheduleButton
-                                );
-                              })()
-                            ) : null}
-                          </div>
-                        )}
+                        <div className="flex items-center">
+                          <CheckCircle className="w-5 h-5 text-indigo-600" />
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p>Chưa có buổi học nào</p>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <p>No sessions scheduled</p>
+                </div>
+              )}
+
+              {selectedSession && (
+                <AttendanceDialog
+                  open={isAttendanceDialogOpen}
+                  onClose={() => {
+                    setIsAttendanceDialogOpen(false);
+                    setSelectedSession(null);
+                  }}
+                  sessionId={selectedSession.id}
+                  sessionTitle={selectedSession.title}
+                  classroomId={id || ''}
+                  classroomName={classroom.name}
+                  sessionStatus={selectedSession.status}
+                />
+              )}
+            </div>
+        )}
+
+            {activeTab === 'sessions' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Danh sách buổi học</h2>
+                  <span className="text-sm text-gray-600">
+                    {classroomSessions?.length || 0} buổi học
+                  </span>
+                </div>
+
+                {classroomSessions && classroomSessions.length > 0 ? (
+                  <div className="space-y-4">
+                    {classroomSessions.map((session) => {
+                      const isTeacher = user?.id === classroom?.teacher?.id;
+                      const sessionDate = new Date(session.startTime);
+                      const isPast = sessionDate < new Date();
+                      const isUpcoming = !isPast && session.status === 'scheduled';
+
+                      // Get request for this session from map
+                      const request = isTeacher && isUpcoming
+                        ? requestsMap.get(session.id)
+                        : undefined;
+
+                      const getStatusBadge = (status: string) => {
+                        switch (status) {
+                          case 'pending':
+                            return { label: 'Chờ duyệt', className: 'bg-yellow-100 text-yellow-800' };
+                          case 'approved':
+                            return { label: 'Đã duyệt', className: 'bg-green-100 text-green-800' };
+                          case 'rejected':
+                            return { label: 'Đã từ chối', className: 'bg-red-100 text-red-800' };
+                          case 'cancelled':
+                            return { label: 'Đã hủy', className: 'bg-gray-100 text-gray-800' };
+                          default:
+                            return null;
+                        }
+                      };
+
+                      const statusBadge = request ? getStatusBadge(request.status) : null;
+                      const canEdit = request && request.status === 'pending';
+
+                      return (
+                        <div
+                          key={session.id}
+                          className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                  {session.title}
+                                </h3>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === 'completed'
+                                    ? 'bg-gray-100 text-gray-800'
+                                    : session.status === 'in_progress'
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-blue-100 text-blue-800'
+                                    }`}
+                                >
+                                  {session.status === 'completed'
+                                    ? 'Đã hoàn thành'
+                                    : session.status === 'in_progress'
+                                      ? 'Đang diễn ra'
+                                      : 'Sắp diễn ra'}
+                                </span>
+                                {statusBadge && (
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.className}`}>
+                                    {statusBadge.label}
+                                  </span>
+                                )}
+                              </div>
+                              {session.description && (
+                                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                  {session.description}
+                                </p>
+                              )}
+                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                <span className="flex items-center">
+                                  <Clock className="w-4 h-4 mr-1" />
+                                  {new Date(session.startTime).toLocaleString('vi-VN')} -{' '}
+                                  {new Date(session.endTime).toLocaleString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                {request && (
+                                  <span className="text-xs text-gray-500">
+                                    Yêu cầu: {new Date(request.newStartTime).toLocaleString('vi-VN')}
+                                  </span>
+                                )}
+                              </div>
+                              {request && request.status === 'rejected' && request.reviewNote && (
+                                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+                                  <span className="font-medium text-red-800">Lý do từ chối: </span>
+                                  <span className="text-red-700">{request.reviewNote}</span>
+                                </div>
+                              )}
+                            </div>
+                            {isTeacher && isUpcoming && (
+                              <div className="flex items-center space-x-2">
+                                {canEdit ? (
+                                  (() => {
+                                    const isSessionOnExamDay = isExamDate(
+                                      session.startTime,
+                                      examAssignments,
+                                    );
+                                    const editButton = (
+                                      <button
+                                        onClick={() => {
+                                          setSelectedSessionForReschedule({
+                                            id: session.id,
+                                            title: session.title,
+                                            startTime: new Date(session.startTime),
+                                            endTime: new Date(session.endTime),
+                                            existingRequest: request,
+                                          });
+                                          setIsRescheduleModalOpen(true);
+                                        }}
+                                        disabled={isSessionOnExamDay}
+                                        className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
+                                          ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                                          }`}
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                        <span>Chỉnh sửa</span>
+                                      </button>
+                                    );
+                                    return isSessionOnExamDay ? (
+                                      <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
+                                        <span>{editButton}</span>
+                                      </Tooltip>
+                                    ) : (
+                                      editButton
+                                    );
+                                  })()
+                                ) : !request ? (
+                                  (() => {
+                                    const isSessionOnExamDay = isExamDate(
+                                      session.startTime,
+                                      examAssignments,
+                                    );
+                                    const rescheduleButton = (
+                                      <button
+                                        onClick={() => {
+                                          setSelectedSessionForReschedule({
+                                            id: session.id,
+                                            title: session.title,
+                                            startTime: new Date(session.startTime),
+                                            endTime: new Date(session.endTime),
+                                          });
+                                          setIsRescheduleModalOpen(true);
+                                        }}
+                                        disabled={isSessionOnExamDay}
+                                        className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
+                                          ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                          : 'bg-orange-600 text-white hover:bg-orange-700'
+                                          }`}
+                                      >
+                                        <Calendar className="w-4 h-4" />
+                                        <span>Dời lịch</span>
+                                      </button>
+                                    );
+                                    return isSessionOnExamDay ? (
+                                      <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
+                                        <span>{rescheduleButton}</span>
+                                      </Tooltip>
+                                    ) : (
+                                      rescheduleButton
+                                    );
+                                  })()
+                                ) : null}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                    <p>Chưa có buổi học nào</p>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Assignment Detail Modal - Moved outside tab conditions so it renders regardless of active tab */}
+            <AssignmentDetailModal
+              isOpen={isAssignmentModalOpen}
+              onClose={() => {
+                setIsAssignmentModalOpen(false);
+                setSelectedAssignment(null);
+              }}
+              assignment={(assignmentDetail?.data || assignmentDetail || selectedAssignment) as Assignment | null}
+            />
+
+            {/* Submission List Modal */}
+            {selectedAssignmentForSubmissions && (
+              <SubmissionListModal
+                assignmentId={selectedAssignmentForSubmissions.id}
+                classroomId={id as string}
+                isOpen={isSubmissionModalOpen}
+                onClose={() => {
+                  setIsSubmissionModalOpen(false);
+                  setSelectedAssignmentForSubmissions(null);
+                }}
+                assignmentTotalPoints={selectedAssignmentForSubmissions.totalPoints || 100}
+              />
+            )}
+
+            {/* Reschedule Request Modal */}
+            {selectedSessionForReschedule && (
+              <RescheduleRequestModal
+                isOpen={isRescheduleModalOpen}
+                onClose={() => {
+                  setIsRescheduleModalOpen(false);
+                  setSelectedSessionForReschedule(null);
+                }}
+                sessionId={selectedSessionForReschedule.id}
+                classroomId={id as string}
+                sessionTitle={selectedSessionForReschedule.title}
+                currentStartTime={selectedSessionForReschedule.startTime}
+                currentEndTime={selectedSessionForReschedule.endTime}
+                existingRequest={selectedSessionForReschedule.existingRequest}
+              />
+            )}
+
+            {/* Student Grade Detail Modal */}
+            {isGradeDetailModalOpen && selectedStudentForDetails && (
+              <StudentGradeDetailModal
+                open={isGradeDetailModalOpen}
+                onClose={() => {
+                  setIsGradeDetailModalOpen(false);
+                  setSelectedStudentForDetails(null);
+                }}
+                classroomId={id as string}
+                studentId={selectedStudentForDetails.studentId}
+                studentName={selectedStudentForDetails.studentName}
+              />
+            )}
           </div>
-        )}
-
-        {/* Assignment Detail Modal - Moved outside tab conditions so it renders regardless of active tab */}
-        <AssignmentDetailModal
-          isOpen={isAssignmentModalOpen}
-          onClose={() => {
-            setIsAssignmentModalOpen(false);
-            setSelectedAssignment(null);
-          }}
-          assignment={(assignmentDetail?.data || assignmentDetail || selectedAssignment) as Assignment | null}
-        />
-
-        {/* Submission List Modal */}
-        {selectedAssignmentForSubmissions && (
-          <SubmissionListModal
-            assignmentId={selectedAssignmentForSubmissions.id}
-            classroomId={id as string}
-            isOpen={isSubmissionModalOpen}
-            onClose={() => {
-              setIsSubmissionModalOpen(false);
-              setSelectedAssignmentForSubmissions(null);
-            }}
-            assignmentTotalPoints={selectedAssignmentForSubmissions.totalPoints || 100}
-          />
-        )}
-
-        {/* Reschedule Request Modal */}
-        {selectedSessionForReschedule && (
-          <RescheduleRequestModal
-            isOpen={isRescheduleModalOpen}
-            onClose={() => {
-              setIsRescheduleModalOpen(false);
-              setSelectedSessionForReschedule(null);
-            }}
-            sessionId={selectedSessionForReschedule.id}
-            classroomId={id as string}
-            sessionTitle={selectedSessionForReschedule.title}
-            currentStartTime={selectedSessionForReschedule.startTime}
-            currentEndTime={selectedSessionForReschedule.endTime}
-            existingRequest={selectedSessionForReschedule.existingRequest}
-          />
-        )}
-
-        {/* Student Grade Detail Modal */}
-        {isGradeDetailModalOpen && selectedStudentForDetails && (
-          <StudentGradeDetailModal
-            open={isGradeDetailModalOpen}
-            onClose={() => {
-              setIsGradeDetailModalOpen(false);
-              setSelectedStudentForDetails(null);
-            }}
-            classroomId={id as string}
-            studentId={selectedStudentForDetails.studentId}
-            studentName={selectedStudentForDetails.studentName}
-          />
-        )}
-      </div>
     </div>
-  );
+      );
 };
 
-export default ClassroomDetailPage; // Export component để dùng trong router
+      export default ClassroomDetailPage; // Export component để dùng trong router

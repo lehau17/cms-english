@@ -1,14 +1,14 @@
 import axiosInstance from '@/config/axiosConfig';
 import {
-  AttendanceRecord,
-  BulkAttendanceRequest,
-  ClassroomAttendanceStats,
-  MarkAllAbsentResponse,
-  MarkAttendanceRequest,
-  SessionAttendanceSummary,
-  StudentAttendanceHistory,
-  StudentHistoryFilter,
-  UnmarkedStudent,
+    AttendanceRecord,
+    BulkAttendanceRequest,
+    ClassroomAttendanceStats,
+    MarkAllAbsentResponse,
+    MarkAttendanceRequest,
+    SessionAttendanceSummary,
+    StudentAttendanceHistory,
+    StudentHistoryFilter,
+    UnmarkedStudent,
 } from '@/interface/attendance.interface';
 import { ApiResponse } from '@/interface/base-response.interface';
 
@@ -174,10 +174,10 @@ export const getStudentHistory = async (
 // ==================== MAKEUP ATTENDANCE REQUESTS ====================
 
 import {
-  MakeupAttendanceRequest,
-  PaginatedMakeupRequests,
-  ReviewMakeupRequestDto,
-  MakeupRequestFilter,
+    MakeupAttendanceRequest,
+    MakeupRequestFilter,
+    PaginatedMakeupRequests,
+    ReviewMakeupRequestDto,
 } from '@/interface/makeup-request.interface';
 
 /**
@@ -242,4 +242,94 @@ export const getMakeupRequestById = async (
     `${BASE_URL}/makeup-requests/${requestId}`
   );
   return response.data.data;
+};
+
+// ==================== ATTENDANCE BLOCKING ====================
+
+import {
+    BlockedStudent,
+    BlockingConfig,
+    BlockingStatus,
+    BlockStudentRequest,
+    UnblockStudentRequest,
+    UpdateBlockingConfigRequest,
+} from '@/interface/attendance.interface';
+
+/**
+ * Get blocking status for a student
+ */
+export const getBlockingStatus = async (
+  classroomId: string,
+  studentId: string
+): Promise<BlockingStatus> => {
+  const response = await axiosInstance.get<ApiResponse<BlockingStatus>>(
+    `${BASE_URL}/classrooms/${classroomId}/students/${studentId}/blocking-status`
+  );
+  return response.data.data;
+};
+
+/**
+ * Get blocking configuration for a classroom
+ */
+export const getBlockingConfig = async (
+  classroomId: string
+): Promise<BlockingConfig> => {
+  const response = await axiosInstance.get<ApiResponse<BlockingConfig>>(
+    `${BASE_URL}/classrooms/${classroomId}/blocking-config`
+  );
+  return response.data.data;
+};
+
+/**
+ * Update blocking configuration
+ */
+export const updateBlockingConfig = async (
+  classroomId: string,
+  config: UpdateBlockingConfigRequest
+): Promise<BlockingConfig> => {
+  const response = await axiosInstance.put<ApiResponse<BlockingConfig>>(
+    `${BASE_URL}/classrooms/${classroomId}/blocking-config`,
+    config
+  );
+  return response.data.data;
+};
+
+/**
+ * Get list of blocked students
+ */
+export const getBlockedStudents = async (
+  classroomId: string
+): Promise<BlockedStudent[]> => {
+  const response = await axiosInstance.get<ApiResponse<BlockedStudent[]>>(
+    `${BASE_URL}/classrooms/${classroomId}/blocked-students`
+  );
+  return response.data.data;
+};
+
+/**
+ * Unblock a student
+ */
+export const unblockStudent = async (
+  classroomId: string,
+  studentId: string,
+  data: UnblockStudentRequest
+): Promise<void> => {
+  await axiosInstance.post(
+    `${BASE_URL}/classrooms/${classroomId}/students/${studentId}/unblock`,
+    data
+  );
+};
+
+/**
+ * Manually block a student
+ */
+export const blockStudent = async (
+  classroomId: string,
+  studentId: string,
+  data: BlockStudentRequest
+): Promise<void> => {
+  await axiosInstance.post(
+    `${BASE_URL}/classrooms/${classroomId}/students/${studentId}/block`,
+    data
+  );
 };

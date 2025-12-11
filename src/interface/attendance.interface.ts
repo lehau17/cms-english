@@ -225,3 +225,60 @@ export interface StudentHistoryFilter {
   toDate?: string;
   status?: AttendanceStatus;
 }
+
+/**
+ * Blocking status
+ */
+export interface BlockingStatus {
+  isBlocked: boolean;
+  blockedAt?: string;
+  blockedReason?: string;
+  consecutiveAbsences: number;
+  threshold: number;
+  lastAbsenceDate?: string;
+}
+
+/**
+ * Blocking configuration
+ */
+export interface BlockingConfig {
+  enabled: boolean;
+  threshold: number;
+}
+
+/**
+ * Blocked student info
+ */
+export interface BlockedStudent {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  studentAvatar: string | null;
+  consecutiveAbsences: number;
+  blockedAt: string | null;
+  blockedReason: string | null;
+}
+
+/**
+ * Update blocking config request
+ */
+export interface UpdateBlockingConfigRequest {
+  enabled?: boolean;
+  threshold?: number;
+}
+
+/**
+ * Unblock student request
+ */
+export interface UnblockStudentRequest {
+  reason: string;
+  notes?: string;
+}
+
+/**
+ * Block student request
+ */
+export interface BlockStudentRequest {
+  reason: string;
+  notes?: string;
+}
