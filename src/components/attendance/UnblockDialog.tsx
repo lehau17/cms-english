@@ -1,6 +1,6 @@
 import { unblockStudent } from '@/apis/attendance.api';
 import { BlockedStudent, UnblockStudentRequest } from '@/interface/attendance.interface';
-import { Cancel, Unlock } from '@mui/icons-material';
+import { Cancel, LockOpen } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -75,7 +75,7 @@ export const UnblockDialog: React.FC<UnblockDialogProps> = ({
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Box display="flex" alignItems="center" gap={1}>
-          <Unlock />
+          <LockOpen />
           <Typography variant="h6">Bỏ chặn học sinh</Typography>
         </Box>
       </DialogTitle>
@@ -135,7 +135,7 @@ export const UnblockDialog: React.FC<UnblockDialogProps> = ({
           variant="contained"
           onClick={handleSubmit}
           disabled={unblockMutation.isPending || !reason.trim()}
-          startIcon={<Unlock />}
+          startIcon={<LockOpen />}
           color="primary"
         >
           {unblockMutation.isPending ? 'Đang xử lý...' : 'Bỏ chặn'}

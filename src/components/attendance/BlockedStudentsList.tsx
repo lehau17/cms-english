@@ -1,6 +1,6 @@
 import { getBlockedStudents } from '@/apis/attendance.api';
 import { BlockedStudent } from '@/interface/attendance.interface';
-import { Search, Unlock } from '@mui/icons-material';
+import { LockOpen, Search } from '@mui/icons-material';
 import {
   Alert,
   Avatar,
@@ -22,7 +22,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import moment from 'moment';
 import React, { useState } from 'react';
 import { UnblockDialog } from './UnblockDialog';
 
@@ -138,7 +138,7 @@ export const BlockedStudentsList: React.FC<BlockedStudentsListProps> = ({
                         </TableCell>
                         <TableCell>
                           {student.blockedAt
-                            ? format(new Date(student.blockedAt), 'dd/MM/yyyy HH:mm')
+                            ? moment(student.blockedAt).format('DD/MM/YYYY HH:mm')
                             : '-'}
                         </TableCell>
                         <TableCell>
@@ -153,7 +153,7 @@ export const BlockedStudentsList: React.FC<BlockedStudentsListProps> = ({
                             onClick={() => handleUnblock(student)}
                             title="Bỏ chặn"
                           >
-                            <Unlock />
+                            <LockOpen />
                           </IconButton>
                         </TableCell>
                       </TableRow>
