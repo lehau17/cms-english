@@ -169,7 +169,7 @@ const AssignmentGradingPage: React.FC = () => {
 
   // Initialize activity scores from submission data
   React.useEffect(() => {
-    if (submission?.assignment?.activities) {
+    if (submission?.assignment?.activities && Array.isArray(submission.assignment.activities)) {
       const initialScores: Record<string, number> = {};
       const answers = submission.answers || {};
 
@@ -238,10 +238,12 @@ const AssignmentGradingPage: React.FC = () => {
         // Calculate total from initial scores
         let totalEarned = 0;
         let totalPoints = 0;
-        submission.assignment.activities.forEach((activity: any) => {
-          totalEarned += initialScores[activity.id] || 0;
-          totalPoints += activity.points || 0;
-        });
+        if (submission.assignment.activities) {
+          submission.assignment.activities.forEach((activity: any) => {
+            totalEarned += initialScores[activity.id] || 0;
+            totalPoints += activity.points || 0;
+          });
+        }
         const calculatedTotal = totalPoints > 0 ? Math.round((totalEarned / totalPoints) * 100) : 0;
         console.log('Calculated total from activities:', calculatedTotal, `(${totalEarned}/${totalPoints})`);
       }
@@ -253,7 +255,7 @@ const AssignmentGradingPage: React.FC = () => {
 
   // Calculate total score: earned/total * 100
   const scoreCalculation = useMemo(() => {
-    if (!submission?.assignment?.activities) {
+    if (!submission?.assignment?.activities || !Array.isArray(submission.assignment.activities)) {
       return { earnedPoints: 0, totalPoints: 0, finalScore: 0 };
     }
 
@@ -283,7 +285,7 @@ const AssignmentGradingPage: React.FC = () => {
   };
 
   const handleAcceptAIScores = () => {
-    if (!submission?.assignment?.activities) return;
+    if (!submission?.assignment?.activities || !Array.isArray(submission.assignment.activities)) return;
 
     const newScores: Record<string, number> = {};
     const answers = submission.answers || {};
@@ -337,7 +339,7 @@ const AssignmentGradingPage: React.FC = () => {
   }
 
   const assignment = submission.assignment;
-  const activities = assignment.activities || [];
+  const activities = (assignment.activities && Array.isArray(assignment.activities)) ? assignment.activities : [];
   const student = submission.student;
   const studentName =
     student.displayName ||
@@ -491,4 +493,7 @@ const AssignmentGradingPage: React.FC = () => {
 };
 
 export default AssignmentGradingPage;
+
+
+
 

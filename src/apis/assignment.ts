@@ -304,6 +304,24 @@ export const downloadAssignmentPdf = async (assignmentId: string, assignmentTitl
 
 // ==================== SUBMISSION GRADING ====================
 
+export interface SubmissionActivity {
+    id: string;
+    type: string;
+    title: string;
+    instructions?: string;
+    content: Record<string, any>;
+    points: number;
+    difficulty?: string;
+    hints?: string[];
+    studentAnswer?: any;
+    correctAnswer?: any;
+    classification?: string;
+    isAutoGraded?: boolean;
+    isAIGradable?: boolean;
+    requiresManualGrading?: boolean;
+    calculatedScore?: number | null;
+}
+
 export interface SubmissionDetail {
     id: string;
     assignmentId: string;
@@ -330,6 +348,7 @@ export interface SubmissionDetail {
         title: string;
         description: string | null;
         totalPoints: number;
+        activities?: SubmissionActivity[];
         classroom: {
             id: string;
             name: string;
@@ -367,6 +386,24 @@ export const gradeSubmission = async (
         message: string;
         data: SubmissionDetail;
     }>(`/private/v1/assignments/assignment-submissions/${submissionId}/grade`, payload);
+    return response.data.data;
+};
+
+export interface GradeSubmissionDetailedPayload {
+    activityScores: Record<string, number>;
+    feedback?: string;
+    acceptAIScores?: boolean;
+}
+
+export const gradeSubmissionDetailed = async (
+    submissionId: string,
+    payload: GradeSubmissionDetailedPayload
+): Promise<SubmissionDetail> => {
+    const response = await axiosInstance.patch<{
+        statusCode: number;
+        message: string;
+        data: SubmissionDetail;
+    }>(`/private/v1/assignments/assignment-submissions/${submissionId}/grade-detailed`, payload);
     return response.data.data;
 };
 
