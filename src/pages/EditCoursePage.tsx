@@ -1,9 +1,10 @@
 import { getCourseById, updateCourse } from '@/apis/course';
 import { uploadFile } from '@/apis/upload';
+import LessonActivities from '@/components/course/LessonActivities';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calendar, CheckCircle, ChevronDown, ChevronRight, CircleDot, FileEdit, GripVertical, Library, Lock, Plus, RefreshCw, Save, Target, Trash2, Upload, X, Zap } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calendar, CheckCircle, CircleDot, FileEdit, GripVertical, Library, Plus, RefreshCw, Save, Target, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -103,7 +104,6 @@ const EditCoursePage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'course' | 'lessons'>('course');
-  const [expandedLessons, setExpandedLessons] = useState<Set<number>>(new Set());
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -429,7 +429,7 @@ const EditCoursePage: React.FC = () => {
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">⚙️ Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <FormField name="price" label="Price ($)" type="number" placeholder="0" />
+                    <FormField name="price" label="Giá (VND)" type="number" placeholder="0" />
                     <FormField name="difficulty" label="Difficulty" placeholder="beginner" />
                     <FormField name="language" label="Language" placeholder="en" />
                     <div className="md:col-span-2">
@@ -658,7 +658,7 @@ const EditCoursePage: React.FC = () => {
                               />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 mt-2">
+                            <div className="grid grid-cols-2 gap-2 mt-2">
                               <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Order</label>
                                 <input
@@ -678,19 +678,6 @@ const EditCoursePage: React.FC = () => {
                                   placeholder="30"
                                 />
                               </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Access</label>
-                                <div className="flex items-center pt-1">
-                                  <input
-                                    type="checkbox"
-                                    {...register(`lessons.${index}.isLocked`)}
-                                    className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                                  />
-                                  <span className="ml-2 text-sm text-gray-700 flex items-center gap-1">
-                                    <Lock className="w-3 h-3" /> Locked
-                                  </span>
-                                </div>
-                              </div>
                             </div>
 
                             <div className="mt-2">
@@ -707,52 +694,14 @@ const EditCoursePage: React.FC = () => {
 
                             {/* Activities Section */}
                             <div className="mt-3 border-t border-gray-200 pt-3">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newExpanded = new Set(expandedLessons);
-                                  if (newExpanded.has(index)) {
-                                    newExpanded.delete(index);
-                                  } else {
-                                    newExpanded.add(index);
-                                  }
-                                  setExpandedLessons(newExpanded);
-                                }}
-                                className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
-                              >
-                                {expandedLessons.has(index) ? (
-                                  <ChevronDown className="w-4 h-4" />
-                                ) : (
-                                  <ChevronRight className="w-4 h-4" />
-                                )}
-                                <Zap className="w-4 h-4" />
-                                <span>Activities ({watch(`lessons.${index}.activities`)?.length || 0})</span>
-                              </button>
-
-                              {expandedLessons.has(index) && (
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                  <div className="flex items-center gap-2 text-amber-600 mb-3">
-                                    <Lock className="w-5 h-5" />
-                                    <span className="font-medium">Activities are locked for editing</span>
-                                  </div>
-                                  <p className="text-sm text-gray-600 mb-4">
-                                    Activities cannot be modified in edit mode. To change activities, you need to create a new course version.
-                                  </p>
-                                  <div className="space-y-2">
-                                    {watch(`lessons.${index}.activities`)?.map((activity: any, actIndex: number) => (
-                                      <div key={actIndex} className="bg-white p-3 rounded border border-gray-200">
-                                        <div className="flex items-center justify-between">
-                                          <div>
-                                            <span className="font-medium text-gray-900">{activity.title || `Activity ${actIndex + 1}`}</span>
-                                            <span className="ml-2 text-xs text-gray-500">({activity.type})</span>
-                                          </div>
-                                          <span className="text-xs text-gray-500">Order: {activity.orderNo}</span>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                              <LessonActivities
+                                lessonIndex={index}
+                                control={control as any}
+                                register={register as any}
+                                errors={errors as any}
+                                setValue={setValue as any}
+                                watch={watch as any}
+                              />
                             </div>
                           </div>
                         );

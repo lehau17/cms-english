@@ -1,5 +1,4 @@
 export { ActivityEditor } from './ActivityEditor';
+export { default as AssignmentBankBrowser } from './AssignmentBankBrowser/AssignmentBankBrowser';
 export { ImportDialog } from './ImportDialog';
-export { ListeningActivityEditor } from './ListeningActivityEditor';
-export { QuizActivityEditor } from './QuizActivityEditor';
 

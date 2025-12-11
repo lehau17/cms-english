@@ -1,5 +1,11 @@
 import { useNotifications } from "@/hooks/useDashboard";
 import {
+  getClassroomIdFromNotification,
+  isMakeupRequestNotification,
+  isRescheduleRequestNotification,
+  parseNotificationData,
+} from "@/utils/notification.utils";
+import {
   CheckCircle,
   Error as ErrorIcon,
   Notifications,
@@ -9,6 +15,7 @@ import {
 import {
   alpha,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -19,6 +26,7 @@ import {
 } from "@mui/material";
 import moment from "moment";
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 
 type NotifType = "success" | "warning" | "error" | "info";
 
@@ -27,12 +35,14 @@ type NotificationItem = {
   title: string;
   message?: string | null;
   type: NotifType;
+  data?: string | null;
   createdAt: string;
 };
 
 const NotificationsWidget: React.FC = () => {
   const { data: notifications, isLoading, isError } = useNotifications();
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const getNotificationConfig = (type: NotifType) => {
     switch (type) {
@@ -65,6 +75,7 @@ const NotificationsWidget: React.FC = () => {
       title: notif.title,
       message: notif.message,
       type: normalizeNotificationType(notif.type),
+      data: notif.data,
       createdAt: notif.createdAt,
     }));
   }, [notifications]);
@@ -146,6 +157,42 @@ const NotificationsWidget: React.FC = () => {
                   <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5, display: "block" }}>
                     {moment(notif.createdAt).fromNow()}
                   </Typography>
+                  {(() => {
+                    const parsedData = parseNotificationData(notif.data);
+                    const isRescheduleRequest = isRescheduleRequestNotification(parsedData);
+                    const isMakeupRequest = isMakeupRequestNotification(parsedData);
+                    const classroomId = isMakeupRequest
+                      ? getClassroomIdFromNotification(parsedData)
+                      : null;
+
+                    if (isRescheduleRequest) {
+                      return (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          sx={{ mt: 1 }}
+                          onClick={() => navigate('/reschedule-requests')}
+                        >
+                          Xem yêu cầu
+                        </Button>
+                      );
+                    }
+
+                    if (isMakeupRequest && classroomId) {
+                      return (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          sx={{ mt: 1 }}
+                          onClick={() => navigate(`/classrooms/${classroomId}#attendance`)}
+                        >
+                          Xem điểm danh
+                        </Button>
+                      );
+                    }
+
+                    return null;
+                  })()}
                 </Box>
               </Stack>
             </Box>

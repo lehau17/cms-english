@@ -1065,12 +1065,12 @@ export default function CreateAssignmentModal({
               <h4 className="text-lg font-semibold flex-1 min-w-0 break-words">
                 Import Assignment from Excel
               </h4>
-              <button className="flex-shrink-0"
+              <button
+                className="flex-shrink-0 rounded-lg p-2 hover:bg-gray-100"
                 onClick={() => {
                   setShowImportDialog(false)
                   setImportPreview(null)
                 }}
-                className="rounded-lg p-2 hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
               </button>

@@ -29,17 +29,22 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AssignmentActivityDto, assignmentApi, CreateAssignmentDto, downloadAssignmentPdf } from '../apis/assignment';
+import { getClassroomSessions } from '../apis/classroom';
+import { AssignmentBankBrowser } from '../components/assignment';
 import { ActivityEditor } from '../components/assignment/ActivityEditor';
 import { ImportDialog } from '../components/assignment/ImportDialog';
 import { AIActivityGeneratorModal } from '../components/course/AIActivityGeneratorModal';
 import type { Activity } from '../interface/activity.interface';
 import { ACTIVITY_TYPES, AssignmentFormValues, assignmentSchema } from '../schemas/assignment.schema';
+import { getBookedDateErrorMessage, getBookedDates, getPastDateErrorMessage, isDateBooked, isPastDate } from '../utils/dateValidation';
+import { get15MinuteIntervalErrorMessage, isValid15MinuteInterval } from '../utils/timeValidation';
 
 const DIFFICULTY_LEVELS = [
   { value: 'beginner', label: 'Beginner' },
@@ -58,6 +63,28 @@ export default function CreateAssignmentPage() {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const [bankBrowserOpen, setBankBrowserOpen] = useState(false);
+  const [timeValidationErrors, setTimeValidationErrors] = useState<{
+    startTime?: string;
+    dueDate?: string;
+  }>({});
+  const [dateValidationErrors, setDateValidationErrors] = useState<{
+    startTime?: string;
+    dueDate?: string;
+  }>({});
+
+  // Fetch classroom sessions for date restriction
+  const { data: classroomSessions } = useQuery({
+    queryKey: ['classroom-sessions', classroomId],
+    queryFn: () => getClassroomSessions(classroomId!),
+    enabled: !!classroomId,
+  });
+
+  // Calculate booked dates
+  const bookedDates = useMemo(() => {
+    if (!classroomSessions) return new Set<string>();
+    return getBookedDates(classroomSessions);
+  }, [classroomSessions]);
 
   // React Hook Form setup
   const {
@@ -234,6 +261,26 @@ export default function CreateAssignmentPage() {
     toast.success(`Imported ${importedActivities.length} activities`);
   };
 
+  const handleBankActivitiesSelected = (activities: AssignmentActivityDto[]) => {
+    // Map bank activities to form format
+    activities.forEach((activity) => {
+      append({
+        type: activity.type,
+        title: activity.title || '',
+        instructions: activity.instructions || '',
+        content: activity.content || {},
+        points: activity.points || 10,
+        passingScore: activity.passingScore,
+        difficulty: activity.difficulty,
+        hints: activity.hints || [],
+        mediaUrls: activity.mediaUrls || [],
+      } as any);
+    });
+
+    toast.success(`Added ${activities.length} ${activities.length === 1 ? 'activity' : 'activities'} from bank`);
+    setBankBrowserOpen(false);
+  };
+
   const onSubmit: SubmitHandler<AssignmentFormValues> = async (data: any) => {
     try {
       setIsSubmitting(true);
@@ -248,6 +295,52 @@ export default function CreateAssignmentPage() {
         toast.error('At least one activity is required');
         return;
       }
+
+      // Validate 15-minute intervals
+      const timeErrors: { startTime?: string; dueDate?: string } = {};
+      if (data.startTime) {
+        const startDate = new Date(data.startTime);
+        if (!isValid15MinuteInterval(startDate)) {
+          timeErrors.startTime = get15MinuteIntervalErrorMessage();
+        }
+      }
+      if (data.dueDate) {
+        const dueDate = new Date(data.dueDate);
+        if (!isValid15MinuteInterval(dueDate)) {
+          timeErrors.dueDate = get15MinuteIntervalErrorMessage();
+        }
+      }
+      if (Object.keys(timeErrors).length > 0) {
+        setTimeValidationErrors(timeErrors);
+        toast.error('Vui lòng kiểm tra lại thời gian');
+        return;
+      }
+      setTimeValidationErrors({});
+
+      // Validate date restrictions
+      const dateErrors: { startTime?: string; dueDate?: string } = {};
+      if (data.startTime) {
+        const startDate = new Date(data.startTime);
+        if (isPastDate(startDate)) {
+          dateErrors.startTime = getPastDateErrorMessage();
+        } else if (isDateBooked(startDate, bookedDates)) {
+          dateErrors.startTime = getBookedDateErrorMessage();
+        }
+      }
+      if (data.dueDate) {
+        const dueDate = new Date(data.dueDate);
+        if (isPastDate(dueDate)) {
+          dateErrors.dueDate = getPastDateErrorMessage();
+        } else if (isDateBooked(dueDate, bookedDates)) {
+          dateErrors.dueDate = getBookedDateErrorMessage();
+        }
+      }
+      if (Object.keys(dateErrors).length > 0) {
+        setDateValidationErrors(dateErrors);
+        toast.error('Vui lòng kiểm tra lại ngày đã chọn');
+        return;
+      }
+      setDateValidationErrors({});
 
       // Map to API format
       const createDto: CreateAssignmentDto = {
@@ -469,9 +562,28 @@ export default function CreateAssignmentPage() {
                       label="Start Time"
                       type="datetime-local"
                       {...register('startTime')}
-                      error={!!errors.startTime}
-                      helperText={errors.startTime?.message}
+                      error={!!errors.startTime || !!timeValidationErrors.startTime || !!dateValidationErrors.startTime}
+                      helperText={
+                        errors.startTime?.message ||
+                        timeValidationErrors.startTime ||
+                        dateValidationErrors.startTime ||
+                        'Thời gian phải là bội số của 15 phút (ví dụ: 12:00, 12:15, 12:30, 12:45)'
+                      }
                       InputLabelProps={{ shrink: true }}
+                      inputProps={{
+                        step: 900, // 15 minutes = 900 seconds
+                        min: new Date().toISOString().slice(0, 16),
+                      }}
+                      onChange={(e) => {
+                        register('startTime').onChange(e);
+                        // Clear errors on change
+                        if (timeValidationErrors.startTime) {
+                          setTimeValidationErrors(prev => ({ ...prev, startTime: undefined }));
+                        }
+                        if (dateValidationErrors.startTime) {
+                          setDateValidationErrors(prev => ({ ...prev, startTime: undefined }));
+                        }
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
@@ -480,9 +592,28 @@ export default function CreateAssignmentPage() {
                       label="Due Date"
                       type="datetime-local"
                       {...register('dueDate')}
-                      error={!!errors.dueDate}
-                      helperText={errors.dueDate?.message}
+                      error={!!errors.dueDate || !!timeValidationErrors.dueDate || !!dateValidationErrors.dueDate}
+                      helperText={
+                        errors.dueDate?.message ||
+                        timeValidationErrors.dueDate ||
+                        dateValidationErrors.dueDate ||
+                        'Thời gian phải là bội số của 15 phút (ví dụ: 12:00, 12:15, 12:30, 12:45)'
+                      }
                       InputLabelProps={{ shrink: true }}
+                      inputProps={{
+                        step: 900, // 15 minutes = 900 seconds
+                        min: new Date().toISOString().slice(0, 16),
+                      }}
+                      onChange={(e) => {
+                        register('dueDate').onChange(e);
+                        // Clear errors on change
+                        if (timeValidationErrors.dueDate) {
+                          setTimeValidationErrors(prev => ({ ...prev, dueDate: undefined }));
+                        }
+                        if (dateValidationErrors.dueDate) {
+                          setDateValidationErrors(prev => ({ ...prev, dueDate: undefined }));
+                        }
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} md={3}>
@@ -559,6 +690,17 @@ export default function CreateAssignmentPage() {
                   >
                     <Sparkles size={16} />
                     AI Generate Activities
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setBankBrowserOpen(true)}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Browse Bank
                   </Button>
                   {ACTIVITY_TYPES.map((type) => (
                     <Button
@@ -745,6 +887,15 @@ export default function CreateAssignmentPage() {
           open={importDialogOpen}
           onClose={() => setImportDialogOpen(false)}
           onImportConfirm={handleImportConfirm}
+        />
+
+        {/* Bank Browser Modal */}
+        <AssignmentBankBrowser
+          open={bankBrowserOpen}
+          onClose={() => setBankBrowserOpen(false)}
+          onSelect={handleBankActivitiesSelected}
+          browseMode="activities"
+          allowModeSwitch={true}
         />
 
         {/* AI Activity Generator Modal */}

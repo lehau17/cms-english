@@ -1,15 +1,22 @@
 
 import { Assignment, assignmentApi } from '@/apis/assignment';
+import { getClassroomSessions } from '@/apis/classroom';
 import { exportClassroomGradebook, getClassroomDetail, getClassroomGradebook } from '@/apis/classroom-detail';
+import type { RescheduleRequest } from '@/apis/reschedule';
 import { AttendanceDialog } from '@/components/attendance/AttendanceDialog';
 import AssignmentDetailModal from '@/components/classroom/AssignmentDetailModal';
+import { RescheduleRequestModal } from '@/components/classroom/RescheduleRequestModal';
+import SubmissionListModal from '@/components/classroom/SubmissionListModal';
 import StudentGradeDetailModal from '@/components/student/StudentGradeDetailModal';
 import ViewStudentModal from '@/components/student/ViewStudentModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useMyRescheduleRequests } from '@/hooks/useRescheduleRequest';
 import { UserRole } from '@/interface/enum.interface';
 import { Student } from '@/interface/student.interface';
 import { getActivityIcon } from '@/utils/activityIcons';
-import { Tab, Tabs } from '@mui/material';
+import { canEditAssignment } from '@/utils/assignment.utils';
+import { getExamAssignments, isExamDate } from '@/utils/examValidation';
+import { Tab, Tabs, Tooltip } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -31,14 +38,15 @@ import {
   Users,
   XCircle
 } from 'lucide-react';
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-type TabValue = 'overview' | 'slots' | 'students' | 'assignments' | 'attendance' | 'gradebook';
+type TabValue = 'overview' | 'slots' | 'students' | 'assignments' | 'attendance' | 'gradebook' | 'sessions';
 
 const ClassroomDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabValue>('overview');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -47,6 +55,10 @@ const ClassroomDetailPage: React.FC = () => {
   const [isAttendanceDialogOpen, setIsAttendanceDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [selectedAssignmentForSubmissions, setSelectedAssignmentForSubmissions] = useState<Assignment | null>(null);
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+  const [selectedSessionForReschedule, setSelectedSessionForReschedule] = useState<{ id: string; title?: string; startTime?: Date; endTime?: Date; existingRequest?: RescheduleRequest } | null>(null);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [selectedStudentForDetails, setSelectedStudentForDetails] = useState<{
     studentId: string;
     studentName: string;
@@ -82,6 +94,71 @@ const ClassroomDetailPage: React.FC = () => {
     queryFn: () => getClassroomGradebook(id as string),
     enabled: !!id && activeTab === 'gradebook',
   });
+
+  // Fetch classroom sessions for reschedule requests
+  const { data: classroomSessions } = useQuery({
+    queryKey: ['classroom-sessions', id],
+    queryFn: () => getClassroomSessions(id as string),
+    enabled: !!id,
+  });
+
+  // Handle URL hash for tab navigation (e.g., #attendance)
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'attendance') {
+      setActiveTab('attendance');
+    }
+  }, [location.pathname, location.hash]);
+
+  // Also listen to hash changes after initial load
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'attendance') {
+        setActiveTab('attendance');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Fetch assignments to check for exam dates
+  const { data: assignmentsData } = useQuery({
+    queryKey: ['classroom-assignments', id],
+    queryFn: () => assignmentApi.getClassroomAssignments(id as string),
+    enabled: !!id,
+  });
+
+  // Filter exam assignments (MIDTERM_EXAM, FINAL_EXAM)
+  const examAssignments = useMemo(() => {
+    if (!assignmentsData?.data?.data) return [];
+    return getExamAssignments(assignmentsData.data.data);
+  }, [assignmentsData]);
+
+  // Fetch all reschedule requests for teacher (to show status for all sessions)
+  const { data: myRescheduleRequests } = useMyRescheduleRequests({
+    limit: 100, // Get all requests
+  });
+
+  // Create map of sessionId -> request (prioritize pending, then latest)
+  const requestsMap = useMemo(() => {
+    if (!myRescheduleRequests?.data) return new Map<string, RescheduleRequest>();
+    const map = new Map<string, RescheduleRequest>();
+    // Sort by createdAt desc, then prioritize pending
+    const sorted = [...myRescheduleRequests.data].sort((a, b) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    sorted.forEach((request: RescheduleRequest) => {
+      // Only set if not already in map (prioritize pending)
+      if (!map.has(request.sessionId) || map.get(request.sessionId)?.status !== 'pending') {
+        map.set(request.sessionId, request);
+      }
+    });
+    return map;
+  }, [myRescheduleRequests]);
 
   // Fetch assignment detail when selected
   const { data: assignmentDetail, isLoading: loadingAssignment } = useQuery({
@@ -290,6 +367,12 @@ const ClassroomDetailPage: React.FC = () => {
               icon={<GraduationCap className="w-5 h-5" />}
               iconPosition="start"
             />
+            <Tab
+              label="Buổi học"
+              value="sessions"
+              icon={<Calendar className="w-5 h-5" />}
+              iconPosition="start"
+            />
           </Tabs>
         </div>
 
@@ -350,11 +433,7 @@ const ClassroomDetailPage: React.FC = () => {
                                   <Clock className="w-4 h-4 mr-1" />
                                   {lesson.estimatedTime || 0} phút {/* Thời gian ước tính */}
                                 </span>
-                                {lesson.isLocked && ( // Nếu lesson bị khóa
-                                  <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
-                                    Đã khóa
-                                  </span>
-                                )}
+
                               </div>
                               {expandedLesson === lesson.id ? ( // Icon mở/đóng
                                 <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -738,6 +817,7 @@ const ClassroomDetailPage: React.FC = () => {
                     const dueDateFormatted = assignment.dueDate
                       ? formatDate(assignment.dueDate)
                       : 'Không có hạn nộp';
+                    const canEdit = canEditAssignment(assignment);
 
                     return (
                       <div
@@ -783,17 +863,41 @@ const ClassroomDetailPage: React.FC = () => {
                                 {assignment._count?.submissions || 0} bài nộp
                               </span>
                             </div>
-                            {/* Edit Button */}
+                            {/* View Submissions Button */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/classrooms/${id}/edit-assignment/${assignment.id}`);
+                                setSelectedAssignmentForSubmissions(assignment);
+                                setIsSubmissionModalOpen(true);
                               }}
-                              className="flex-shrink-0 p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
-                              title="Chỉnh sửa bài tập"
+                              className="mt-2 flex items-center space-x-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
                             >
-                              <Edit className="w-5 h-5" />
+                              <FileText className="w-4 h-4" />
+                              <span>Xem bài nộp</span>
                             </button>
+                            {/* Edit Button */}
+                            <Tooltip
+                              title={canEdit ? 'Chỉnh sửa bài tập' : 'Không thể chỉnh sửa sau khi đã đến giờ bắt đầu'}
+                              arrow
+                            >
+                              <span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (canEdit) {
+                                      navigate(`/classrooms/${id}/edit-assignment/${assignment.id}`);
+                                    }
+                                  }}
+                                  disabled={!canEdit}
+                                  className={`flex-shrink-0 p-2 rounded-lg transition-colors ${canEdit
+                                    ? 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
+                                    : 'text-gray-400 cursor-not-allowed opacity-50'
+                                    }`}
+                                >
+                                  <Edit className="w-5 h-5" />
+                                </button>
+                              </span>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
@@ -1014,6 +1118,194 @@ const ClassroomDetailPage: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'sessions' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Danh sách buổi học</h2>
+              <span className="text-sm text-gray-600">
+                {classroomSessions?.length || 0} buổi học
+              </span>
+            </div>
+
+            {classroomSessions && classroomSessions.length > 0 ? (
+              <div className="space-y-4">
+                {classroomSessions.map((session) => {
+                  const isTeacher = user?.id === classroom?.teacher?.id;
+                  const sessionDate = new Date(session.startTime);
+                  const isPast = sessionDate < new Date();
+                  const isUpcoming = !isPast && session.status === 'scheduled';
+
+                  // Get request for this session from map
+                  const request = isTeacher && isUpcoming
+                    ? requestsMap.get(session.id)
+                    : undefined;
+
+                  const getStatusBadge = (status: string) => {
+                    switch (status) {
+                      case 'pending':
+                        return { label: 'Chờ duyệt', className: 'bg-yellow-100 text-yellow-800' };
+                      case 'approved':
+                        return { label: 'Đã duyệt', className: 'bg-green-100 text-green-800' };
+                      case 'rejected':
+                        return { label: 'Đã từ chối', className: 'bg-red-100 text-red-800' };
+                      case 'cancelled':
+                        return { label: 'Đã hủy', className: 'bg-gray-100 text-gray-800' };
+                      default:
+                        return null;
+                    }
+                  };
+
+                  const statusBadge = request ? getStatusBadge(request.status) : null;
+                  const canEdit = request && request.status === 'pending';
+
+                  return (
+                    <div
+                      key={session.id}
+                      className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {session.title}
+                            </h3>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${session.status === 'completed'
+                                ? 'bg-gray-100 text-gray-800'
+                                : session.status === 'in_progress'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-blue-100 text-blue-800'
+                                }`}
+                            >
+                              {session.status === 'completed'
+                                ? 'Đã hoàn thành'
+                                : session.status === 'in_progress'
+                                  ? 'Đang diễn ra'
+                                  : 'Sắp diễn ra'}
+                            </span>
+                            {statusBadge && (
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.className}`}>
+                                {statusBadge.label}
+                              </span>
+                            )}
+                          </div>
+                          {session.description && (
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                              {session.description}
+                            </p>
+                          )}
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                            <span className="flex items-center">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {new Date(session.startTime).toLocaleString('vi-VN')} -{' '}
+                              {new Date(session.endTime).toLocaleString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                            {request && (
+                              <span className="text-xs text-gray-500">
+                                Yêu cầu: {new Date(request.newStartTime).toLocaleString('vi-VN')}
+                              </span>
+                            )}
+                          </div>
+                          {request && request.status === 'rejected' && request.reviewNote && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+                              <span className="font-medium text-red-800">Lý do từ chối: </span>
+                              <span className="text-red-700">{request.reviewNote}</span>
+                            </div>
+                          )}
+                        </div>
+                        {isTeacher && isUpcoming && (
+                          <div className="flex items-center space-x-2">
+                            {canEdit ? (
+                              (() => {
+                                const isSessionOnExamDay = isExamDate(
+                                  session.startTime,
+                                  examAssignments,
+                                );
+                                const editButton = (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedSessionForReschedule({
+                                        id: session.id,
+                                        title: session.title,
+                                        startTime: new Date(session.startTime),
+                                        endTime: new Date(session.endTime),
+                                        existingRequest: request,
+                                      });
+                                      setIsRescheduleModalOpen(true);
+                                    }}
+                                    disabled={isSessionOnExamDay}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                      }`}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                    <span>Chỉnh sửa</span>
+                                  </button>
+                                );
+                                return isSessionOnExamDay ? (
+                                  <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
+                                    <span>{editButton}</span>
+                                  </Tooltip>
+                                ) : (
+                                  editButton
+                                );
+                              })()
+                            ) : !request ? (
+                              (() => {
+                                const isSessionOnExamDay = isExamDate(
+                                  session.startTime,
+                                  examAssignments,
+                                );
+                                const rescheduleButton = (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedSessionForReschedule({
+                                        id: session.id,
+                                        title: session.title,
+                                        startTime: new Date(session.startTime),
+                                        endTime: new Date(session.endTime),
+                                      });
+                                      setIsRescheduleModalOpen(true);
+                                    }}
+                                    disabled={isSessionOnExamDay}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-orange-600 text-white hover:bg-orange-700'
+                                      }`}
+                                  >
+                                    <Calendar className="w-4 h-4" />
+                                    <span>Dời lịch</span>
+                                  </button>
+                                );
+                                return isSessionOnExamDay ? (
+                                  <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
+                                    <span>{rescheduleButton}</span>
+                                  </Tooltip>
+                                ) : (
+                                  rescheduleButton
+                                );
+                              })()
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <p>Chưa có buổi học nào</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Assignment Detail Modal - Moved outside tab conditions so it renders regardless of active tab */}
         <AssignmentDetailModal
           isOpen={isAssignmentModalOpen}
@@ -1023,6 +1315,37 @@ const ClassroomDetailPage: React.FC = () => {
           }}
           assignment={(assignmentDetail?.data || assignmentDetail || selectedAssignment) as Assignment | null}
         />
+
+        {/* Submission List Modal */}
+        {selectedAssignmentForSubmissions && (
+          <SubmissionListModal
+            assignmentId={selectedAssignmentForSubmissions.id}
+            classroomId={id as string}
+            isOpen={isSubmissionModalOpen}
+            onClose={() => {
+              setIsSubmissionModalOpen(false);
+              setSelectedAssignmentForSubmissions(null);
+            }}
+            assignmentTotalPoints={selectedAssignmentForSubmissions.totalPoints || 100}
+          />
+        )}
+
+        {/* Reschedule Request Modal */}
+        {selectedSessionForReschedule && (
+          <RescheduleRequestModal
+            isOpen={isRescheduleModalOpen}
+            onClose={() => {
+              setIsRescheduleModalOpen(false);
+              setSelectedSessionForReschedule(null);
+            }}
+            sessionId={selectedSessionForReschedule.id}
+            classroomId={id as string}
+            sessionTitle={selectedSessionForReschedule.title}
+            currentStartTime={selectedSessionForReschedule.startTime}
+            currentEndTime={selectedSessionForReschedule.endTime}
+            existingRequest={selectedSessionForReschedule.existingRequest}
+          />
+        )}
 
         {/* Student Grade Detail Modal */}
         {isGradeDetailModalOpen && selectedStudentForDetails && (

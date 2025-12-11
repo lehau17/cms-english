@@ -90,6 +90,26 @@ export const importStudentsFromExcel = async (classroomId: string, file: File): 
     return response.data;
 };
 
+export interface ClassroomSession {
+    id: string;
+    title: string;
+    description?: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    instructorId: string;
+    classroomId: string;
+}
+
+export const getClassroomSessions = async (classroomId: string): Promise<ClassroomSession[]> => {
+    const response = await axiosInstance.get<{
+        statusCode: number;
+        message: string;
+        data: ClassroomSession[];
+    }>(`/private/v1/classrooms/${classroomId}/sessions`);
+    return response.data.data;
+};
+
 // System Schedule Types
 export interface SystemScheduleSession {
     sessionId: string;

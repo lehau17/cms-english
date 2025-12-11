@@ -22,6 +22,7 @@ export interface DashboardNotification {
   title: string
   message?: string | null
   type: DashboardNotificationType
+  data?: string | null
   createdAt: string
 }
 

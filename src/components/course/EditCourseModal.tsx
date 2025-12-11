@@ -1,10 +1,11 @@
 import { getCourseById, updateCourse } from '@/apis/course';
 import { useTeachers } from '@/hooks/useTeacher';
 import { Course } from '@/interface/course.interface';
+import { formatVNDAlways } from '@/utils/currency.utils';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { BarChart, Cancel, CheckCircle, Language, LibraryBooks, Lock, MenuBook, Person } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, BookOpen, Edit, GripVertical, Plus, Save, Trash2 } from 'lucide-react';
-import { CheckCircle, Cancel, LibraryBooks, BarChart, MenuBook, Lock, Language, Person } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import * as yup from 'yup';
@@ -281,7 +282,7 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
                       <div className="text-gray-600">Đã xuất bản</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-orange-600 text-lg">${watch('price') || 0}</div>
+                      <div className="font-semibold text-orange-600 text-lg">{formatVNDAlways(watch('price'))}</div>
                       <div className="text-gray-600">Giá</div>
                     </div>
                   </div>
@@ -316,7 +317,7 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField name="price" label="Price ($)" type="number" placeholder="0" />
+                      <FormField name="price" label="Giá (VND)" type="number" placeholder="0" />
                       <FormField name="difficulty" label="Course Difficulty" placeholder="beginner" />
                     </div>
 

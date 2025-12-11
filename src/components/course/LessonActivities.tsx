@@ -1,9 +1,31 @@
-import { uploadFile } from "@/apis/upload";
+import { createFreeAudio } from '@/apis/googleTranslate';
+import {
+  ConversationDialogEditor,
+  FlashcardsEditor,
+  ListeningQuestionsEditor,
+  PronunciationPhrasesEditor,
+  StringArrayField,
+  UploadField,
+  VocabItemsEditor
+} from "@/components/shared/activity-editors";
 import type { Activity } from "@/interface/activity.interface";
 import { CreateCourseDto } from "@/interface/course.interface";
 import { ActivityType, DifficultyLevel } from "@/interface/enums";
-import { useMutation } from "@tanstack/react-query";
-import { Brain, Image, Music, Plus, Sparkles, Trash2, Wand2, X } from "lucide-react";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Tab,
+  Tabs,
+  TextField,
+  Typography
+} from '@mui/material';
+import { useMutation } from '@tanstack/react-query';
+import { Brain, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   type Control,
@@ -16,9 +38,7 @@ import {
 } from "react-hook-form";
 import toast from "react-hot-toast";
 import { AIActivityGeneratorModal } from "./AIActivityGeneratorModal";
-import { useGenerateAudio } from "@/hooks/useGenerateAudio";
 const asPath = (s: string) => s as Path<CreateCourseDto>;
-
 
 const activityTypes = Object.values(ActivityType).map(type => ({
   value: type,
@@ -29,173 +49,184 @@ const activityTypes = Object.values(ActivityType).map(type => ({
 
 const difficultyOptions = Object.values(DifficultyLevel).map(level => ({ value: level, label: level.charAt(0).toUpperCase() + level.slice(1), }));
 
-// UploadField component tái sử dụng cho image và audio
-function UploadField({
-  name,
-  label,
-  accept,
-  placeholder,
+// Listening Activity Content Component with Text-to-Audio
+function ListeningActivityContent({
+  basePath,
+  lessonIndex,
+  activityIndex,
+  control,
   register,
   setValue,
   watch,
-  type = 'image'
 }: {
-  name: string;
-  label: string;
-  accept: string;
-  placeholder: string;
-  register: UseFormRegister<any>;
-  setValue: UseFormSetValue<any>;
-  watch: UseFormWatch<any>;
-  type?: 'image' | 'audio';
+  basePath: string;
+  lessonIndex: number;
+  activityIndex: number;
+  control: Control<CreateCourseDto>;
+  register: UseFormRegister<CreateCourseDto>;
+  setValue: UseFormSetValue<CreateCourseDto>;
+  watch: UseFormWatch<CreateCourseDto>;
 }) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [audioMode, setAudioMode] = useState<'upload' | 'text'>('upload');
+  const [textInput, setTextInput] = useState('');
+  const [language, setLanguage] = useState('en');
 
-  // Sử dụng watch với callback để theo dõi giá trị
-  const rawValue = watch(name);
+  const audioUrl = watch(`${basePath}.content.audioUrl` as any);
 
-  // Normalize value - handle both string and object {url, filePath} formats from AI-generated activities
-  const currentValue = typeof rawValue === 'object' && rawValue?.url
-    ? rawValue.url
-    : (typeof rawValue === 'string' ? rawValue : '');
-
-  const uploadMutation = useMutation({
-    mutationFn: uploadFile,
+  const generateAudioMutation = useMutation({
+    mutationFn: createFreeAudio,
     onSuccess: (data) => {
-      setValue(name, data.data.url, { shouldDirty: true, shouldValidate: true });
-      toast.success(`${type === 'image' ? 'Image' : 'Audio'} uploaded successfully!`);
+      setValue(`${basePath}.content.audioUrl` as any, data.url, { shouldDirty: true, shouldValidate: true });
+      toast.success('Audio generated successfully!');
     },
-    onError: (error) => {
-      console.error(`Upload error for ${name}:`, error);
-      toast.error(`Failed to upload ${type}`);
-    }
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to generate audio';
+      toast.error(errorMessage);
+    },
   });
 
-  const handleFileSelect = (file: File) => {
-    if (file && file.type.startsWith(type === 'image' ? 'image/' : 'audio/')) {
-      uploadMutation.mutate(file);
-    } else {
-      toast.error(`Please upload a valid ${type} file`);
+  const handleGenerateAudio = () => {
+    if (!textInput.trim()) {
+      toast.error('Please enter text to generate audio');
+      return;
     }
+
+    generateAudioMutation.mutate({
+      text: textInput.trim(),
+      language: language,
+    });
   };
 
+  const handleModeChange = (_event: React.SyntheticEvent, newValue: 'upload' | 'text') => {
+    setAudioMode(newValue);
+  };
+
+  const supportedLanguages = [
+    { code: 'en', name: 'English' },
+    { code: 'vi', name: 'Vietnamese' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'it', name: 'Italian' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'ru', name: 'Russian' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'zh', name: 'Chinese' },
+    { code: 'ar', name: 'Arabic' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'th', name: 'Thai' },
+  ];
+
   return (
-    <div className="space-y-2">
-      <label className="block text-xs font-medium text-gray-600">{label}</label>
-      <div
-        className={`relative border border-dashed rounded p-4 text-center transition-all duration-200 ${uploadMutation.isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-          } ${isDragOver
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
-          } ${currentValue ? 'bg-gray-50' : 'bg-white'}`}
-        onClick={() => {
-          if (!currentValue && fileInputRef.current) {
-            fileInputRef.current.click();
-          }
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragOver(true);
-        }}
-        onDragLeave={() => setIsDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsDragOver(false);
-          const files = e.dataTransfer.files;
-          if (files.length > 0 && files[0]) {
-            handleFileSelect(files[0]);
-          }
-        }}
-      >
-        {currentValue ? (
-          <div className="space-y-2">
-            <div className="flex items-center justify-center">
-              {type === 'image' ? (
-                <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
-                  <img
-                    src={currentValue}
-                    alt="Uploaded image"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      console.error('Image failed to load:', currentValue);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-                    <div className="opacity-0 hover:opacity-100 transition-opacity duration-200">
-                      <Image className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full bg-blue-50 rounded-lg p-3">
-                  <audio
-                    controls
-                    className="w-full h-8"
-                    src={currentValue}
-                    onError={(e) => {
-                      console.error('Audio failed to load:', currentValue);
-                    }}
-                  >
+    <>
+      <div className="mb-4">
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs value={audioMode} onChange={handleModeChange} aria-label="audio input mode">
+            <Tab label="Upload File" value="upload" />
+            <Tab label="Text to Audio" value="text" />
+          </Tabs>
+        </Box>
+
+        {audioMode === 'upload' ? (
+          <UploadField
+            key={`listening-audio-${lessonIndex}-${activityIndex}`}
+            name={`${basePath}.content.audioUrl`}
+            label="Audio File"
+            accept="audio/*"
+            placeholder="Drag & drop or click to upload audio"
+            register={register}
+            setValue={setValue}
+            watch={watch}
+            type="audio"
+          />
+        ) : (
+          <div className="space-y-4">
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Text to Convert"
+              placeholder="Enter the text you want to convert to audio..."
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              disabled={generateAudioMutation.isPending}
+              helperText={`${textInput.length} characters`}
+            />
+
+            <FormControl fullWidth>
+              <InputLabel>Language</InputLabel>
+              <Select
+                value={language}
+                label="Language"
+                onChange={(e) => setLanguage(e.target.value)}
+                disabled={generateAudioMutation.isPending}
+              >
+                {supportedLanguages.map((lang) => (
+                  <MenuItem key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Button
+              variant="contained"
+              onClick={handleGenerateAudio}
+              disabled={generateAudioMutation.isPending || !textInput.trim()}
+              startIcon={generateAudioMutation.isPending ? <CircularProgress size={16} /> : null}
+              fullWidth
+            >
+              {generateAudioMutation.isPending ? 'Generating Audio...' : 'Generate Audio'}
+            </Button>
+
+            {generateAudioMutation.isPending && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+                <CircularProgress size={16} />
+                <Typography variant="body2">Generating audio, please wait...</Typography>
+              </Box>
+            )}
+
+            {audioUrl && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                  Generated Audio:
+                </Typography>
+                <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1 }}>
+                  <audio controls className="w-full" src={audioUrl}>
                     Your browser does not support the audio element.
                   </audio>
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-gray-600 truncate" title={currentValue}>
-              {currentValue.split('/').pop() || 'File uploaded'}
-            </p>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setValue(name, '', { shouldDirty: true, shouldValidate: true });
-              }}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow-sm"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-center">
-              {type === 'image' ? (
-                <Image className={`w-6 h-6 ${isDragOver ? 'text-blue-600' : 'text-gray-400'}`} />
-              ) : (
-                <Music className={`w-6 h-6 ${isDragOver ? 'text-blue-600' : 'text-gray-400'}`} />
-              )}
-            </div>
-            <p className="text-xs text-gray-500">{placeholder}</p>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    {audioUrl}
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    onClick={() => {
+                      setValue(`${basePath}.content.audioUrl` as any, '', { shouldDirty: true, shouldValidate: true });
+                      setTextInput('');
+                    }}
+                    sx={{ mt: 1 }}
+                  >
+                    Clear
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </div>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={accept}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              handleFileSelect(file);
-            }
-            // Reset input để có thể chọn cùng file lần nữa
-            e.target.value = '';
-          }}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          style={{ pointerEvents: currentValue ? 'none' : 'auto' }}
-        />
       </div>
-      {uploadMutation.isPending && (
-        <div className="text-center">
-          <div className="inline-flex items-center text-blue-600 text-xs">
-            <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600 mr-1"></div>
-            Uploading...
-          </div>
-        </div>
-      )}
-    </div>
+      <ListeningQuestionsEditor
+        basePath={`${basePath}.content.questions`}
+        control={control}
+        register={register}
+        watch={watch}
+      />
+    </>
   );
 }
+
 const defaultContentByType = (type: ActivityType) => {
   switch (type) {
     case ActivityType.QUIZ:
@@ -239,500 +270,6 @@ const defaultContentByType = (type: ActivityType) => {
       return {};
   }
 };
-
-
-function VocabItemsEditor({
-  basePath, control, register, setValue, watch
-}: {
-  basePath: string;
-  control: Control<CreateCourseDto>;
-  register: UseFormRegister<any>;
-  setValue: UseFormSetValue<any>;
-  watch: UseFormWatch<any>;
-}) {
-  const name = `${basePath}.items`;
-  const { fields, append, remove } = useFieldArray({ control, name: name as any });
-
-  return (
-    <div className="space-y-3">
-      <label className="block text-xs font-medium text-gray-600">Vocabulary Items *</label>
-
-      {fields.map((f, i) => (
-        <div key={f.id} className="p-3 border rounded-lg bg-white space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="font-semibold text-sm text-purple-800">Item #{i + 1}</div>
-            <button type="button" onClick={() => remove(i)} className="text-red-500">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-3">
-            <input
-              {...register(`${name}.${i}.word` as const)}
-              className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Word *"
-            />
-            <input
-              {...register(`${name}.${i}.definition` as const)}
-              className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Definition *"
-            />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-3">
-            <UploadField
-              key={`image-${f.id}`}
-              name={`${name}.${i}.imageUrl`}
-              label="Image"
-              accept="image/*"
-              placeholder="Drag & drop or click to upload image"
-              register={register}
-              setValue={setValue}
-              watch={watch}
-              type="image"
-            />
-            <UploadField
-              key={`audio-${f.id}`}
-              name={`${name}.${i}.audioUrl`}
-              label="Audio"
-              accept="audio/*"
-              placeholder="Drag & drop or click to upload audio"
-              register={register}
-              setValue={setValue}
-              watch={watch}
-              type="audio"
-            />
-          </div>
-
-          {/* examples: string[] */}
-          <StringArrayField
-            name={`${name}.${i}.examples`}
-            control={control}
-            label="Examples"
-            placeholder="Example sentence"
-            register={register}
-          />
-        </div>
-      ))}
-
-      <button
-        type="button"
-        onClick={() => append({ word: "", definition: "", examples: [""], imageUrl: "", audioUrl: "" })}
-        className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
-      >
-        + Add vocab item
-      </button>
-    </div>
-  );
-}
-
-
-function PronunciationPhrasesEditor({
-  basePath, control, register, setValue, watch
-}: {
-  basePath: string;
-  control: Control<CreateCourseDto>;
-  register: UseFormRegister<any>;
-  setValue: UseFormSetValue<any>;
-  watch: UseFormWatch<any>;
-}) {
-  const name = `${basePath}.phrases`;
-  const { fields, append, remove } = useFieldArray({ control, name: name as any });
-  const generateAudio = useGenerateAudio();
-
-  const handleGenerateAudio = async (index: number) => {
-    const text = watch(`${name}.${index}.text`);
-    if (!text || text.trim() === '') {
-      toast.error('Vui lòng nhập phrase text trước');
-      return;
-    }
-
-    try {
-      const result = await generateAudio.mutateAsync({ text, language: 'en' });
-      setValue(`${name}.${index}.sampleUrl`, result.url, { shouldDirty: true });
-    } catch (error) {
-      // Error is handled by useGenerateAudio hook
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <label className="block text-xs font-medium text-gray-600">Phrases to Practice *</label>
-
-      {fields.map((f, i) => (
-        <div key={f.id} className="p-3 border rounded-lg bg-white space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="font-semibold text-sm text-purple-800">Phrase #{i + 1}</div>
-            <button type="button" onClick={() => remove(i)} className="text-red-500">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          <input
-            {...register(`${name}.${i}.text` as const)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            placeholder="Phrase text (e.g., 'I see a lion.')"
-          />
-
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <UploadField
-                name={`${name}.${i}.sampleUrl`}
-                label="Sample Audio"
-                accept="audio/*"
-                placeholder="Upload or generate audio"
-                register={register}
-                setValue={setValue}
-                watch={watch}
-                type="audio"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => handleGenerateAudio(i)}
-              disabled={generateAudio.isPending}
-              className="px-3 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 disabled:opacity-50 flex items-center gap-1 text-sm whitespace-nowrap"
-            >
-              <Wand2 className="w-4 h-4" />
-              {generateAudio.isPending ? 'Đang tạo...' : 'Gen AI'}
-            </button>
-          </div>
-        </div>
-      ))}
-
-      <button
-        type="button"
-        onClick={() => append({ text: "", sampleUrl: "" })}
-        className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
-      >
-        + Add phrase
-      </button>
-    </div>
-  );
-}
-
-
-function StringArrayField({
-  name, control, label, placeholder = "Value", register, errors
-}: {
-  name: string;
-  control: Control<CreateCourseDto>;
-  label: string;
-  placeholder?: string;
-  register: UseFormRegister<any>;
-  errors?: any;
-}) {
-  const { fields, append, remove } = useFieldArray({ control, name: name as any });
-
-  // Parse error path để lấy error message
-  const getFieldError = (index: number) => {
-    const parts = name.split('.');
-    let errorObj = errors;
-    for (const part of parts) {
-      if (errorObj?.[part]) {
-        errorObj = errorObj[part];
-      } else {
-        return null;
-      }
-    }
-    return errorObj?.[index]?.message;
-  };
-
-  // Lấy error chung cho toàn bộ array
-  const getArrayError = () => {
-    const parts = name.split('.');
-    let errorObj = errors;
-    for (const part of parts) {
-      if (errorObj?.[part]) {
-        errorObj = errorObj[part];
-      } else {
-        return null;
-      }
-    }
-    return errorObj?.message || (Array.isArray(errorObj) ? null : errorObj?.message);
-  };
-
-  const arrayError = getArrayError();
-
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs font-medium text-gray-600">{label}</label>
-      {fields.map((f, i) => {
-        const fieldError = getFieldError(i);
-        return (
-          <div key={f.id} className="space-y-1">
-            <div className="flex items-center gap-2">
-              <input
-                {...register(`${name}.${i}` as const)}
-                className={`w-full px-3 py-2 text-sm border rounded focus:ring-1 transition-colors ${fieldError
-                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  }`}
-                placeholder={placeholder}
-              />
-              <button type="button" onClick={() => remove(i)} className="text-red-500 hover:text-red-700">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-            {fieldError && (
-              <p className="text-xs text-red-600">{fieldError}</p>
-            )}
-          </div>
-        );
-      })}
-      {arrayError && (
-        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
-          {arrayError}
-        </p>
-      )}
-      <button
-        type="button"
-        onClick={() => append("")}
-        className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
-      >
-        + Add
-      </button>
-    </div>
-  );
-}
-
-
-// ====== Biên tập options + correctIndex cho các dạng trắc nghiệm ======
-function OptionsEditor({
-  basePath,
-  control,
-  register,
-  showExplanation = false,
-}: {
-  basePath: string; // ví dụ "lessons.0.activities.1.content"
-  control: Control<CreateCourseDto>;
-  register: UseFormRegister<any>;
-  showExplanation?: boolean;
-}) {
-  const name = `${basePath}.options`;
-  const { fields, append, remove } = useFieldArray({ control, name: name as any });
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs font-medium text-gray-600">Options *</label>
-      <div className="space-y-2">
-        {fields.map((f, i) => (
-          <div key={f.id} className="flex items-center gap-2">
-            <input
-              {...register(`${name}.${i}` as const)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder={`Option #${i + 1}`}
-            />
-            <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border border-gray-300 rounded">
-              <input type="radio" value={i} {...register(`${basePath}.correctIndex` as const, { valueAsNumber: true })} />
-              Correct
-            </label>
-            <button type="button" onClick={() => remove(i)} className="text-red-500">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => append("")}
-          className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
-        >
-          + Add option
-        </button>
-        {showExplanation && (
-          <input
-            {...register(`${basePath}.explanation` as const)}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            placeholder="Explanation (optional)"
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ====== Editor cho LISTENING QUESTIONS ======
-function ListeningQuestionsEditor({
-  basePath,
-  control,
-  register,
-  watch,
-}: {
-  basePath: string;
-  control: Control<CreateCourseDto>;
-  register: UseFormRegister<any>;
-  watch: UseFormWatch<any>;
-}) {
-  const { fields, append, remove } = useFieldArray({ control, name: basePath as any });
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">Questions</label>
-        <button
-          type="button"
-          onClick={() => append({ question: "", options: ["", ""], correctIndex: 0 })}
-          className="text-purple-700 border border-purple-300 px-3 py-1 rounded text-sm hover:bg-purple-50"
-        >
-          + Add Question
-        </button>
-      </div>
-
-      {fields.map((field, questionIndex) => (
-        <div key={field.id} className="p-4 border border-gray-200 rounded-lg bg-white">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-medium text-gray-700">Question #{questionIndex + 1}</h4>
-            <button
-              type="button"
-              onClick={() => remove(questionIndex)}
-              className="text-red-500 hover:text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <input
-              {...register(`${basePath}.${questionIndex}.question` as const)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Enter your question"
-            />
-
-            <ListeningQuestionOptionsEditor
-              basePath={`${basePath}.${questionIndex}`}
-              control={control}
-              register={register}
-              watch={watch}
-            />
-          </div>
-        </div>
-      ))}
-
-      {fields.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <p className="mb-2">No questions added yet</p>
-          <button
-            type="button"
-            onClick={() => append({ question: "", options: ["", ""], correctIndex: 0 })}
-            className="text-purple-700 border border-purple-300 px-4 py-2 rounded hover:bg-purple-50"
-          >
-            Add First Question
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ====== Editor cho LISTENING QUESTION OPTIONS ======
-function ListeningQuestionOptionsEditor({
-  basePath,
-  control,
-  register,
-  watch,
-}: {
-  basePath: string;
-  control: Control<CreateCourseDto>;
-  register: UseFormRegister<any>;
-  watch: UseFormWatch<any>;
-}) {
-  const optionsName = `${basePath}.options`;
-  const { fields, append, remove } = useFieldArray({ control, name: optionsName as any });
-  const currentCorrectIndex = watch(`${basePath}.correctIndex`);
-
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs font-medium text-gray-600">Answer Options</label>
-      <div className="space-y-2">
-        {fields.map((field, optionIndex) => (
-          <div key={field.id} className="flex items-center gap-2">
-            <input
-              {...register(`${optionsName}.${optionIndex}` as const)}
-              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder={`Option ${optionIndex + 1}`}
-            />
-            <label className="text-xs inline-flex items-center gap-1 px-2 py-1 border border-gray-300 rounded whitespace-nowrap">
-              <input
-                type="radio"
-                value={optionIndex}
-                checked={currentCorrectIndex === optionIndex}
-                {...register(`${basePath}.correctIndex` as const, { valueAsNumber: true })}
-              />
-              Correct
-            </label>
-            <button
-              type="button"
-              onClick={() => remove(optionIndex)}
-              className="text-red-500 hover:text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => append("")}
-        className="text-gray-700 border border-gray-300 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
-      >
-        + Add Option
-      </button>
-    </div>
-  );
-}
-
-// ====== Editor cho FLASHCARD ======
-function FlashcardsEditor({
-  basePath,
-  control,
-  register,
-  setValue,
-  watch,
-}: {
-  basePath: string;
-  control: Control<CreateCourseDto>;
-  register: UseFormRegister<any>;
-  setValue: UseFormSetValue<any>;
-  watch: UseFormWatch<any>;
-}) {
-  const name = `${basePath}.cards`;
-  const { fields, append, remove } = useFieldArray({ control, name: name as any });
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs font-medium text-gray-600">Cards *</label>
-      <div className="space-y-3">
-        {fields.map((f, i) => (
-          <div key={f.id} className="grid md:grid-cols-3 gap-2">
-            <input {...register(`${name}.${i}.front` as const)} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Front *" />
-            <input {...register(`${name}.${i}.back` as const)} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Back *" />
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <UploadField
-                  key={`flashcard-image-${f.id}`}
-                  name={`${name}.${i}.imageUrl`}
-                  label=""
-                  accept="image/*"
-                  placeholder="Upload image"
-                  register={register}
-                  setValue={setValue}
-                  watch={watch}
-                  type="image"
-                />
-              </div>
-              <button type="button" onClick={() => remove(i)} className="text-red-500">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-      <button type="button" onClick={() => append({ front: "", back: "", imageUrl: "" })} className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs">
-        + Add card
-      </button>
-    </div>
-  );
-}
 
 // ====== Form theo từng ActivityType ======
 function ActivityContentFields({
@@ -790,7 +327,6 @@ function ActivityContentFields({
 
     case ActivityType.VOCAB:
       return section(
-        // ⬇️ dùng editor mới cho danh sách items
         <VocabItemsEditor
           basePath={`${basePath}.content`}
           control={control}
@@ -803,27 +339,15 @@ function ActivityContentFields({
 
     case ActivityType.LISTENING:
       return section(
-        <>
-          <div className="mb-4">
-            <UploadField
-              key={`listening-audio-${lessonIndex}-${activityIndex}`}
-              name={`${basePath}.content.audioUrl`}
-              label="Audio File"
-              accept="audio/*"
-              placeholder="Drag & drop or click to upload audio"
-              register={register}
-              setValue={setValue}
-              watch={watch}
-              type="audio"
-            />
-          </div>
-          <ListeningQuestionsEditor
-            basePath={`${basePath}.content.questions`}
-            control={control}
-            register={register}
-            watch={watch}
-          />
-        </>,
+        <ListeningActivityContent
+          basePath={basePath}
+          lessonIndex={lessonIndex}
+          activityIndex={activityIndex}
+          control={control}
+          register={register}
+          setValue={setValue}
+          watch={watch}
+        />,
         "Listening"
       );
 
@@ -954,7 +478,6 @@ function ActivityContentFields({
       return section(
         <>
           <input {...register(`${basePath}.content.scenario` as const)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Scenario *" />
-          {/* initialDialog: array of {role,text} */}
           <ConversationDialogEditor basePath={`${basePath}.content.initialDialog`} control={control} register={register} />
           <StringArrayField name={`${basePath}.content.suggestions`} control={control} label="Suggestions" placeholder="Suggestion" register={register} />
         </>,
@@ -1090,41 +613,6 @@ function ActivityContentFields({
       );
       return null;
   }
-}
-
-// Editor cho initialDialog (role + text)
-function ConversationDialogEditor({
-  basePath,
-  control,
-  register,
-}: {
-  basePath: string;
-  control: Control<CreateCourseDto>;
-  register: UseFormRegister<any>;
-}) {
-  const { fields, append, remove } = useFieldArray({ control, name: basePath as any });
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs font-medium text-gray-600">Initial Dialog</label>
-      {fields.map((f, i) => (
-        <div key={f.id} className="grid md:grid-cols-3 gap-2">
-          <select {...register(`${basePath}.${i}.role` as const)} className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-            <option value="assistant">assistant</option>
-            <option value="user">user</option>
-          </select>
-          <input {...register(`${basePath}.${i}.text` as const)} className="md:col-span-2 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Text *" />
-          <div className="md:col-span-3 flex justify-end">
-            <button type="button" onClick={() => remove(i)} className="text-red-500">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      ))}
-      <button type="button" onClick={() => append({ role: "assistant", text: "" })} className="text-purple-700 border border-purple-300 px-2 py-1 rounded text-xs">
-        + Add message
-      </button>
-    </div>
-  );
 }
 
 // ====== COMPONENT CHÍNH: LessonActivities ======

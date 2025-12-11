@@ -2,9 +2,9 @@ import { createCourse } from '@/apis/course';
 import { useTeachers } from '@/hooks/useTeacher';
 import { Course } from '@/interface/course.interface';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { BarChart, CheckCircle, LibraryBooks, Lock, MenuBook, Person, TrackChanges } from '@mui/icons-material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, GripVertical, Plus, Trash2 } from 'lucide-react';
-import { LibraryBooks, MenuBook, Person, CheckCircle, BarChart, Lock, TrackChanges } from '@mui/icons-material';
 import { useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import * as yup from 'yup';
@@ -204,7 +204,7 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({ isOpen, onClose }
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField name="price" label="Giá ($)" type="number" placeholder="0" />
+                      <FormField name="price" label="Giá (VND)" type="number" placeholder="0" />
                       <FormField name="difficulty" label="Độ khó" placeholder="beginner" />
                     </div>
 

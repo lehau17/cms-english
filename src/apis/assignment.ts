@@ -90,6 +90,58 @@ export interface CloneAssignmentPayload {
     customContent?: any;
 }
 
+export interface QueryBankAssignmentsParams {
+    page?: number;
+    limit?: number;
+    activityType?: string;
+    difficulty?: string;
+    search?: string;
+    teacherId?: string;
+}
+
+export interface BankAssignmentsResponse {
+    assignments: Assignment[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+export interface QueryBankActivitiesParams {
+    page?: number;
+    limit?: number;
+    type?: string;
+    difficulty?: string;
+    search?: string;
+    teacherId?: string;
+}
+
+export interface BankActivity {
+    id: string;
+    type: string;
+    title: string;
+    instructions?: string;
+    content: Record<string, any>;
+    points: number;
+    difficulty?: string;
+    hints?: string[];
+    assignment: {
+        id: string;
+        title: string;
+        teacherId: string;
+        teacher: {
+            id: string;
+            displayName: string | null;
+        };
+    };
+}
+
+export interface BankActivitiesResponse {
+    activities: BankActivity[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
 export interface AssignmentsResponse {
     assignments: Assignment[];
     total: number;
@@ -115,6 +167,21 @@ export const assignmentApi = {
     // Get assignments by classroom
     getClassroomAssignments: async (classroomId: string, params?: QueryAssignmentsDto) => {
         const response = await axiosInstance.get(`/private/v1/assignments/classroom/${classroomId}`, { params });
+        return response.data;
+    },
+
+    // Get submissions for an assignment
+    getAssignmentSubmissions: async (assignmentId: string) => {
+        const response = await axiosInstance.get(`/private/v1/assignments/${assignmentId}/submissions`);
+        return response.data;
+    },
+
+    // Grade a submission
+    gradeSubmission: async (assignmentId: string, submissionId: string, data: { grade: number; feedback?: string }) => {
+        const response = await axiosInstance.patch(
+            `/private/v1/assignments/${assignmentId}/submissions/${submissionId}/grade`,
+            data
+        );
         return response.data;
     },
 
@@ -212,6 +279,18 @@ export const assignmentApi = {
         const response = await axiosInstance.patch(`/private/v1/assignments/submissions/${submissionId}/grade`, data);
         return response.data;
     },
+
+    // Get bank assignments (all assignments)
+    getBankAssignments: async (params?: QueryBankAssignmentsParams) => {
+        const response = await axiosInstance.get('/private/v1/assignments/bank', { params });
+        return response.data?.data || response.data
+    },
+
+    // Get bank activities (all activities independently)
+    getBankActivities: async (params?: QueryBankActivitiesParams) => {
+        const response = await axiosInstance.get('/private/v1/assignments/bank/activities', { params });
+        return response.data?.data || response.data
+    },
 };
 
 // Utility functions
@@ -240,6 +319,21 @@ export const downloadAssignmentPdf = async (assignmentId: string, assignmentTitl
 
 // ==================== SUBMISSION GRADING ====================
 
+export interface ActivityWithAnswer {
+    id: string;
+    type: string;
+    title: string;
+    points: number;
+    content: any;
+    studentAnswer: any;
+    correctAnswer?: any;
+    isAutoGraded?: boolean;
+    isAIGradable?: boolean;
+    requiresManualGrading?: boolean;
+    calculatedScore?: number | null;
+    classification?: 'auto' | 'ai' | 'manual';
+}
+
 export interface SubmissionDetail {
     id: string;
     assignmentId: string;
@@ -249,6 +343,9 @@ export interface SubmissionDetail {
     feedback: string | null;
     gradedAt: string | null;
     gradedById: string | null;
+    aiScore: number | null;
+    aiFeedback: string | null;
+    aiGradedAt: string | null;
     answers: any; // JSON containing student's answers
     timeSpent: number | null;
     attemptCount: number;
@@ -266,6 +363,7 @@ export interface SubmissionDetail {
         title: string;
         description: string | null;
         totalPoints: number;
+        activities?: ActivityWithAnswer[];
         classroom: {
             id: string;
             name: string;
@@ -303,6 +401,24 @@ export const gradeSubmission = async (
         message: string;
         data: SubmissionDetail;
     }>(`/private/v1/assignments/assignment-submissions/${submissionId}/grade`, payload);
+    return response.data.data;
+};
+
+export interface GradeSubmissionDetailedPayload {
+    activityScores: Record<string, number>;
+    feedback?: string;
+    acceptAIScores?: boolean;
+}
+
+export const gradeSubmissionDetailed = async (
+    submissionId: string,
+    payload: GradeSubmissionDetailedPayload
+): Promise<SubmissionDetail> => {
+    const response = await axiosInstance.patch<{
+        statusCode: number;
+        message: string;
+        data: SubmissionDetail;
+    }>(`/private/v1/assignments/assignment-submissions/${submissionId}/grade-detailed`, payload);
     return response.data.data;
 };
 
