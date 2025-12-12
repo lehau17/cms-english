@@ -172,8 +172,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         {NAV_ITEMS.map((item, index) => {
           // Check if it's a group
           if ('children' in item && item.children) {
-            // Filter group based on user role
-            if (item.roles && user?.role && !item.roles.includes(user.role)) {
+            // Calculate visible children based on current user role
+            const visibleChildren = item.children.filter(child =>
+              !child.roles || (user?.role && child.roles.includes(user.role))
+            );
+
+            // Hide group if no children are accessible to current user
+            if (visibleChildren.length === 0) {
               return null;
             }
 
@@ -193,9 +198,29 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               }));
             };
 
-            // Don't show group if collapsed
+            // Show group icon in collapsed mode with tooltip
             if (collapsed) {
-              return null;
+              return (
+                <Tooltip key={groupKey} title={item.label} placement="right">
+                  <ListItemButton
+                    onClick={handleToggleGroup}
+                    sx={{
+                      mx: 1,
+                      mb: 0.5,
+                      borderRadius: 1.5,
+                      color: hasActiveChild ? "primary.main" : "text.primary",
+                      bgcolor: "transparent",
+                      "&:hover": { bgcolor: "action.hover" },
+                      justifyContent: "center",
+                      px: 1,
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 0, color: "inherit" }}>
+                      {item.icon}
+                    </ListItemIcon>
+                  </ListItemButton>
+                </Tooltip>
+              );
             }
 
             return (
