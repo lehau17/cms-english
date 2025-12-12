@@ -48,6 +48,14 @@ import TeacherPage from "./pages/TeacherPage";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage";
 import VocabularyDetailPage from "./pages/VocabularyDetailPage";
 import VocabularyListPage from "./pages/VocabularyListPage";
+// Learning Path Pages
+import { LearningPathList } from "./pages/LearningPaths/LearningPathList";
+import { LearningPathCreate } from "./pages/LearningPaths/LearningPathCreate";
+import { LearningPathDetail } from "./pages/LearningPaths/LearningPathDetail";
+import { LearningPathAnalytics } from "./pages/LearningPaths/LearningPathAnalytics";
+// Prompt Template Pages
+import { PromptTemplateList } from "./pages/PromptTemplates/PromptTemplateList";
+import { PromptTemplateEditor } from "./pages/PromptTemplates/PromptTemplateEditor";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -103,6 +111,16 @@ const router = createBrowserRouter([
           { path: "/api-report", element: <ApiReportPage /> },
           { path: "/settings", element: <SettingsPage /> },
           { path: "/media", element: <MediaLibraryPage /> },
+          // Learning Paths
+          { path: "/learning-paths", element: <LearningPathList /> },
+          { path: "/learning-paths/create", element: <LearningPathCreate /> },
+          { path: "/learning-paths/:id", element: <LearningPathDetail /> },
+          { path: "/learning-paths/:id/edit", element: <LearningPathCreate /> },
+          { path: "/learning-paths/:id/analytics", element: <LearningPathAnalytics /> },
+          // Prompt Templates
+          { path: "/prompt-templates", element: <PromptTemplateList /> },
+          { path: "/prompt-templates/create", element: <PromptTemplateEditor /> },
+          { path: "/prompt-templates/:id/edit", element: <PromptTemplateEditor /> },
           // { path: "/google-translate-demo", element: <GoogleTranslateDemo /> },
         ],
       },
