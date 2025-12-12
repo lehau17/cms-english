@@ -88,11 +88,11 @@ export const usePromptTemplates = (params?: any) => {
   });
 };
 
-export const usePromptTemplate = (id: string) => {
+export const usePromptTemplate = (id: string, options?: { enabled?: boolean }) => {
   return useQuery<ApiResponse<PromptTemplate>, Error>({
     queryKey: ['prompt-template', id],
     queryFn: () => getPromptTemplateById(id),
-    enabled: !!id,
+    enabled: options?.enabled !== undefined ? options.enabled && !!id : !!id,
   });
 };
 

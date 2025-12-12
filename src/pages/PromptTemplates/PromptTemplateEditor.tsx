@@ -195,7 +195,9 @@ export const PromptTemplateEditor: React.FC = () => {
     let preview = currentPrompt;
     currentVariables.forEach((variable) => {
       const sampleValue = `[Sample: ${variable.replace(/[{}]/g, '')}]`;
-      preview = preview.replace(new RegExp(variable.replace(/[{}]/g, '\\$&'), 'g'), sampleValue);
+      // Escape all regex special characters to prevent injection
+      const escapedVariable = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      preview = preview.replace(new RegExp(escapedVariable, 'g'), sampleValue);
     });
     return preview;
   };
