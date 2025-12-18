@@ -160,7 +160,7 @@ export default function AssignmentPage() {
                 toast('Không thể hủy xuất bản bài tập qua giao diện này');
                 return;
             } else {
-                await assignmentApi.publishAssignment(assignment.id);
+                await assignmentApi.setAssignmentPublish(assignment.id, true);
                 toast.success('Xuất bản bài tập thành công');
                 loadAssignments();
             }
@@ -174,7 +174,16 @@ export default function AssignmentPage() {
     const handleDownloadPdf = async (assignment: Assignment) => {
         try {
             setDownloading(assignment.id);
-            await downloadAssignmentPdf(assignment.id, assignment.title);
+            const blob = await downloadAssignmentPdf(assignment.id);
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${assignment.title || 'assignment'}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
             toast.success('Tải PDF thành công');
         } catch (err: any) {
             console.error('Error downloading PDF:', err);
@@ -319,9 +328,8 @@ export default function AssignmentPage() {
             color: 'warning',
             onClick: async (assignment) => {
                 try {
-                    const response = await assignmentApi.getAssignmentById(assignment.id);
-                    if (response.data) {
-                        const assignmentData = response.data;
+                    const assignmentData = await assignmentApi.getAssignmentById(assignment.id);
+                    if (assignmentData) {
                         const formValues: AssignmentFormValues = {
                             title: assignmentData.title,
                             description: assignmentData.description || '',

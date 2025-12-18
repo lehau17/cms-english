@@ -26,13 +26,15 @@ export const ChatList: React.FC<ChatListProps> = ({ chatHistory, streaming, onSe
         <ChatMessageItem key={chat.id} chat={chat} />
       ))}
 
-      {/* Streaming Message */}
-      <StreamingMessage
-        pendingMessage={pendingMessage}
-        response={response}
-        charts={charts}
-        isStreaming={isStreaming}
-      />
+      {/* Streaming Message - Only render when actively streaming to prevent duplication */}
+      {pendingMessage && isStreaming && (
+        <StreamingMessage
+          pendingMessage={pendingMessage}
+          response={response}
+          charts={charts}
+          isStreaming={isStreaming}
+        />
+      )}
     </div>
   );
 };

@@ -27,14 +27,14 @@ const RegistrationTrendWidget: React.FC = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return <Skeleton variant="rectangular" width="100%" height={120} sx={{ borderRadius: 1 }} />;
+      return <Skeleton variant="rectangular" width="100%" height={320} sx={{ borderRadius: 1 }} />;
     }
 
     if (isError || !data || data.length === 0) {
       return (
         <Box
           sx={{
-            height: 120,
+            height: 320,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -42,7 +42,7 @@ const RegistrationTrendWidget: React.FC = () => {
             borderRadius: 1,
           }}
         >
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="caption" color="text.secondary">
             Chưa có dữ liệu
           </Typography>
         </Box>
@@ -50,48 +50,43 @@ const RegistrationTrendWidget: React.FC = () => {
     }
 
     return (
-      <Box sx={{ height: 120 }}>
+      <Box sx={{ height: 320 }}>
         <LineChartWrapper
           data={data}
           xAxisDataKey="date"
           lines={[{ dataKey: "count", name: "Đăng ký", color: chartColors.secondary }]}
-          height={120}
+          height={320}
         />
       </Box>
     );
   };
 
   return (
-    <Card>
+    <Card sx={{ height: "100%" }}>
       <CardContent sx={{ p: 2.5 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1.5 }}>
-          <Box>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+          <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="subtitle1" fontWeight={600}>
               Đăng ký mới
             </Typography>
             {!isLoading && totalRegistrations > 0 && (
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-                <Typography variant="h5" fontWeight={700} color="secondary.main">
-                  {totalRegistrations}
-                </Typography>
-                <Chip
-                  icon={<TrendingUp sx={{ fontSize: 12 }} />}
-                  label="7 ngày"
-                  size="small"
-                  variant="outlined"
-                  sx={{ height: 20, fontSize: "0.65rem" }}
-                />
-              </Stack>
+              <Chip
+                icon={<TrendingUp sx={{ fontSize: 10 }} />}
+                label={`${totalRegistrations} (7 ngày)`}
+                size="small"
+                color="secondary"
+                sx={{ height: 20, fontSize: "0.7rem" }}
+              />
             )}
-          </Box>
+          </Stack>
           <Avatar
             sx={{
               bgcolor: alpha(theme.palette.secondary.main, 0.1),
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
             }}
           >
-            <PersonAdd sx={{ fontSize: 18, color: "secondary.main" }} />
+            <PersonAdd sx={{ fontSize: 16, color: "secondary.main" }} />
           </Avatar>
         </Stack>
         {renderContent()}

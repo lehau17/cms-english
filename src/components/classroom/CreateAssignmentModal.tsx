@@ -12,11 +12,12 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
+
 import {
   assignmentApi,
-  type Assignment,
-  type AssignmentActivity,
-  type CreateAssignmentDto
+  Assignment,
+  AssignmentActivity,
+  CreateAssignmentDto,
 } from '../../apis/assignment'
 import { ActivityFormValues, AssignmentFormValues } from '../../schemas/assignment.schema'
 import { TypeSpecificFields } from '../assignment/TypeSpecificFields'
@@ -141,7 +142,7 @@ function ReuseAssignmentDialog({
   }, [open, refetch])
 
   const assignments: Assignment[] = useMemo(() => {
-    const list: Assignment[] = data?.data?.assignments || data?.assignments || []
+    const list: Assignment[] = data?.assignments || []
     if (!searchTerm.trim()) {
       return list
     }
@@ -153,7 +154,7 @@ function ReuseAssignmentDialog({
   }, [data, searchTerm])
 
   const selectedAssignment = useMemo(() => {
-    const list: Assignment[] = data?.data?.assignments || data?.assignments || []
+    const list: Assignment[] = data?.assignments || []
     return list.find((assignment) => assignment.id === selectedAssignmentId) || null
   }, [data, selectedAssignmentId])
 
@@ -458,7 +459,7 @@ export default function CreateAssignmentModal({
 
 
   const queryClient = useQueryClient()
-  const { register, control, handleSubmit, watch, setValue, reset } =
+  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } =
     useForm<AssignmentFormValues>({
       defaultValues: rest.initialValues
         ? {
@@ -494,7 +495,7 @@ export default function CreateAssignmentModal({
         replaceActivities(rest.initialValues.activities)
       }
     }
-  }, [rest.initialValues, mode, reset])
+  }, [rest.initialValues, mode, reset, replaceActivities])
 
   // Import handlers
   const handleDownloadTemplate = async () => {
@@ -529,7 +530,7 @@ export default function CreateAssignmentModal({
       const result = await assignmentApi.previewImportData(file)
       // Handle the response structure - data is nested
       const previewData = result.data || result
-      setImportPreview(previewData)
+      setImportPreview(previewData as ImportPreviewResult)
 
       if ((previewData.errors || []).length === 0) {
         toast.success('File processed successfully')
@@ -762,11 +763,7 @@ export default function CreateAssignmentModal({
     setValue('title', assignment.title || '')
     setValue('description', assignment.description ?? '')
     setValue('instructions', assignment.instructions ?? '')
-
-    const calculatedTotalPoints =
-      assignment.totalPoints ??
-      clonedActivities.reduce((sum, activity) => sum + (activity.points ?? 0), 0)
-    setValue('totalPoints', (calculatedTotalPoints ?? undefined) as any)
+    // totalPoints removed - backend will set to 100
     setValue('timeLimit', (assignment.timeLimit ?? undefined) as any)
     setValue('maxAttempts', assignment.maxAttempts ?? 1)
     setValue(

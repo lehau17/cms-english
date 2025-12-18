@@ -56,6 +56,8 @@ import { LearningPathAnalytics } from "./pages/LearningPaths/LearningPathAnalyti
 // Prompt Template Pages
 import { PromptTemplateList } from "./pages/PromptTemplates/PromptTemplateList";
 import { PromptTemplateEditor } from "./pages/PromptTemplates/PromptTemplateEditor";
+// Session Type Change Requests
+import SessionTypeChangeRequestsPage from "./pages/admin/SessionTypeChangeRequests";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -80,6 +82,7 @@ const router = createBrowserRouter([
           { path: "/parents/:parentId/schedule", element: <ParentSchedulePage /> },
           { path: "/link-requests", element: <LinkRequestsPage /> },
           { path: "/reschedule-requests", element: <RescheduleRequestsPage /> },
+          { path: "/type-change-requests", element: <SessionTypeChangeRequestsPage /> },
           { path: "/classrooms", element: <ClassroomPage /> },
           { path: "/classrooms/:id", element: <ClassroomDetailPage /> },
           { path: "/schedule", element: <SchedulePage /> },

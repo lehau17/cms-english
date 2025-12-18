@@ -7,6 +7,8 @@ export enum ClassroomStatus {
     cancelled = "cancelled"
 }
 
+export type SessionType = 'online' | 'offline' | 'hybrid';
+
 export interface Classroom {
     name: string;
     description: string;
@@ -28,6 +30,19 @@ export interface Classroom {
     _count?: { students: number };
     periodStart: Date;
     periodEnd: Date;
+}
+
+export interface ClassroomSessionExtended {
+    id: string;
+    title: string;
+    description?: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    instructorId: string;
+    classroomId: string;
+    type: SessionType;
+    meetingUrl?: string | null;
 }
 
 

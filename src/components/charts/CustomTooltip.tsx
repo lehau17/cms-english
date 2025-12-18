@@ -3,35 +3,33 @@ import { Box, Paper, Typography } from "@mui/material";
 import * as React from "react";
 import { TooltipProps } from "recharts";
 
-const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload, label }) => {
+// Use 'any' to bypass strict recharts type checking for now, as it can be inconsistent across versions
+const CustomTooltip: React.FC<TooltipProps<any, any>> = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <Paper
-        elevation={3}
-        sx={{
-          padding: "12px",
-          backgroundColor: chartStyle.tooltip.contentStyle.backgroundColor,
-          border: chartStyle.tooltip.contentStyle.border,
-          borderRadius: "8px",
-        }}
+        elevation={0}
+        sx={chartStyle.tooltip.contentStyle}
       >
         <Typography sx={chartStyle.tooltip.labelStyle}>{label}</Typography>
-        {payload.map((pld, index) => (
-          <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-            <Box
-              sx={{
-                width: 10,
-                height: 10,
-                backgroundColor: pld.color,
-                mr: 1,
-                borderRadius: "50%",
-              }}
-            />
-            <Typography sx={chartStyle.tooltip.itemStyle}>
-              {`${pld.name}: `}
-              <Typography component="span" fontWeight="bold">
-                {pld.value}
+        {payload.map((pld: any, index: number) => (
+          <Box key={index} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", minWidth: 120, mb: 0.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  backgroundColor: pld.color,
+                  mr: 1.5,
+                  borderRadius: "50%",
+                }}
+              />
+              <Typography sx={chartStyle.tooltip.itemStyle}>
+                {pld.name}
               </Typography>
+            </Box>
+            <Typography component="span" fontWeight="600" fontSize="13px" sx={{ ml: 2 }}>
+              {pld.value?.toLocaleString()}
             </Typography>
           </Box>
         ))}

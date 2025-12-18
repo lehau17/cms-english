@@ -110,12 +110,20 @@ export const streamAgentChat = async (
       try {
         let buffer = '';
         let chunkCount = 0;
+        let completeCalled = false; // Guard against duplicate onComplete calls
+
+        const safeOnComplete = () => {
+          if (!completeCalled && onComplete) {
+            completeCalled = true;
+            onComplete();
+          }
+        };
 
         while (true) {
           const { done, value } = await reader.read();
 
           if (done) {
-            if (onComplete) onComplete();
+            safeOnComplete();
             break;
           }
 
@@ -135,7 +143,7 @@ export const streamAgentChat = async (
                 const data = trimmed.substring(6);
 
                 if (data === '[DONE]') {
-                  if (onComplete) onComplete();
+                  safeOnComplete();
                   return;
                 }
 
@@ -145,7 +153,7 @@ export const streamAgentChat = async (
                   onChunk(chunk);
 
                   if (chunk.type === 'complete' || chunk.type === 'error') {
-                    if (onComplete) onComplete();
+                    safeOnComplete();
                     return;
                   }
                 } catch (err) {

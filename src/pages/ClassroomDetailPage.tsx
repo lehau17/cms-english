@@ -12,6 +12,12 @@ import StudentGradeDetailModal from '@/components/student/StudentGradeDetailModa
 import ViewStudentModal from '@/components/student/ViewStudentModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyRescheduleRequests } from '@/hooks/useRescheduleRequest';
+import { useMyTypeChangeRequests } from '@/hooks/useSessionTypeChangeRequest';
+import { useSessionTypeChange } from '@/hooks/useSessionTypeChange';
+import RequestSessionTypeChangeModal from '@/components/schedule/RequestSessionTypeChangeModal';
+import ChangeSessionTypeModal from '@/components/schedule/ChangeSessionTypeModal';
+import VideoPlayerModal from '@/components/shared/VideoPlayerModal';
+import toast from 'react-hot-toast';
 import { UserRole } from '@/interface/enum.interface';
 import { Student } from '@/interface/student.interface';
 import { getActivityIcon } from '@/utils/activityIcons';
@@ -22,6 +28,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   BookOpen,
+  Building,
   Calendar,
   CheckCircle,
   ChevronDown,
@@ -32,11 +39,14 @@ import {
   FileText,
   GraduationCap,
   Hash,
+  Layers,
   ListChecks,
   Plus,
+  RefreshCw,
   Star,
   User,
   Users,
+  Video,
   XCircle
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -60,13 +70,22 @@ const ClassroomDetailPage: React.FC = () => {
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
   const [selectedSessionForReschedule, setSelectedSessionForReschedule] = useState<{ id: string; title?: string; startTime?: Date; endTime?: Date; existingRequest?: RescheduleRequest } | null>(null);
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [selectedSessionForTypeChange, setSelectedSessionForTypeChange] = useState<{ id: string; title: string; type: 'online' | 'offline' | 'hybrid' } | null>(null);
+  const [isTypeChangeModalOpen, setIsTypeChangeModalOpen] = useState(false);
+  const [selectedSessionForAdminTypeChange, setSelectedSessionForAdminTypeChange] = useState<{ id: string; title: string; type: 'online' | 'offline' | 'hybrid'; meetingUrl?: string } | null>(null);
+  const [isAdminTypeChangeModalOpen, setIsAdminTypeChangeModalOpen] = useState(false);
   const [selectedStudentForDetails, setSelectedStudentForDetails] = useState<{
     studentId: string;
     studentName: string;
   } | null>(null);
   const [isGradeDetailModalOpen, setIsGradeDetailModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedSessionForRecording, setSelectedSessionForRecording] = useState<{ id: string; title: string; recordingUrl: string } | null>(null);
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
+
+  // Admin direct type change mutation
+  const sessionTypeChangeMutation = useSessionTypeChange();
 
   const dayOfWeekMap: Record<string, string> = {
     mon: 'Thứ 2',
@@ -133,8 +152,8 @@ const ClassroomDetailPage: React.FC = () => {
 
   // Filter exam assignments (MIDTERM_EXAM, FINAL_EXAM)
   const examAssignments = useMemo(() => {
-    if (!assignmentsData?.data?.data) return [];
-    return getExamAssignments(assignmentsData.data.data);
+    if (!assignmentsData?.data) return [];
+    return getExamAssignments(assignmentsData.data);
   }, [assignmentsData]);
 
   // Fetch all reschedule requests for teacher (to show status for all sessions)
@@ -160,6 +179,28 @@ const ClassroomDetailPage: React.FC = () => {
     });
     return map;
   }, [myRescheduleRequests]);
+
+  // Fetch all type change requests for teacher (to show status for all sessions)
+  const { data: myTypeChangeRequests } = useMyTypeChangeRequests({
+    limit: 100,
+  });
+
+  // Create map of sessionId -> type change request (prioritize pending)
+  const typeChangeRequestsMap = useMemo(() => {
+    if (!myTypeChangeRequests?.data) return new Map<string, any>();
+    const map = new Map<string, any>();
+    const sorted = [...myTypeChangeRequests.data].sort((a: any, b: any) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    sorted.forEach((request: any) => {
+      if (!map.has(request.sessionId) || map.get(request.sessionId)?.status !== 'pending') {
+        map.set(request.sessionId, request);
+      }
+    });
+    return map;
+  }, [myTypeChangeRequests]);
 
   // Fetch assignment detail when selected
   const { data: assignmentDetail, isLoading: loadingAssignment } = useQuery({
@@ -196,6 +237,19 @@ const ClassroomDetailPage: React.FC = () => {
       case 'intermediate': return 'bg-yellow-100 text-yellow-800';
       case 'advanced': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getSessionTypeInfo = (type: string) => { // Trả về icon và label theo hình thức buổi học
+    switch (type) {
+      case 'online':
+        return { icon: <Video className="w-4 h-4" />, label: 'Online', className: 'bg-blue-100 text-blue-800' };
+      case 'offline':
+        return { icon: <Building className="w-4 h-4" />, label: 'Offline', className: 'bg-gray-100 text-gray-800' };
+      case 'hybrid':
+        return { icon: <Layers className="w-4 h-4" />, label: 'Hybrid', className: 'bg-purple-100 text-purple-800' };
+      default:
+        return { icon: null, label: type || 'N/A', className: 'bg-gray-100 text-gray-800' };
     }
   };
 
@@ -1203,6 +1257,16 @@ const ClassroomDetailPage: React.FC = () => {
                                 {statusBadge.label}
                               </span>
                             )}
+                            {/* Session Type Badge */}
+                            {session.type && (() => {
+                              const typeInfo = getSessionTypeInfo(session.type);
+                              return (
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${typeInfo.className}`}>
+                                  {typeInfo.icon}
+                                  {typeInfo.label}
+                                </span>
+                              );
+                            })()}
                           </div>
                           {session.description && (
                             <p className="text-sm text-gray-600 mb-2 line-clamp-2">
@@ -1223,7 +1287,57 @@ const ClassroomDetailPage: React.FC = () => {
                                 Yêu cầu: {new Date(request.newStartTime).toLocaleString('vi-VN')}
                               </span>
                             )}
+                            {/* Meeting URL for online sessions */}
+                            {session.meetingUrl && (
+                              <a
+                                href={session.meetingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex items-center text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                <Video className="w-4 h-4 mr-1" />
+                                Tham gia online
+                              </a>
+                            )}
+                            {/* Recording URL for online sessions */}
+                            {session.type === 'online' && session.recordingUrl && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSessionForRecording({
+                                    id: session.id,
+                                    title: session.title,
+                                    recordingUrl: session.recordingUrl || '',
+                                  });
+                                  setIsVideoModalOpen(true);
+                                }}
+                                className="flex items-center text-red-600 hover:text-red-800 hover:underline ml-4"
+                              >
+                                <Video className="w-4 h-4 mr-1" />
+                                Xem lại video
+                              </button>
+                            )}
                           </div>
+                          {/* Type Change Request Status */}
+                          {(() => {
+                            const typeRequest = isTeacher && isUpcoming ? typeChangeRequestsMap.get(session.id) : undefined;
+                            if (!typeRequest) return null;
+                            const typeStatusBadge = getStatusBadge(typeRequest.status);
+                            if (!typeStatusBadge) return null;
+                            return (
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${typeStatusBadge.className}`}>
+                                  Đổi hình thức: {typeStatusBadge.label}
+                                </span>
+                                {typeRequest.status === 'rejected' && typeRequest.reviewNote && (
+                                  <span className="text-xs text-red-600">
+                                    ({typeRequest.reviewNote})
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                           {request && request.status === 'rejected' && request.reviewNote && (
                             <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
                               <span className="font-medium text-red-800">Lý do từ chối: </span>
@@ -1231,9 +1345,10 @@ const ClassroomDetailPage: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        {isTeacher && isUpcoming && (
+                        {(isTeacher || isAdmin) && isUpcoming && (
                           <div className="flex items-center space-x-2">
-                            {canEdit ? (
+                            {/* Teacher/Admin: Reschedule buttons */}
+                            {(isTeacher || isAdmin) && canEdit ? (
                               (() => {
                                 const isSessionOnExamDay = isExamDate(
                                   session.startTime,
@@ -1251,8 +1366,8 @@ const ClassroomDetailPage: React.FC = () => {
                                       });
                                       setIsRescheduleModalOpen(true);
                                     }}
-                                    disabled={isSessionOnExamDay}
-                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
+                                    disabled={!isAdmin && isSessionOnExamDay}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${!isAdmin && isSessionOnExamDay
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-blue-600 text-white hover:bg-blue-700'
                                       }`}
@@ -1261,7 +1376,7 @@ const ClassroomDetailPage: React.FC = () => {
                                     <span>Chỉnh sửa</span>
                                   </button>
                                 );
-                                return isSessionOnExamDay ? (
+                                return !isAdmin && isSessionOnExamDay ? (
                                   <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
                                     <span>{editButton}</span>
                                   </Tooltip>
@@ -1269,7 +1384,7 @@ const ClassroomDetailPage: React.FC = () => {
                                   editButton
                                 );
                               })()
-                            ) : !request ? (
+                            ) : (isTeacher || isAdmin) && !request ? (
                               (() => {
                                 const isSessionOnExamDay = isExamDate(
                                   session.startTime,
@@ -1286,8 +1401,8 @@ const ClassroomDetailPage: React.FC = () => {
                                       });
                                       setIsRescheduleModalOpen(true);
                                     }}
-                                    disabled={isSessionOnExamDay}
-                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${isSessionOnExamDay
+                                    disabled={!isAdmin && isSessionOnExamDay}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm ${!isAdmin && isSessionOnExamDay
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-orange-600 text-white hover:bg-orange-700'
                                       }`}
@@ -1296,7 +1411,7 @@ const ClassroomDetailPage: React.FC = () => {
                                     <span>Dời lịch</span>
                                   </button>
                                 );
-                                return isSessionOnExamDay ? (
+                                return !isAdmin && isSessionOnExamDay ? (
                                   <Tooltip title="Không thể xin dời lịch vào ngày thi giữa kỳ/cuối kỳ">
                                     <span>{rescheduleButton}</span>
                                   </Tooltip>
@@ -1305,6 +1420,41 @@ const ClassroomDetailPage: React.FC = () => {
                                 );
                               })()
                             ) : null}
+                            {/* Teacher: Request Type Change Button */}
+                            {isTeacher && !typeChangeRequestsMap.get(session.id) && (
+                              <button
+                                onClick={() => {
+                                  setSelectedSessionForTypeChange({
+                                    id: session.id,
+                                    title: session.title,
+                                    type: session.type,
+                                  });
+                                  setIsTypeChangeModalOpen(true);
+                                }}
+                                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors text-sm"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                <span>Đổi hình thức</span>
+                              </button>
+                            )}
+                            {/* Admin: Direct Type Change Button */}
+                            {isAdmin && (
+                              <button
+                                onClick={() => {
+                                  setSelectedSessionForAdminTypeChange({
+                                    id: session.id,
+                                    title: session.title,
+                                    type: session.type,
+                                    meetingUrl: session.meetingUrl,
+                                  });
+                                  setIsAdminTypeChangeModalOpen(true);
+                                }}
+                                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors text-sm"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                <span>Đổi hình thức</span>
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1328,7 +1478,7 @@ const ClassroomDetailPage: React.FC = () => {
             setIsAssignmentModalOpen(false);
             setSelectedAssignment(null);
           }}
-          assignment={(assignmentDetail?.data || assignmentDetail || selectedAssignment) as Assignment | null}
+          assignment={(assignmentDetail || selectedAssignment) as Assignment | null}
         />
 
         {/* Submission List Modal */}
@@ -1362,6 +1512,55 @@ const ClassroomDetailPage: React.FC = () => {
           />
         )}
 
+        {/* Type Change Request Modal */}
+        {selectedSessionForTypeChange && (
+          <RequestSessionTypeChangeModal
+            open={isTypeChangeModalOpen}
+            onClose={() => {
+              setIsTypeChangeModalOpen(false);
+              setSelectedSessionForTypeChange(null);
+            }}
+            session={{
+              id: selectedSessionForTypeChange.id,
+              title: selectedSessionForTypeChange.title,
+              type: selectedSessionForTypeChange.type,
+            }}
+          />
+        )}
+
+        {/* Admin Direct Type Change Modal */}
+        {selectedSessionForAdminTypeChange && (
+          <ChangeSessionTypeModal
+            isOpen={isAdminTypeChangeModalOpen}
+            onClose={() => {
+              setIsAdminTypeChangeModalOpen(false);
+              setSelectedSessionForAdminTypeChange(null);
+            }}
+            session={{
+              id: selectedSessionForAdminTypeChange.id,
+              title: selectedSessionForAdminTypeChange.title,
+              type: selectedSessionForAdminTypeChange.type as 'online' | 'offline' | 'hybrid',
+              meetingUrl: selectedSessionForAdminTypeChange.meetingUrl,
+            }}
+            onConfirm={(sessionId, newType, generateMeetLink) => {
+              sessionTypeChangeMutation.mutate(
+                { sessionId, type: newType, generateMeetLink },
+                {
+                  onSuccess: () => {
+                    toast.success('Đổi hình thức buổi học thành công');
+                    setIsAdminTypeChangeModalOpen(false);
+                    setSelectedSessionForAdminTypeChange(null);
+                  },
+                  onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || 'Đổi hình thức thất bại');
+                  }
+                }
+              );
+            }}
+            isLoading={sessionTypeChangeMutation.isPending}
+          />
+        )}
+
         {/* Student Grade Detail Modal */}
         {isGradeDetailModalOpen && selectedStudentForDetails && (
           <StudentGradeDetailModal
@@ -1373,6 +1572,19 @@ const ClassroomDetailPage: React.FC = () => {
             classroomId={id as string}
             studentId={selectedStudentForDetails.studentId}
             studentName={selectedStudentForDetails.studentName}
+          />
+        )}
+
+        {/* Video Player Modal */}
+        {selectedSessionForRecording && (
+          <VideoPlayerModal
+            open={isVideoModalOpen}
+            onClose={() => {
+              setIsVideoModalOpen(false);
+              setSelectedSessionForRecording(null);
+            }}
+            videoUrl={selectedSessionForRecording.recordingUrl}
+            title={`Xem lại buổi học: ${selectedSessionForRecording.title}`}
           />
         )}
       </div>

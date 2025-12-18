@@ -1,3 +1,4 @@
+import holidayApi from '@/apis/holiday';
 import { getClassrooms, getSystemSchedule, SystemScheduleParams, SystemScheduleResponse, SystemScheduleSession } from '@/apis/classroom';
 import { getTeachers } from '@/apis/teacher';
 import { UserResponse } from '@/interface/user.interface';
@@ -14,8 +15,9 @@ import {
   Users,
   Video,
   X,
+  PartyPopper, // Import PartyPopper icon
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 type ViewMode = 'week' | 'month';
 
@@ -47,6 +49,55 @@ const SchedulePage: React.FC = () => {
 
   // Selected session for detail modal
   const [selectedSession, setSelectedSession] = useState<SystemScheduleSession | null>(null);
+
+  // Fetch holidays
+  // Calculate start and end year of the current view
+  const { startYear, endYear } = useMemo(() => {
+    const start = new Date(currentWeekStart);
+    const end = new Date(start);
+    // Week view is 7 days, Month view is roughly 31 days or more
+    // Safest is to check the range.
+    // However, the `scheduleData` isn't always available instantly.
+    // We can rely on viewMode. 
+    // If week: start + 6 days.
+    // If month: we are likely safe fetching just the month's year, or adjacents?
+    // User asked specifically for "Lịch vừa 2025 vừa 2026" implies the week view crossing the boundary.
+    if (viewMode === 'week') {
+      end.setDate(end.getDate() + 6);
+    } else {
+      end.setDate(end.getDate() + 31); // Rough estimate for month view
+    }
+    return { startYear: start.getFullYear(), endYear: end.getFullYear() };
+  }, [currentWeekStart, viewMode]);
+
+  const [holidays, setHolidays] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const yearsToFetch = new Set([startYear, endYear]);
+        const promises = Array.from(yearsToFetch).map(year => holidayApi.getHolidays(year));
+
+        const responses = await Promise.all(promises);
+
+        // Merge holidays from all responses
+        const allHolidays = responses.flatMap(res => res.data.data.holidays || []);
+
+        setHolidays(allHolidays);
+      } catch (error) {
+        console.error('Error fetching holidays', error);
+      }
+    };
+    fetchHolidays();
+  }, [startYear, endYear]);
+
+  // Helper to check holiday
+  const getHolidayForDate = (dateStr: string) => {
+    // dateStr is YYYY-MM-DD (from scheduleData.days[i].date) or ISO
+    // The holiday API returns 'YYYY-MM-DD'.
+    const date = new Date(dateStr).toISOString().split('T')[0];
+    return holidays.find(h => h.date === date);
+  };
 
   // Load filter options
   useEffect(() => {
@@ -431,16 +482,28 @@ const SchedulePage: React.FC = () => {
                       day: '2-digit',
                       month: '2-digit'
                     });
+                    const holiday = getHolidayForDate(day.date instanceof Date ? day.date.toISOString() : day.date);
+
                     return (
                       <div
                         key={index}
-                        className="p-3 bg-gray-100 border-r border-gray-300 text-center"
+                        className={`p-3 border-r border-gray-300 text-center relative ${holiday ? 'bg-red-50' : 'bg-gray-100'}`}
                       >
-                        <div className="text-xs font-semibold text-gray-900">{dayLabel}</div>
-                        <div className="text-xs text-gray-600 mt-1">{dateStr}</div>
+                        {holiday && (
+                          <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-[10px] py-0.5 font-bold uppercase tracking-wider shadow-sm z-10">
+                            {holiday.name}
+                          </div>
+                        )}
+                        <div className={`text-xs font-semibold ${holiday ? 'text-red-700 mt-3' : 'text-gray-900'}`}>{dayLabel}</div>
+                        <div className={`text-xs mt-1 ${holiday ? 'text-red-600 font-medium' : 'text-gray-600'}`}>{dateStr}</div>
                         <div className="text-xs text-gray-700 font-medium mt-1">
                           {day.sessions.length} buổi
                         </div>
+                        {holiday && (
+                          <div className="mt-1 flex justify-center text-red-500">
+                            <PartyPopper className="w-4 h-4" />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -483,11 +546,26 @@ const SchedulePage: React.FC = () => {
                           <span className="text-sm font-bold text-gray-900">
                             {new Date(day.date).getDate()}
                           </span>
-                          {sessionCount > 0 && (
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-white">
-                              {sessionCount}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {(() => {
+                              const holiday = getHolidayForDate(day.date instanceof Date ? day.date.toISOString() : day.date);
+                              if (!holiday) return null;
+                              return (
+                                <div className="group relative">
+                                  <PartyPopper className="w-4 h-4 text-red-500 cursor-help" />
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                                    {holiday.name}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {sessionCount > 0 && (
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-white">
+                                {sessionCount}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Sessions List */}

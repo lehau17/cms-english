@@ -1,18 +1,21 @@
 import { createClassroom } from '@/apis/classroom';
+import holidayApi from '@/apis/holiday';
 import { useCourses } from '@/hooks/useCourse';
 import { useTeachers } from '@/hooks/useTeacher';
 import { useTeacherAvailability } from '@/hooks/useTeacherSchedule';
 import { Classroom } from '@/interface/classroom.interface';
 import { Weekday } from '@/interface/enums';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Plus, Trash2 } from 'lucide-react';
+import { BarChart, Check, Lightbulb, Notes, Timer } from '@mui/icons-material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { DatePicker } from 'antd';
+import dayjs, { Dayjs } from 'dayjs';
+import { Calendar, Plus, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import FormField from '../forms/FormField';
 import IntegratedScheduleModal from '../schedule/IntegratedScheduleModal';
-import { LibraryBooks, Notes, Schedule, BarChart, Lightbulb, Check, Timer } from '@mui/icons-material';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 
@@ -109,6 +112,38 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
 
     // API already returns in correct format: { mon: [], tue: [], ..., sun: [] }
     const teacherSchedule = teacherAvailability?.schedule ?? null;
+
+    // Fetch holidays for current and next year
+    const currentYear = new Date().getFullYear();
+    const { data: currentYearHolidays } = useQuery({
+        queryKey: ['holidays', currentYear],
+        queryFn: () => holidayApi.getHolidays(currentYear),
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const { data: nextYearHolidays } = useQuery({
+        queryKey: ['holidays', currentYear + 1],
+        queryFn: () => holidayApi.getHolidays(currentYear + 1),
+        staleTime: 5 * 60 * 1000,
+    });
+
+    // Combine holiday dates into a Set for efficient lookup
+    const holidayDates = React.useMemo(() => {
+        const dates = new Set<string>();
+        currentYearHolidays?.data?.holidays?.forEach(h => dates.add(h.date));
+        nextYearHolidays?.data?.holidays?.forEach(h => dates.add(h.date));
+        return dates;
+    }, [currentYearHolidays, nextYearHolidays]);
+
+    const disabledDate = (current: Dayjs): boolean => {
+        // Can not select days before today
+        if (current && current < dayjs().startOf('day')) {
+            return true;
+        }
+        // Disable holidays
+        const dateStr = current.format('YYYY-MM-DD');
+        return holidayDates.has(dateStr);
+    };
 
     const createMutation = useMutation({
         mutationFn: (data: Partial<Classroom>) => createClassroom(data),
@@ -240,230 +275,204 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({ isOpen, onC
         replace(newSlots);
     };
 
+    // Check if schedule button should be enabled
+    const canViewSchedule = !!selectedTeacherValue;
+
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
             title="Tạo lớp học mới"
-            description="Thêm lớp học mới vào hệ thống"
+            description="Điền thông tin để tạo lớp học"
             icon={<Plus className="w-6 h-6 text-purple-600" />}
+            maxWidthClass="max-w-2xl"
         >
             <FormProvider {...methods}>
-                <form onSubmit={handleSubmit(onSubmit)} className="p-4 max-h-[calc(90vh-200px)] overflow-y-auto space-y-3">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    {/* Row 1: Course & Teacher */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Course Selection */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Khóa học <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                {...register('courseId', {
+                                    onChange: (e) => {
+                                        setValue('courseId', e.target.value, {
+                                            shouldValidate: true,
+                                            shouldDirty: true,
+                                            shouldTouch: true
+                                        });
+                                    }
+                                })}
+                                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                                disabled={isLoadingCourses}
+                            >
+                                <option value="">{isLoadingCourses ? 'Đang tải...' : 'Chọn khóa học'}</option>
+                                {coursesData?.data?.data?.map((course) => (
+                                    <option key={course.id} value={course.id}>
+                                        {course.title}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.courseId && <p className="text-red-500 text-xs mt-1">{errors.courseId.message}</p>}
+                        </div>
 
-                    {/* Step 1: Select Course */}
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                            <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">1</span>
-                            Khóa học *
-                        </label>
-                        <select
-                            {...register('courseId', {
-                                onChange: (e) => {
-                                    setValue('courseId', e.target.value, {
-                                        shouldValidate: true,
-                                        shouldDirty: true,
-                                        shouldTouch: true
-                                    });
-                                }
-                            })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
-                            disabled={isLoadingCourses}
-                        >
-                            <option value="">{isLoadingCourses ? 'Đang tải khóa học...' : 'Chọn khóa học'}</option>
-                            {coursesData?.data?.data?.map((course) => (
-                                <option key={course.id} value={course.id}>
-                                    {course.title}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.courseId && <p className="text-red-500 text-sm mt-1">{errors.courseId.message}</p>}
+                        {/* Teacher Selection */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Giáo viên <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                {...register('teacherId', {
+                                    onChange: (e) => {
+                                        setValue('teacherId', e.target.value, {
+                                            shouldValidate: true,
+                                            shouldDirty: true,
+                                            shouldTouch: true
+                                        });
+                                    }
+                                })}
+                                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                                disabled={isLoadingTeachers}
+                            >
+                                <option value="">{isLoadingTeachers ? 'Đang tải...' : 'Chọn giáo viên'}</option>
+                                {teachersData?.data.data.map((teacher) => (
+                                    <option key={teacher.id} value={teacher.id}>
+                                        {teacher.firstName} {teacher.lastName}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.teacherId && <p className="text-red-500 text-xs mt-1">{errors.teacherId.message}</p>}
+                        </div>
                     </div>
 
-                    {/* Course Info Preview */}
-                    {selectedCourseId && coursesData?.data?.data && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <h4 className="text-sm font-medium text-blue-800 mb-2">Thông tin khóa học</h4>
-                            {(() => {
-                                const selectedCourse = coursesData.data.data.find(c => c.id === selectedCourseId);
-                                if (!selectedCourse) return null;
+                    {/* Course Info Preview - Compact */}
+                    {selectedCourseId && coursesData?.data?.data && (() => {
+                        const selectedCourse = coursesData.data.data.find(c => c.id === selectedCourseId);
+                        if (!selectedCourse) return null;
+                        return (
+                            <div className="flex items-center gap-4 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm">
+                                <div className="flex items-center gap-1.5 text-purple-700">
+                                    <Timer fontSize="small" />
+                                    <span><strong>{selectedCourse.plannedSessions || '?'}</strong> buổi</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-purple-700">
+                                    <Notes fontSize="small" />
+                                    <span><strong>{selectedCourse.totalLessons || 0}</strong> bài học</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-purple-700">
+                                    <BarChart fontSize="small" />
+                                    <span>{selectedCourse.difficulty}</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
-                                return (
-                                    <div className="space-y-1 text-sm text-blue-700">
-                                        <div className="flex items-center gap-1"><LibraryBooks fontSize="small" /> <strong>Tiêu đề:</strong> {selectedCourse.title}</div>
-                                        <div className="flex items-center gap-1"><Timer fontSize="small" /> <strong>Số buổi dự kiến:</strong> {selectedCourse.plannedSessions || 'Không xác định'}</div>
-                                        <div className="flex items-center gap-1"><Notes fontSize="small" /> <strong>Tổng số bài học:</strong> {selectedCourse.totalLessons || 0}</div>
-                                        <div className="flex items-center gap-1"><Schedule fontSize="small" /> <strong>Thời lượng:</strong> {selectedCourse.totalDuration ? `${Math.round(selectedCourse.totalDuration / 60)} giờ` : 'Không xác định'}</div>
-                                        <div className="flex items-center gap-1"><BarChart fontSize="small" /> <strong>Độ khó:</strong> {selectedCourse.difficulty}</div>
-                                        {selectedCourse.plannedSessions && (
-                                            <div className="mt-2 p-2 bg-blue-100 rounded text-xs flex items-start gap-1">
-                                                <Lightbulb fontSize="small" /> <strong>Lưu ý:</strong> Khóa học này có {selectedCourse.plannedSessions} buổi học dự kiến.
-                                                Lớp học sẽ tự động sắp xếp hoạt động theo lịch trình của khóa học.
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
+                    {/* Row 2: Start Date & Schedule Button */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Ngày bắt đầu <span className="text-red-500">*</span>
+                            </label>
+                            <Controller
+                                control={control}
+                                name="periodStart"
+                                render={({ field }) => (
+                                    <DatePicker
+                                        className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg hover:border-purple-500 focus:border-purple-500"
+                                        format="DD/MM/YYYY"
+                                        placeholder="Chọn ngày bắt đầu"
+                                        value={field.value ? dayjs(field.value) : null}
+                                        onChange={(date) => {
+                                            field.onChange(date ? date.format('YYYY-MM-DD') : '');
+                                        }}
+                                        disabledDate={disabledDate}
+                                    />
+                                )}
+                            />
+                            {errors.periodStart && <p className="text-red-500 text-xs mt-1">{errors.periodStart.message}</p>}
                         </div>
-                    )}
 
-                    {/* Step 2: Select Teacher */}
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                            <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">2</span>
-                            Assigned Teacher *
-                        </label>
-                        <select
-                            {...register('teacherId', {
-                                onChange: (e) => {
-                                    setValue('teacherId', e.target.value, {
-                                        shouldValidate: true,
-                                        shouldDirty: true,
-                                        shouldTouch: true
-                                    });
-                                }
-                            })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors appearance-none"
-                            disabled={isLoadingTeachers}
-                        >
-                            <option value="">{isLoadingTeachers ? 'Loading teachers...' : 'Select a teacher'}</option>
-                            {teachersData?.data.data.map((teacher) => (
-                                <option key={teacher.id} value={teacher.id}>
-                                    {teacher.firstName} {teacher.lastName} - {teacher.email}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.teacherId && <p className="text-red-500 text-sm mt-1">{errors.teacherId.message}</p>}
-                        {/* Debug info */}
-                        {selectedTeacherValue && (
-                            <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><Check fontSize="small" /> Selected: {selectedTeacherValue}</p>
-                        )}
-
-                        {/* Schedule Button - Only show after teacher is selected */}
-                        {selectedTeacherValue && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Lịch học <span className="text-red-500">*</span>
+                            </label>
                             <Button
                                 type="button"
-                                variant="secondary"
+                                variant={canViewSchedule ? "primary" : "secondary"}
                                 onClick={handleViewSchedule}
-                                size="sm"
-                                className="mt-2 w-full text-sm"
+                                disabled={!canViewSchedule}
+                                className="w-full h-[42px] justify-center"
                             >
                                 <Calendar className="w-4 h-4 mr-2" />
-                                Xem Lịch & Chọn Khung Giờ
+                                {fields.length > 0 ? `${fields.length} khung giờ đã chọn` : 'Chọn khung giờ'}
                             </Button>
-                        )}
+                            {!canViewSchedule && (
+                                <p className="text-gray-400 text-xs mt-1">Chọn giáo viên trước</p>
+                            )}
+                            {errors.slots && <p className="text-red-500 text-xs mt-1">{errors.slots.message}</p>}
+                        </div>
                     </div>
 
-                    {/* Step 3: Select Start Date */}
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                            <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">3</span>
-                            Start Date *
-                        </label>
-                        <input
-                            type="date"
-                            {...register('periodStart')}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                        />
-                        {errors.periodStart && <p className="text-red-500 text-sm mt-1">{errors.periodStart.message}</p>}
-                    </div>
-
-                    {/* Step 4: Selected Slots Preview */}
+                    {/* Selected Slots Preview - Compact */}
                     {fields.length > 0 && (
-                        <div className="space-y-3">
-                            <h4 className="text-sm font-medium text-gray-700">
-                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 mr-2"><Check fontSize="small" /></span>
-                                Selected Schedule
-                            </h4>
-                            <div className="space-y-2">
-                                {fields.map((field, index) => {
-                                    const duration = (field.endMinuteOfDay - field.startMinuteOfDay) / 60;
-                                    return (
-                                        <div key={field.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                                            <div className="flex-1">
-                                                <span className="text-sm font-medium text-green-800">
-                                                    {weekdayLabels[field.dayOfWeek]} {minutesToTimeString(field.startMinuteOfDay)} - {minutesToTimeString(field.endMinuteOfDay)}
-                                                </span>
-                                                <span className="text-xs text-green-600 ml-2">({duration.toFixed(1)}h)</span>
-                                            </div>
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                onClick={() => remove(index)}
-                                                size="sm"
-                                                className="text-red-600 hover:text-red-700"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    );
-                                })}
-                                <div className="text-sm text-gray-600 pt-2 border-t border-gray-200">
-                                    Total weekly hours: {fields.reduce((total, field) =>
-                                        total + ((field.endMinuteOfDay - field.startMinuteOfDay) / 60), 0
-                                    ).toFixed(1)}h
+                        <div className="flex flex-wrap gap-2">
+                            {fields.map((field, index) => (
+                                <div
+                                    key={field.id}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-sm"
+                                >
+                                    <span className="text-green-700 font-medium">
+                                        {weekdayLabels[field.dayOfWeek]} {minutesToTimeString(field.startMinuteOfDay)}-{minutesToTimeString(field.endMinuteOfDay)}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => remove(index)}
+                                        className="text-green-600 hover:text-red-500 transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
                                 </div>
-                            </div>
+                            ))}
                         </div>
                     )}
 
-                    {/* Step 5: Auto-calculated End Date */}
-                    <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                            <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">4</span>
-                            Ngày kết thúc (Tự động tính)
-                        </label>
-                        {selectedPeriodEnd ? (
+                    {/* Auto-calculated End Date - Inline */}
+                    {selectedPeriodEnd && (
+                        <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
+                            <Check fontSize="small" />
+                            <span>Ngày kết thúc dự kiến: <strong>{new Date(selectedPeriodEnd).toLocaleDateString('vi-VN')}</strong></span>
+                        </div>
+                    )}
+
+                    {/* Classroom Details */}
+                    <div className="pt-4 border-t border-gray-200 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField name="name" label="Tên lớp học *" placeholder="VD: Lớp TOEIC 500+" />
+                            <FormField name="maxStudents" label="Số học viên tối đa" type="number" placeholder="30" />
+                        </div>
+                        <FormField name="description" label="Mô tả" placeholder="Mô tả ngắn về lớp học" />
+                        <div className="flex items-center gap-2">
                             <input
-                                type="date"
-                                value={selectedPeriodEnd}
-                                readOnly
-                                className="w-full px-3 py-2 text-sm bg-green-50 border border-green-300 rounded-lg text-green-800 font-medium"
-                                title="Automatically calculated based on course planned sessions and weekly schedule"
+                                type="checkbox"
+                                {...register('isActive')}
+                                id="isActive"
+                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                             />
-                        ) : (
-                            <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg text-gray-400 flex items-center justify-center h-10">
-                                {!selectedCourseId && '← Chọn khóa học trước'}
-                                {selectedCourseId && !selectedPeriodStart && '← Chọn ngày bắt đầu'}
-                                {selectedCourseId && selectedPeriodStart && fields.length === 0 && '← Chọn khung giờ học'}
-                                {selectedCourseId && selectedPeriodStart && fields.length > 0 && 'Đang tính toán...'}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="pt-4 border-t border-gray-200">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">
-                            <span className="inline-block w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mr-2 text-center leading-6">5</span>
-                            Chi tiết lớp học
-                        </h4>
-                        <div className="space-y-3">
-                            <FormField name="name" label="Tên lớp học *" placeholder="Nhập tên lớp học" />
-                            <FormField name="description" label="Mô tả *" placeholder="Nhập mô tả lớp học" />
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <FormField name="maxStudents" label="Số học viên tối đa" type="number" placeholder="30" />
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Trạng thái</label>
-                                    <div className="flex items-center h-10">
-                                        <input
-                                            type="checkbox"
-                                            {...register('isActive')}
-                                            className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                                        />
-                                        <span className="ml-3 text-sm font-medium text-gray-700">Hoạt động</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <label htmlFor="isActive" className="text-sm text-gray-700">Kích hoạt lớp học ngay</label>
                         </div>
                     </div>
 
-                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
-                        <div className="flex justify-end space-x-3">
-                            <Button type="button" variant="secondary" onClick={onClose}>Hủy</Button>
-                            <Button type="submit" isLoading={createMutation.isPending}>
-                                <span>Tạo lớp học</span>
-                            </Button>
-                        </div>
+                    {/* Footer Actions */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                        <Button type="button" variant="secondary" onClick={onClose}>
+                            Hủy
+                        </Button>
+                        <Button type="submit" isLoading={createMutation.isPending}>
+                            Tạo lớp học
+                        </Button>
                     </div>
                 </form>
             </FormProvider>

@@ -99,6 +99,9 @@ export interface ClassroomSession {
     status: string;
     instructorId: string;
     classroomId: string;
+    type: 'online' | 'offline' | 'hybrid';
+    meetingUrl?: string;
+    recordingUrl?: string;
 }
 
 export const getClassroomSessions = async (classroomId: string): Promise<ClassroomSession[]> => {
@@ -217,5 +220,34 @@ export const transferStudent = async (payload: TransferStudentPayload): Promise<
         message: string;
         data: TransferStudentResponse;
     }>('/private/v1/classrooms/transfer-student', payload);
+    return response.data.data;
+};
+
+// ==================== SESSION TYPE MANAGEMENT ====================
+
+export interface UpdateSessionTypePayload {
+    type: 'online' | 'offline' | 'hybrid';
+    generateMeetLink?: boolean;
+}
+
+export interface UpdateSessionTypeResponse {
+    success: boolean;
+    message: string;
+    data?: {
+        id: string;
+        type: 'online' | 'offline' | 'hybrid';
+        meetingUrl?: string | null;
+    };
+}
+
+export const updateSessionType = async (
+    sessionId: string,
+    payload: UpdateSessionTypePayload
+): Promise<UpdateSessionTypeResponse> => {
+    const response = await axiosInstance.put<{
+        statusCode: number;
+        message: string;
+        data: UpdateSessionTypeResponse;
+    }>(`/private/v1/classrooms/sessions/${sessionId}/type`, payload);
     return response.data.data;
 };

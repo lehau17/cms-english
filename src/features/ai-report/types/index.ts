@@ -35,9 +35,13 @@ export interface ChartConfig {
   config: {
     xLabel?: string;
     yLabel?: string;
+    xAxisKey?: string;
     colors?: string[];
     responsive?: boolean;
     legend?: boolean;
+    lines?: { dataKey: string; color: string; strokeWidth?: number }[];
+    bars?: { dataKey: string; color: string }[];
+    areas?: { dataKey: string; color: string; fillOpacity?: number }[];
   };
 }
 

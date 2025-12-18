@@ -107,7 +107,7 @@ export const getMyRescheduleRequests = async (
  * Cancel a reschedule request (Teacher)
  */
 export const cancelRescheduleRequest = async (id: string): Promise<void> => {
-    await axiosInstance.delete(`/private/v1/sessions/reschedule-requests/${id}`);
+    await axiosInstance.put(`/private/v1/sessions/reschedule-requests/${id}/cancel`);
 };
 
 /**

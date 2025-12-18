@@ -2,6 +2,9 @@ import { Weekday } from '@/interface/enums';
 import { Calendar, CheckCircle, Clock, Plus, User, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import Button from '../ui/Button';
+import SessionTypeDisplay from './SessionTypeDisplay';
+import { SessionType } from '@/interface/classroom.interface';
+import { useSystemSettings } from '@/hooks/useSystemSetting';
 
 interface ClassroomSlot {
   dayOfWeek: Weekday;
@@ -14,6 +17,8 @@ interface ScheduleSlot {
   type: string;
   startMinuteOfDay: number;
   endMinuteOfDay: number;
+  sessionType?: SessionType;
+  meetingUrl?: string | null;
 }
 
 interface IntegratedScheduleModalProps {
@@ -42,6 +47,8 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
     startTime: '09:00',
     endTime: '10:30'
   });
+
+  const { openTime, closeTime } = useSystemSettings();
 
   useEffect(() => {
     setSelectedSlots(currentSlots);
@@ -79,28 +86,6 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
     [Weekday.SUN]: 'sun',
   };
 
-  // Define time periods
-  const timePeriods = [
-    {
-      name: 'Sáng',
-      start: 6 * 60, // 6:00
-      end: 12 * 60,  // 12:00
-      color: 'bg-yellow-100'
-    },
-    {
-      name: 'Chiều',
-      start: 12 * 60, // 12:00
-      end: 18 * 60,   // 18:00
-      color: 'bg-orange-100'
-    },
-    {
-      name: 'Tối',
-      start: 18 * 60, // 18:00
-      end: 22 * 60,   // 22:00
-      color: 'bg-purple-100'
-    }
-  ];
-
   const minutesToTimeString = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -111,6 +96,32 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
     const [hours, minutes] = timeString.split(':').map(num => parseInt(num, 10));
     return hours! * 60 + minutes!;
   };
+
+  const openMinutes = timeStringToMinutes(openTime);
+  const closeMinutes = timeStringToMinutes(closeTime);
+
+  // Define time periods dynamically
+  const timePeriods = [
+    {
+      name: 'Sáng',
+      start: openMinutes,
+      end: 12 * 60,
+      color: 'bg-yellow-100'
+    },
+    {
+      name: 'Chiều',
+      start: 12 * 60,
+      end: 18 * 60,
+      color: 'bg-orange-100'
+    },
+    {
+      name: 'Tối',
+      start: 18 * 60,
+      end: closeMinutes,
+      color: 'bg-purple-100'
+    }
+  ];
+
 
   const getDaySchedule = (dayKey: string) => {
     if (!schedule) return [];
@@ -140,6 +151,11 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
 
     if (endMinute <= startMinute) {
       alert('Thời gian kết thúc phải sau thời gian bắt đầu!');
+      return;
+    }
+
+    if (startMinute < openMinutes || endMinute > closeMinutes) {
+      alert(`Thời gian phải nằm trong khung giờ hoạt động của trung tâm (${openTime} - ${closeTime})`);
       return;
     }
 
@@ -211,6 +227,11 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
             </div>
             <div className="text-xs opacity-75 mt-1">{slot.classroomName}</div>
             <div className="text-xs opacity-60">{slot.type === 'session' ? 'Buổi học' : 'Lớp thường'}</div>
+            {slot.sessionType && (
+              <div className="mt-1">
+                <SessionTypeDisplay type={slot.sessionType} meetingUrl={slot.meetingUrl} showLink={false} compact />
+              </div>
+            )}
           </div>
         ))}
 
@@ -343,15 +364,15 @@ const IntegratedScheduleModal: React.FC<IntegratedScheduleModalProps> = ({
                   </div>
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded mr-2"></div>
-                    <span>Ca sáng (6:00-12:00)</span>
+                    <span>Ca sáng ({openTime}-{minutesToTimeString(12 * 60)})</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-orange-100 border border-orange-300 rounded mr-2"></div>
-                    <span>Ca chiều (12:00-18:00)</span>
+                    <span>Ca chiều ({minutesToTimeString(12 * 60)}-{minutesToTimeString(18 * 60)})</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded mr-2"></div>
-                    <span>Ca tối (18:00-22:00)</span>
+                    <span>Ca tối ({minutesToTimeString(18 * 60)}-{closeTime})</span>
                   </div>
                 </div>
               </div>

@@ -29,20 +29,34 @@ export const deleteTeacher = async (id: string): Promise<void> => {
   await axiosInstance.delete(`/private/v1/teachers/${id}`);
 };
 
-export const importTeachers = async (file: File): Promise<void> => {
+export const importTeachers = async (
+  file: File
+): Promise<ApiResponse<{ created: number; errors: any[] }>> => {
   const formData = new FormData();
   formData.append("file", file);
-  await axiosInstance.post("/private/v1/teachers/import", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const response = await axiosInstance.post<ApiResponse<{ created: number; errors: any[] }>>(
+    "/private/v1/teachers/import",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+  return response.data;
 };
 
 export const exportTeachers = async (params: RequestPagingDto): Promise<Blob> => {
   const response = await axiosInstance.get<Blob>("/private/v1/teachers/export", {
     params,
     responseType: "blob",
+  });
+  return response.data;
+};
+
+export const downloadImportTemplate = async (): Promise<Blob> => {
+  const response = await axiosInstance.get("/private/v1/teachers/import-template", {
+    responseType: 'blob'
   });
   return response.data;
 };

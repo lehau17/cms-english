@@ -1,28 +1,28 @@
 // Prompt Template List Page - Phase 4 CMS
-import React, { useState } from 'react';
+import { useDeletePromptTemplate, usePromptTemplates } from '@/hooks/useLearningPaths';
+import { PromptTemplate } from '@/interface/learning-path.interface';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
-  Typography,
   Button,
-  TextField,
-  InputAdornment,
-  Chip,
-  IconButton,
   Card,
   CardContent,
+  Chip,
+  FormControl,
   Grid,
+  IconButton,
+  InputAdornment,
+  InputLabel,
   MenuItem,
   Select,
-  FormControl,
-  InputLabel,
+  TextField,
+  Typography,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import SearchIcon from '@mui/icons-material/Search';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { usePromptTemplates, useDeletePromptTemplate } from '@/hooks/useLearningPaths';
-import { PromptTemplate, ActivityType } from '@/interface/learning-path.interface';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const PromptTemplateList: React.FC = () => {
@@ -203,13 +203,13 @@ export const PromptTemplateList: React.FC = () => {
 
       <Card>
         <DataGrid
-          rows={templates?.data || []}
+          rows={templates?.data.data || []}
           columns={columns}
           loading={isLoading}
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[10, 25, 50]}
-          rowCount={templates?.meta?.total || 0}
+          rowCount={templates?.data?.total || 0}
           paginationMode="server"
           autoHeight
           disableRowSelectionOnClick

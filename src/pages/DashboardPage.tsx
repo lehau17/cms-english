@@ -13,7 +13,7 @@ import * as React from "react";
 const DashboardPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
-      <Grid container spacing={3}>
+      <Grid container spacing={2.5}>
         {/* Section 1: Header & Quick Actions */}
         <Grid item xs={12}>
           <WelcomeWidget />
@@ -24,29 +24,30 @@ const DashboardPage: React.FC = () => {
           <StatsOverviewWidget />
         </Grid>
 
-        {/* Section 3: Main Content Area */}
+        {/* Section 3: Main Content Area - Balanced 3-column layout */}
         {/* Left Column: Primary Data & Charts (66% width) */}
         <Grid item xs={12} lg={8}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            {/* Revenue Chart */}
             <RevenueTrendWidget />
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TopCoursesWidget />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <RecentStudentsWidget />
-              </Grid>
-            </Grid>
+
+            {/* Registration Trend - Full Width */}
+            <RegistrationTrendWidget />
+
+            {/* Top Courses - Full Width */}
+            <TopCoursesWidget />
+
+            {/* Recent Students Table */}
+            <RecentStudentsWidget />
           </Box>
         </Grid>
 
-        {/* Right Column: Secondary Info & Sidebars (33% width) */}
+        {/* Right Column: Time-sensitive Info Only (33% width) */}
         <Grid item xs={12} lg={4}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <CourseDistributionWidget />
             <NotificationsWidget />
             <UpcomingClassesWidget />
-            <CourseDistributionWidget />
-            <RegistrationTrendWidget />
           </Box>
         </Grid>
       </Grid>

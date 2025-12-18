@@ -1,3 +1,5 @@
+import HolidayManagement from "@/components/settings/HolidayManagement";
+import SystemConfiguration from "@/components/settings/SystemConfiguration";
 import React from "react";
 
 const SettingsPage: React.FC = () => {
@@ -21,7 +23,7 @@ const SettingsPage: React.FC = () => {
                 const current = localStorage.getItem("cms_sidebar") === "collapsed";
                 const next = current ? "expanded" : "collapsed";
                 localStorage.setItem("cms_sidebar", next);
-                try { window.dispatchEvent(new Event("cms:sidebar-toggle")); } catch {}
+                try { window.dispatchEvent(new Event("cms:sidebar-toggle")); } catch { }
               }}
               className="px-4 py-2 rounded-lg border text-gray-700 hover:bg-gray-50"
             >
@@ -34,6 +36,9 @@ const SettingsPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Account</h2>
           <p className="text-sm text-gray-600">More account settings will appear here.</p>
         </div>
+
+        <SystemConfiguration />
+        <HolidayManagement />
       </div>
     </div>
   );

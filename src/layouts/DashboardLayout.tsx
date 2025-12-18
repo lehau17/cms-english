@@ -41,7 +41,7 @@ export function DashboardLayout() {
   const contentPaddingLeft = isMobile ? 0 : (collapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default", }}>
       <CssBaseline />
       <Toaster position="top-center" reverseOrder={false} />
       <Sidebar mobileOpen={mobileOpen} onMobileClose={handleDrawerToggle} />
@@ -100,10 +100,8 @@ export function DashboardLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          px: { xs: 2, sm: 3 },
-          pt: { xs: 9, sm: 10 }, // chừa AppBar
-          // pb: 3,
-          minWidth: 0, // Allow content to shrink
+          pt: { xs: 9, sm: 8 }, // chừa AppBar
+
         }}
       >
         <Outlet />

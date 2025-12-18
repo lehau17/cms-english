@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, X, Clock, BookOpen, Users, Video, MapPin, Calendar, Sunrise, Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, X, Clock, BookOpen, Users, Video, MapPin, Calendar, Sunrise, Sun, Moon, RefreshCw, PartyPopper } from 'lucide-react';
+import RequestSessionTypeChangeModal from '@/components/schedule/RequestSessionTypeChangeModal';
+import ChangeSessionTypeModal from '@/components/schedule/ChangeSessionTypeModal';
+import holidayApi from '@/apis/holiday';
+import { useAuth } from '@/hooks/useAuth';
+import { UserRole } from '@/interface/enum.interface';
+import { useSessionTypeChange } from '@/hooks/useSessionTypeChange';
+import { SessionType } from '@/interface/classroom.interface';
+import toast from 'react-hot-toast';
 
 // Common interfaces
 export interface ScheduleSession {
@@ -109,7 +117,56 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     title,
     subtitle
 }) => {
+    const { user } = useAuth();
+    const isTeacher = user?.role === UserRole.TEACHER;
+    const isAdmin = user?.role === UserRole.ADMIN;
     const [selectedSession, setSelectedSession] = useState<ScheduleSession | null>(null);
+    const [showTypeChangeRequest, setShowTypeChangeRequest] = useState(false);
+    const [showChangeTypeModal, setShowChangeTypeModal] = useState(false);
+
+    // Admin direct type change mutation
+    const sessionTypeChangeMutation = useSessionTypeChange();
+
+    // Fetch holidays
+    // Calculate start and end year of the current view
+    const { startYear, endYear } = useMemo(() => {
+        const start = new Date(currentWeekStart);
+        const end = new Date(start);
+        if (viewMode === 'week') {
+            end.setDate(end.getDate() + 6);
+        } else {
+            end.setDate(end.getDate() + 31); // Rough estimate for month view
+        }
+        return { startYear: start.getFullYear(), endYear: end.getFullYear() };
+    }, [currentWeekStart, viewMode]);
+
+    const [holidays, setHolidays] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchHolidays = async () => {
+            try {
+                const yearsToFetch = new Set([startYear, endYear]);
+                const promises = Array.from(yearsToFetch).map(year => holidayApi.getHolidays(year));
+
+                const responses = await Promise.all(promises);
+
+                // Merge holidays from all responses
+                const allHolidays = responses.flatMap(res => res.data.data.holidays || []);
+
+                setHolidays(allHolidays);
+            } catch (error) {
+                console.error('Error fetching holidays', error);
+            }
+        };
+        fetchHolidays();
+    }, [startYear, endYear]);
+
+    // Helper to check holiday
+    const getHolidayForDate = (date: Date | string) => {
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        const dateStr = dateObj.toISOString().split('T')[0];
+        return holidays.find(h => h.date === dateStr);
+    };
 
     const timeSlots = [
         { key: 'morning', label: 'Sáng (6h-12h)', hours: [6, 7, 8, 9, 10, 11], icon: <Sunrise size={16} className="mr-1" /> },
@@ -292,16 +349,28 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                 day: '2-digit',
                                 month: '2-digit'
                             });
+                            const holiday = getHolidayForDate(day.date);
+
                             return (
                                 <div
                                     key={index}
-                                    className="p-3 bg-gray-100 border-r border-gray-300 text-center"
+                                    className={`p-3 border-r border-gray-300 text-center relative ${holiday ? 'bg-red-50' : 'bg-gray-100'}`}
                                 >
-                                    <div className="text-xs font-semibold text-gray-900">{dayLabel}</div>
-                                    <div className="text-xs text-gray-600 mt-1">{dateStr}</div>
+                                    {holiday && (
+                                        <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-[10px] py-0.5 font-bold uppercase tracking-wider shadow-sm z-10">
+                                            {holiday.name}
+                                        </div>
+                                    )}
+                                    <div className={`text-xs font-semibold ${holiday ? 'text-red-700 mt-3' : 'text-gray-900'}`}>{dayLabel}</div>
+                                    <div className={`text-xs mt-1 ${holiday ? 'text-red-600 font-medium' : 'text-gray-600'}`}>{dateStr}</div>
                                     <div className="text-xs text-gray-700 font-medium mt-1">
                                         {day.sessions.length} buổi
                                     </div>
+                                    {holiday && (
+                                        <div className="mt-1 flex justify-center text-red-500">
+                                            <PartyPopper className="w-4 h-4" />
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -346,11 +415,25 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                         <span className="text-sm font-bold text-gray-900">
                                             {dateObj.getDate()}
                                         </span>
-                                        {sessionCount > 0 && (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-white">
-                                                {sessionCount}
-                                            </span>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            {(() => {
+                                                const holiday = getHolidayForDate(day.date);
+                                                if (!holiday) return null;
+                                                return (
+                                                    <div className="group relative">
+                                                        <PartyPopper className="w-4 h-4 text-red-500 cursor-help" />
+                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                                                            {holiday.name}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                            {sessionCount > 0 && (
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-800 text-white">
+                                                    {sessionCount}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Sessions List */}
@@ -513,10 +596,30 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                             {/* Type */}
                             <div className="flex items-start space-x-3">
                                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                                <div>
+                                <div className="flex-1">
                                     <div className="text-sm font-medium text-gray-700">Hình thức</div>
-                                    <div className="text-sm text-gray-900 mt-1">
-                                        {selectedSession.type === 'online' ? 'Trực tuyến' : selectedSession.type === 'offline' ? 'Trực tiếp' : 'Kết hợp'}
+                                    <div className="flex items-center justify-between mt-1">
+                                        <div className="text-sm text-gray-900">
+                                            {selectedSession.type === 'online' ? 'Trực tuyến' : selectedSession.type === 'offline' ? 'Trực tiếp' : 'Kết hợp'}
+                                        </div>
+                                        {isTeacher && selectedSession.state === 'upcoming' && (
+                                            <button
+                                                onClick={() => setShowTypeChangeRequest(true)}
+                                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
+                                            >
+                                                <RefreshCw className="w-3 h-3 mr-1" />
+                                                Yêu cầu đổi hình thức
+                                            </button>
+                                        )}
+                                        {isAdmin && selectedSession.state === 'upcoming' && (
+                                            <button
+                                                onClick={() => setShowChangeTypeModal(true)}
+                                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-md transition-colors"
+                                            >
+                                                <RefreshCw className="w-3 h-3 mr-1" />
+                                                Đổi hình thức
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -561,6 +664,49 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Request Type Change Modal (Teacher) */}
+            {selectedSession && showTypeChangeRequest && (
+                <RequestSessionTypeChangeModal
+                    open={showTypeChangeRequest}
+                    onClose={() => setShowTypeChangeRequest(false)}
+                    session={{
+                        id: selectedSession.sessionId,
+                        title: selectedSession.title,
+                        type: selectedSession.type as 'online' | 'offline' | 'hybrid'
+                    }}
+                />
+            )}
+
+            {/* Direct Type Change Modal (Admin) */}
+            {selectedSession && showChangeTypeModal && (
+                <ChangeSessionTypeModal
+                    isOpen={showChangeTypeModal}
+                    onClose={() => setShowChangeTypeModal(false)}
+                    session={{
+                        id: selectedSession.sessionId,
+                        title: selectedSession.title,
+                        type: selectedSession.type as SessionType,
+                        meetingUrl: selectedSession.meetingUrl
+                    }}
+                    onConfirm={(sessionId, newType, generateMeetLink) => {
+                        sessionTypeChangeMutation.mutate(
+                            { sessionId, type: newType, generateMeetLink },
+                            {
+                                onSuccess: () => {
+                                    toast.success('Đổi hình thức buổi học thành công');
+                                    setShowChangeTypeModal(false);
+                                    setSelectedSession(null);
+                                },
+                                onError: (error: any) => {
+                                    toast.error(error?.response?.data?.message || 'Đổi hình thức thất bại');
+                                }
+                            }
+                        );
+                    }}
+                    isLoading={sessionTypeChangeMutation.isPending}
+                />
             )}
         </div>
     );

@@ -1,4 +1,4 @@
-import { getTeachers } from '@/apis/teacher';
+import { downloadImportTemplate, exportTeachers, getTeachers, importTeachers } from '@/apis/teacher';
 import CreateTeacherModal from '@/components/teacher/CreateTeacherModal';
 import DeleteTeacherModal from '@/components/teacher/DeleteTeacherModal';
 import EditTeacherModal from '@/components/teacher/EditTeacherModal';
@@ -8,17 +8,25 @@ import { useBaseRequestQuery } from '@/hooks/useBaseRequestQuery';
 import { UserResponse } from '@/interface/user.interface';
 import {
     Add as AddIcon,
+    CloudDownload as CloudDownloadIcon,
+    CloudUpload as CloudUploadIcon,
     Delete as DeleteIcon,
+    Download as DownloadIcon,
     Edit as EditIcon,
     Person as PersonIcon,
     Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { Button, Chip, Container, Stack, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useRef, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const TeacherPage: React.FC = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const {
         data: teacherData,
         isLoading,
@@ -67,6 +75,64 @@ const TeacherPage: React.FC = () => {
     const handlePageChange = (newPage: number) => {
         if (newPage > 0 && newPage <= (teacherData?.data.totalPages || 1)) {
             setPage(newPage);
+        }
+    };
+
+    const handleExport = async () => {
+        try {
+            const blob = await exportTeachers(request);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `teachers-${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            toast.success('Xuat danh sach giao vien thanh cong');
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || 'Xuat danh sach giao vien that bai');
+        }
+    };
+
+    const handleDownloadTemplate = async () => {
+        try {
+            const blob = await downloadImportTemplate();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'teachers-import-template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            toast.success('Tai mau thanh cong');
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || 'Tai mau that bai');
+        }
+    };
+
+    const handleImport = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const response = await importTeachers(file);
+            toast.success(`Da import thanh cong ${response.data.created} giao vien`);
+            if (response.data.errors.length > 0) {
+                toast.error(`${response.data.errors.length} loi xay ra`);
+            }
+            queryClient.invalidateQueries({ queryKey: ['teachers'] });
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || 'Import giao vien that bai');
+        } finally {
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -166,6 +232,34 @@ const TeacherPage: React.FC = () => {
                     description="Quản lý tất cả giáo viên và hoạt động giảng dạy."
                     createButtonLabel="Tạo giáo viên"
                     onCreateClick={handleCreate}
+                    actionButton={
+                        <Stack direction="row" spacing={2}>
+                            <Button
+                                variant="outlined"
+                                startIcon={<DownloadIcon />}
+                                onClick={handleDownloadTemplate}
+                                disabled={isLoading}
+                            >
+                                Tải file mẫu
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<CloudDownloadIcon />}
+                                onClick={handleExport}
+                                disabled={isLoading}
+                            >
+                                Xuất file
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<CloudUploadIcon />}
+                                onClick={handleImport}
+                                disabled={isLoading}
+                            >
+                                Import
+                            </Button>
+                        </Stack>
+                    }
                 />
 
                 <SearchFilterBar
@@ -175,6 +269,14 @@ const TeacherPage: React.FC = () => {
                     limitValue={request.limit || 10}
                     onLimitChange={setLimit}
                     isLoading={isLoading}
+                />
+
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
                 />
 
                 <DataTable

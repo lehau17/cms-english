@@ -45,9 +45,14 @@ const CourseDistributionWidget: React.FC = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-          <Skeleton variant="circular" width={200} height={200} />
-        </Box>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Skeleton variant="circular" width={160} height={160} />
+          <Stack spacing={1} sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="80%" height={20} />
+            <Skeleton variant="text" width="70%" height={20} />
+            <Skeleton variant="text" width="60%" height={20} />
+          </Stack>
+        </Stack>
       );
     }
 
@@ -55,14 +60,14 @@ const CourseDistributionWidget: React.FC = () => {
       return (
         <Box
           sx={{
-            py: 4,
+            py: 3,
             textAlign: "center",
             bgcolor: alpha(theme.palette.grey[500], 0.05),
             borderRadius: 1,
           }}
         >
-          <DonutLarge sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
-          <Typography variant="body2" color="text.secondary">
+          <DonutLarge sx={{ fontSize: 40, color: "text.disabled", mb: 0.5 }} />
+          <Typography variant="caption" color="text.secondary">
             Chưa có dữ liệu phân bố
           </Typography>
         </Box>
@@ -70,12 +75,12 @@ const CourseDistributionWidget: React.FC = () => {
     }
 
     return (
-      <>
-        <Box sx={{ height: 220 }}>
-          <PieChartWrapper data={chartData} />
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Box sx={{ height: 160, width: 160, flexShrink: 0 }}>
+          <PieChartWrapper data={chartData} height={160} outerRadius={70} />
         </Box>
         {/* Legend */}
-        <Stack spacing={1} sx={{ mt: 2 }}>
+        <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
           {chartData.slice(0, 4).map((item) => (
             <Stack
               key={item.name}
@@ -83,55 +88,57 @@ const CourseDistributionWidget: React.FC = () => {
               justifyContent="space-between"
               alignItems="center"
             >
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
-                    width: 10,
-                    height: 10,
+                    width: 8,
+                    height: 8,
                     borderRadius: "50%",
                     bgcolor: item.color,
+                    flexShrink: 0,
                   }}
                 />
-                <Typography variant="body2" noWrap sx={{ maxWidth: 120 }}>
+                <Typography variant="caption" noWrap sx={{ maxWidth: 100 }}>
                   {item.name}
                 </Typography>
               </Stack>
-              <Typography variant="body2" fontWeight={600}>
+              <Typography variant="caption" fontWeight={600}>
                 {item.value}
               </Typography>
             </Stack>
           ))}
         </Stack>
-      </>
+      </Stack>
     );
   };
 
   return (
     <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h6" fontWeight={600}>
-            Phân bố khóa học
-          </Typography>
+      <CardContent sx={{ p: 2.5 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="subtitle1" fontWeight={600}>
+              Phân bố khóa học
+            </Typography>
+            {!isLoading && total > 0 && (
+              <Chip
+                label={`${total}`}
+                size="small"
+                color="info"
+                sx={{ height: 20, fontSize: "0.7rem" }}
+              />
+            )}
+          </Stack>
           <Avatar
             sx={{
               bgcolor: alpha(theme.palette.info.main, 0.1),
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
             }}
           >
-            <PieChartIcon sx={{ fontSize: 18, color: "info.main" }} />
+            <PieChartIcon sx={{ fontSize: 16, color: "info.main" }} />
           </Avatar>
         </Stack>
-        {!isLoading && total > 0 && (
-          <Chip
-            label={`Tổng: ${total} khóa học`}
-            size="small"
-            color="info"
-            variant="outlined"
-            sx={{ mb: 2 }}
-          />
-        )}
         {renderContent()}
       </CardContent>
     </Card>

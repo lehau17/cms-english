@@ -8,13 +8,10 @@ interface MessageBubbleProps {
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
-  variant,
   children,
   className = '',
 }) => {
-  const baseClasses = 'flex-1 min-w-0 space-y-3';
-
-  return <div className={`${baseClasses} ${className}`}>{children}</div>;
+  return <div className={`flex-1 min-w-0 ${className}`}>{children}</div>;
 };
 
 // ===================== AVATAR =====================
@@ -26,47 +23,31 @@ interface AvatarProps {
 export const Avatar: React.FC<AvatarProps> = ({ variant, children }) => {
   if (variant === 'user') {
     return (
-      <div className="flex-shrink-0 w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
-        <span className="text-white text-sm font-medium">You</span>
+      <div className="flex-shrink-0 w-7 h-7 bg-[#1a1a1a] rounded-full flex items-center justify-center">
+        <span className="text-white text-xs font-medium">U</span>
       </div>
     );
   }
 
   return (
-    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+    <div className="flex-shrink-0 w-7 h-7 bg-[#d97757] rounded-full flex items-center justify-center">
       {children}
     </div>
   );
 };
 
 // ===================== LOADING DOTS =====================
-interface LoadingDotsProps {
-  text?: string;
-}
-
-export const LoadingDots: React.FC<LoadingDotsProps> = ({ text = 'Thinking...' }) => {
+export const LoadingDots: React.FC = () => {
   return (
-    <div className="flex items-center gap-2 py-2">
-      <div className="flex gap-1">
-        <div
-          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-          style={{ animationDelay: '0ms' }}
-        />
-        <div
-          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-          style={{ animationDelay: '150ms' }}
-        />
-        <div
-          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-          style={{ animationDelay: '300ms' }}
-        />
-      </div>
-      <span className="text-xs text-gray-500 ml-2">{text}</span>
+    <div className="flex items-center gap-1.5 py-1">
+      <div className="w-2 h-2 bg-[#9b9a95] rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+      <div className="w-2 h-2 bg-[#9b9a95] rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+      <div className="w-2 h-2 bg-[#9b9a95] rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
     </div>
   );
 };
 
 // ===================== TYPING CARET =====================
 export const TypingCaret: React.FC = () => {
-  return <span className="inline-block w-0.5 h-4 ml-0.5 bg-gray-900 animate-pulse" />;
+  return <span className="inline-block w-0.5 h-4 ml-0.5 bg-[#d97757] animate-pulse" />;
 };

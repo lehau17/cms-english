@@ -1,11 +1,12 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Edit } from 'lucide-react';
-import React, { useEffect } from 'react';
+import { Edit, Video, Building, Layers } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import FormField from '../forms/FormField';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
+import { SessionType } from '@/interface/classroom.interface';
 
 interface EditScheduleModalProps {
   isOpen: boolean;
@@ -41,6 +42,9 @@ const schema = yup.object({
 });
 
 const EditScheduleModal: React.FC<EditScheduleModalProps> = ({ isOpen, onClose, event, onEventUpdate }) => {
+  const [sessionType, setSessionType] = useState<SessionType>('offline');
+  const [generateMeetLink, setGenerateMeetLink] = useState(true);
+
   const methods = useForm<EditScheduleFormValues>({
     resolver: yupResolver(schema),
   });
@@ -66,6 +70,8 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({ isOpen, onClose, 
         description: event.resource?.description || '',
         location: event.resource?.location || '',
       });
+
+      setSessionType(event.resource?.sessionType || 'offline');
     }
   }, [event, reset]);
 
@@ -78,12 +84,14 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({ isOpen, onClose, 
       title: data.title,
       start,
       end,
-      resource: { 
-        course: data.courseName, 
-        teacher: data.teacherName, 
+      resource: {
+        course: data.courseName,
+        teacher: data.teacherName,
         type: data.type,
         description: data.description,
         location: data.location,
+        sessionType,
+        generateMeetLink: sessionType === 'online' ? generateMeetLink : false,
       },
     });
     onClose();
@@ -125,6 +133,67 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({ isOpen, onClose, 
           </div>
           <FormField name="description" label="Description" placeholder="Enter event description" />
           <FormField name="location" label="Location / Link" placeholder="e.g., Google Meet Link" />
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-2">Session Type *</label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="sessionType"
+                  value="online"
+                  checked={sessionType === 'online'}
+                  onChange={(e) => {
+                    setSessionType('online');
+                    setGenerateMeetLink(true);
+                  }}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <Video className="w-4 h-4 text-blue-600" />
+                <span className="text-sm">Online</span>
+              </label>
+
+              <label className="flex items-center gap-3 p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="sessionType"
+                  value="offline"
+                  checked={sessionType === 'offline'}
+                  onChange={(e) => setSessionType('offline')}
+                  className="w-4 h-4 text-gray-600"
+                />
+                <Building className="w-4 h-4 text-gray-600" />
+                <span className="text-sm">Offline</span>
+              </label>
+
+              <label className="flex items-center gap-3 p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="sessionType"
+                  value="hybrid"
+                  checked={sessionType === 'hybrid'}
+                  onChange={(e) => setSessionType('hybrid')}
+                  className="w-4 h-4 text-purple-600"
+                />
+                <Layers className="w-4 h-4 text-purple-600" />
+                <span className="text-sm">Hybrid</span>
+              </label>
+            </div>
+          </div>
+
+          {sessionType === 'online' && (
+            <label className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <input
+                type="checkbox"
+                checked={generateMeetLink}
+                onChange={(e) => setGenerateMeetLink(e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-green-600"
+              />
+              <span className="text-xs text-green-800">
+                Auto-generate Google Meet link for this session
+              </span>
+            </label>
+          )}
 
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
             <div className="flex justify-end space-x-3">

@@ -1,7 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { usePendingRescheduleRequestCount } from "@/hooks/useRescheduleRequest";
+import { usePendingTypeChangeRequestCount } from "@/hooks/useSessionTypeChangeRequest";
 import { UserRole } from "@/interface/enum.interface";
-import { CalendarMonth, CardMembership, Class, FamilyRestroom, MenuBook, Notifications, Person, Podcasts, ReceiptLong, Schedule, School, VideoLibrary } from "@mui/icons-material";
+import { CalendarMonth, CardMembership, ChangeCircle, Class, FamilyRestroom, MenuBook, Notifications, Person, Podcasts, ReceiptLong, Schedule, School, VideoLibrary } from "@mui/icons-material";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import ExpandLess from "@mui/icons-material/ExpandLess";
@@ -86,6 +87,7 @@ const NAV_ITEMS: (NavItem | NavGroup)[] = [
   { to: "/schedule", label: "Schedule", icon: <CalendarMonth />, roles: [UserRole.ADMIN] },
   { to: "/teacher-schedule", label: "My Schedule", icon: <CalendarMonth />, roles: [UserRole.TEACHER] },
   { to: "/reschedule-requests", label: "Reschedule Requests", icon: <Schedule />, roles: [UserRole.ADMIN] },
+  { to: "/type-change-requests", label: "Type Change Requests", icon: <ChangeCircle />, roles: [UserRole.ADMIN] },
   { to: "/api-report", label: "API Report", icon: <AssessmentOutlinedIcon />, roles: [UserRole.ADMIN] },
 ];
 
@@ -102,6 +104,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
   const { data: pendingCount = 0 } = usePendingRescheduleRequestCount();
+  const { data: pendingTypeChangeCount = 0 } = usePendingTypeChangeRequestCount();
   const [collapsed, setCollapsed] = React.useState<boolean>(() => {
     return localStorage.getItem("cms_sidebar") === "collapsed";
   });
@@ -258,7 +261,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                       }
 
                       const active = pathname === child.to || pathname.startsWith(child.to + "/");
-                      const showBadge = child.to === "/reschedule-requests" && isAdmin && pendingCount > 0;
+                      const showBadge = (child.to === "/reschedule-requests" && isAdmin && pendingCount > 0) ||
+                                        (child.to === "/type-change-requests" && isAdmin && pendingTypeChangeCount > 0);
+                      const badgeCount = child.to === "/reschedule-requests" ? pendingCount : pendingTypeChangeCount;
                       return (
                         <ListItemButton
                           key={child.to}
@@ -281,7 +286,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                             sx={{ minWidth: 0, mr: 1.5, color: "inherit" }}
                           >
                             {showBadge ? (
-                              <Badge badgeContent={pendingCount} color="error" max={99}>
+                              <Badge badgeContent={badgeCount} color="error" max={99}>
                                 {child.icon}
                               </Badge>
                             ) : (
@@ -309,7 +314,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             }
 
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
-            const showBadge = item.to === "/reschedule-requests" && isAdmin && pendingCount > 0;
+            const showBadge = (item.to === "/reschedule-requests" && isAdmin && pendingCount > 0) ||
+                              (item.to === "/type-change-requests" && isAdmin && pendingTypeChangeCount > 0);
+            const itemBadgeCount = item.to === "/reschedule-requests" ? pendingCount : pendingTypeChangeCount;
             return (
               <ListItemButton
                 key={item.to}
@@ -331,7 +338,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                   sx={{ minWidth: 0, mr: collapsed ? 0 : 1.5, color: "inherit" }}
                 >
                   {showBadge ? (
-                    <Badge badgeContent={pendingCount} color="error" max={99}>
+                    <Badge badgeContent={itemBadgeCount} color="error" max={99}>
                       {item.icon}
                     </Badge>
                   ) : (

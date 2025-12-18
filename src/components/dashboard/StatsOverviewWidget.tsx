@@ -195,7 +195,7 @@ const StatsOverviewWidget: React.FC = () => {
   return (
     <Grid container spacing={2}>
       {stats.map((stat, index) => (
-        <Grid item xs={12} sm={6} md={4} lg={2} key={stat.title}>
+        <Grid item xs={12} sm={6} md={4} lg={4} key={stat.title}>
           <StatItem {...stat} isLoading={isLoading} />
         </Grid>
       ))}
